@@ -1,43 +1,51 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import Pipeline from './pages/Pipeline';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import Account from './pages/Account';
-import Network from './pages/Network';
-import Analytics from './pages/Analytics';
-import { JobProvider } from './context/JobContext';
-import { NetworkProvider } from './context/NetworkContext';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import NewApplicationModal from './components/NewApplicationModal';
-import NewContactModal from './components/NewContactModal';
-
-// Protected Route Wrapper
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="w-8 h-8 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"></div></div>;
-  if (!user) return <Navigate to="/login" replace />;
-  return <>{children}</>;
-};
-
-// Public Route Wrapper
-const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="w-8 h-8 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"></div></div>;
-  if (user) return <Navigate to="/" replace />;
-  return <>{children}</>;
-};
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { ProtectedRoute, PublicRoute } from "./components/AuthRoutes";
+import Layout from "./components/Layout";
+import NewApplicationModal from "./components/NewApplicationModal";
+import NewContactModal from "./components/NewContactModal";
+import { AuthProvider } from "./context/AuthContext";
+import { JobProvider } from "./context/JobContext";
+import { NetworkProvider } from "./context/NetworkContext";
+import Account from "./pages/Account";
+import Analytics from "./pages/Analytics";
+import Dashboard from "./pages/Dashboard";
+import Login from "./pages/Login";
+import Network from "./pages/Network";
+import Pipeline from "./pages/Pipeline";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Signup from "./pages/Signup";
 
 function AppRoutes() {
   return (
     <Routes>
       {/* Public Auth Routes */}
-      <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-      <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/signup"
+        element={
+          <PublicRoute>
+            <Signup />
+          </PublicRoute>
+        }
+      />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
       {/* Protected App Routes */}
-      <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Dashboard />} />
         <Route path="pipeline" element={<Pipeline />} />
         <Route path="account" element={<Account />} />
