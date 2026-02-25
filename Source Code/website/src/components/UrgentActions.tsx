@@ -19,7 +19,7 @@ export default function UrgentActions({ actions }: UrgentActionsProps) {
           Needs Attention
         </h2>
       </div>
-      <div className="card-3d rounded-3xl overflow-hidden shadow-2xl flex flex-col items-center justify-center p-6 text-center border-t-4 border-red-500/80 dark:border-red-500/50 relative">
+      <div className="premium-glass rounded-[2rem] overflow-hidden shadow-2xl flex flex-col items-center justify-center p-6 text-center border-t border-red-400 dark:border-red-500/50 relative">
         <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
           <Bell className="w-32 h-32 text-red-500 transform -rotate-12 translate-x-8 -translate-y-8" />
         </div>
@@ -29,7 +29,7 @@ export default function UrgentActions({ actions }: UrgentActionsProps) {
             {actions.map((action, idx) => (
               <div
                 key={idx}
-                className="group relative bg-white/60 dark:bg-gray-800/40 backdrop-blur-md p-5 rounded-2xl border border-white/40 dark:border-white/5 hover:border-red-200 dark:hover:border-red-900/50 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 cursor-pointer text-left overflow-hidden"
+                className="group relative premium-glass-heavy p-5 rounded-2xl hover:border-red-400/50 dark:hover:border-red-500/50 hover:-translate-y-1 shadow-lg transition-all duration-300 cursor-pointer text-left overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-red-500/0 via-red-500/0 to-red-500/0 group-hover:from-red-500/5 group-hover:to-pink-500/5 transition-colors duration-500" />
 
@@ -41,10 +41,10 @@ export default function UrgentActions({ actions }: UrgentActionsProps) {
                     {action.time}
                   </span>
                 </div>
-                <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-1 relative z-10">
+                <h3 className="font-bold text-slate-900 dark:text-white mb-1 relative z-10">
                   {action.title}
                 </h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400 relative z-10">
+                <p className="text-xs text-slate-600 dark:text-slate-300 relative z-10">
                   {action.description}
                 </p>
               </div>
@@ -52,7 +52,7 @@ export default function UrgentActions({ actions }: UrgentActionsProps) {
           </div>
         ) : (
           <div className="py-12">
-            <p className="text-gray-400 font-medium">No urgent actions.</p>
+            <p className="text-slate-500 dark:text-slate-400 font-medium">No urgent actions.</p>
           </div>
         )}
 
