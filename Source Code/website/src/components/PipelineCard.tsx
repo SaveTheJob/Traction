@@ -1,6 +1,6 @@
 import { Draggable } from "@hello-pangea/dnd";
 import { Building2, Calendar, Edit2, Trash2 } from "lucide-react";
-import type { Job, Priority } from "../context/JobContext";
+import type { Job } from "../context/JobContext";
 
 interface PipelineCardProps {
   job: Job;
@@ -15,17 +15,6 @@ export default function PipelineCard({
   openModal,
   handleDelete,
 }: PipelineCardProps) {
-  const getPriorityColor = (p: Priority) => {
-    switch (p) {
-      case "High":
-        return "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800";
-      case "Medium":
-        return "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800";
-      case "Low":
-        return "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700";
-    }
-  };
-
   return (
     <Draggable draggableId={job.id} index={index}>
       {(provided, snapshot) => (
@@ -107,16 +96,6 @@ export default function PipelineCard({
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
-
-            {job.dateAdded && (
-              <div className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500 font-mono">
-                <Calendar className="w-3 h-3" />
-                {new Date(job.dateAdded).toLocaleDateString(undefined, {
-                  month: "short",
-                  day: "numeric",
-                })}
-              </div>
-            )}
           </div>
 
           <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
