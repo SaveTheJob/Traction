@@ -80,7 +80,3 @@ The web dashboard is configured to be deployed using Firebase Hosting.
 2. Login to Firebase: `firebase login`
 3. Build the website: `cd "Source Code/website" && npm run build`
 4. Deploy to Firebase: `firebase deploy`
-
-## License
-
-[Specify License Here]
