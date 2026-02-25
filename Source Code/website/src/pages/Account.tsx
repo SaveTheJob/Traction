@@ -1,6 +1,7 @@
 import {
   AlertTriangle,
   CreditCard,
+  Database,
   FileText,
   KeyRound,
   ShieldCheck,
@@ -9,6 +10,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useJobs } from "../context/JobContext";
+import { seedDemoData } from "../lib/seedData";
 
 export default function Account() {
   const { user, updatePassword } = useAuth();
@@ -16,7 +18,25 @@ export default function Account() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+
+  const handleSeedData = async () => {
+    if (!user) return;
+    if (!window.confirm("This will add demo data to your account. Continue?"))
+      return;
+
+    setIsSeeding(true);
+    try {
+      await seedDemoData(user.uid);
+      setMessage({ type: "success", text: "Demo data added successfully!" });
+    } catch (error) {
+      console.error(error);
+      setMessage({ type: "error", text: "Failed to add demo data." });
+    } finally {
+      setIsSeeding(false);
+    }
+  };
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,8 +84,10 @@ export default function Account() {
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Account Settings</h1>
-        <p className="text-gray-500 mt-1 text-sm">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          Account Settings
+        </h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
           Manage your profile, security, and subscription.
         </p>
       </div>
@@ -73,22 +95,22 @@ export default function Account() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Profile Information */}
         <div className="space-y-6">
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-            <div className="p-5 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-blue-600" />
-              <h2 className="font-semibold text-gray-900">
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+            <div className="p-5 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <h2 className="font-semibold text-gray-900 dark:text-white">
                 Profile Information
               </h2>
             </div>
             <div className="p-5 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Email Address
                 </label>
                 <input
                   type="text"
                   disabled
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-gray-500 cursor-not-allowed text-sm"
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-md text-gray-500 dark:text-gray-400 cursor-not-allowed text-sm"
                   value={user?.email || "No email attached"}
                 />
               </div>
@@ -96,26 +118,28 @@ export default function Account() {
           </div>
 
           {/* Billing & Usage */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-            <div className="p-5 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-blue-600" />
-              <h2 className="font-semibold text-gray-900">Billing & Usage</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+            <div className="p-5 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <h2 className="font-semibold text-gray-900 dark:text-white">
+                Billing & Usage
+              </h2>
             </div>
             <div className="p-5">
               <div className="flex justify-between items-end mb-2">
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Free Tier Usage
                 </span>
                 <span
-                  className={`text-xs font-bold ${isOverLimit ? "text-red-600" : "text-gray-500"}`}
+                  className={`text-xs font-bold ${isOverLimit ? "text-red-600 dark:text-red-400" : "text-gray-500 dark:text-gray-400"}`}
                 >
                   {jobs.length} / 50
                 </span>
               </div>
 
-              <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4 overflow-hidden">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-4 overflow-hidden">
                 <div
-                  className={`h-2.5 rounded-full ${isOverLimit ? "bg-red-600" : "bg-blue-600"}`}
+                  className={`h-2.5 rounded-full ${isOverLimit ? "bg-red-600 dark:bg-red-500" : "bg-blue-600 dark:bg-blue-500"}`}
                   style={{
                     width: `${Math.min((jobs.length / 50) * 100, 100)}%`,
                   }}
@@ -123,22 +147,45 @@ export default function Account() {
               </div>
 
               {isOverLimit ? (
-                <div className="bg-red-50 border border-red-100 p-3 rounded-md flex items-start gap-2 mb-4">
-                  <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-800">
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 p-3 rounded-md flex items-start gap-2 mb-4">
+                  <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-800 dark:text-red-300">
                     You have reached the free limit. Upgrade to Pro to continue
                     tracking jobs.
                   </p>
                 </div>
               ) : (
-                <p className="text-sm text-gray-500 mb-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                   You can track up to 50 applications for free. After that, it's
                   just $5/month for unlimited active tracking!
                 </p>
               )}
 
-              <button className="w-full bg-blue-50 border border-blue-100 text-blue-700 font-medium py-2 rounded-md hover:bg-blue-100 transition-colors text-sm flex items-center justify-center gap-2">
+              <button className="w-full bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 text-blue-700 dark:text-blue-400 font-medium py-2 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors text-sm flex items-center justify-center gap-2">
                 Upgrade to Pro for $5/mo
+              </button>
+            </div>
+          </div>
+
+          {/* Demo Data */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+            <div className="p-5 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center gap-2">
+              <Database className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <h2 className="font-semibold text-gray-900 dark:text-white">
+                Demo Data
+              </h2>
+            </div>
+            <div className="p-5">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                Populate your account with sample jobs and contacts for
+                demonstration purposes.
+              </p>
+              <button
+                onClick={handleSeedData}
+                disabled={isSeeding}
+                className="w-full bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 text-purple-700 dark:text-purple-400 font-medium py-2 rounded-md hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {isSeeding ? "Adding Data..." : "Load Demo Data"}
               </button>
             </div>
           </div>
@@ -147,22 +194,24 @@ export default function Account() {
         {/* Right Column */}
         <div className="space-y-6">
           {/* Security */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm h-fit">
-            <div className="p-5 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
-              <KeyRound className="w-5 h-5 text-blue-600" />
-              <h2 className="font-semibold text-gray-900">Change Password</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm h-fit">
+            <div className="p-5 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center gap-2">
+              <KeyRound className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <h2 className="font-semibold text-gray-900 dark:text-white">
+                Change Password
+              </h2>
             </div>
             <form onSubmit={handleUpdatePassword} className="p-5 space-y-4">
               {message.text && (
                 <div
-                  className={`p-3 rounded-md text-sm ${message.type === "error" ? "bg-red-50 text-red-700 border border-red-100" : "bg-green-50 text-green-700 border border-green-100"}`}
+                  className={`p-3 rounded-md text-sm ${message.type === "error" ? "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-800" : "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-100 dark:border-green-800"}`}
                 >
                   {message.text}
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   New Password
                 </label>
                 <input
@@ -171,13 +220,13 @@ export default function Account() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   minLength={6}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm placeholder-gray-400 dark:placeholder-gray-500"
                   placeholder="Enter new password"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Confirm New Password
                 </label>
                 <input
@@ -186,7 +235,7 @@ export default function Account() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   minLength={6}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm placeholder-gray-400 dark:placeholder-gray-500"
                   placeholder="Confirm new password"
                 />
               </div>
@@ -202,18 +251,20 @@ export default function Account() {
           </div>
 
           {/* Legal */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm h-fit">
-            <div className="p-5 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-blue-600" />
-              <h2 className="font-semibold text-gray-900">Legal</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm h-fit">
+            <div className="p-5 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <h2 className="font-semibold text-gray-900 dark:text-white">
+                Legal
+              </h2>
             </div>
             <div className="p-5">
-              <p className="text-sm text-gray-500 mb-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                 View our privacy policy and terms of service.
               </p>
               <Link
                 to="/privacy-policy"
-                className="w-full bg-gray-50 border border-gray-200 text-gray-700 font-medium py-2 rounded-md hover:bg-gray-100 transition-colors text-sm flex items-center justify-center gap-2"
+                className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors text-sm flex items-center justify-center gap-2"
               >
                 Privacy Policy
               </Link>

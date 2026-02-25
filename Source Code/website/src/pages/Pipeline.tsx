@@ -7,15 +7,32 @@ import type { Priority, Status } from "../context/JobContext";
 import { useJobs } from "../context/JobContext";
 
 const COLUMNS: { id: Status; label: string; color: string }[] = [
-  { id: "Wishlist", label: "Wishlist", color: "bg-gray-100 text-gray-700" },
-  { id: "Applied", label: "Applied", color: "bg-blue-100 text-blue-700" },
+  {
+    id: "Wishlist",
+    label: "Wishlist",
+    color: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+  },
+  {
+    id: "Applied",
+    label: "Applied",
+    color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  },
   {
     id: "Interviewing",
     label: "Interviewing",
-    color: "bg-blue-100 text-blue-700",
+    color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
   },
-  { id: "Offer", label: "Offer", color: "bg-green-100 text-green-700" },
-  { id: "Rejected", label: "Rejected", color: "bg-red-100 text-red-700" },
+  {
+    id: "Offer",
+    label: "Offer",
+    color:
+      "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+  },
+  {
+    id: "Rejected",
+    label: "Rejected",
+    color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+  },
 ];
 
 export default function Pipeline() {
@@ -58,8 +75,10 @@ export default function Pipeline() {
     <div className="p-4 md:p-8 h-full flex flex-col max-w-[1600px] mx-auto overflow-hidden">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 flex-shrink-0 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Pipeline</h1>
-          <p className="text-gray-500 mt-1 text-sm md:text-base">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Pipeline
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm md:text-base">
             Track your job applications across different stages.
           </p>
         </div>
@@ -71,7 +90,7 @@ export default function Pipeline() {
               placeholder="Search company or role..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
             />
           </div>
           <div className="relative">
@@ -81,7 +100,7 @@ export default function Pipeline() {
               onChange={(e) =>
                 setFilterPriority(e.target.value as Priority | "All")
               }
-              className="pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-md appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="pl-9 pr-8 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-md appearance-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
             >
               <option value="All">All</option>
               <option value="High">High Priority</option>
@@ -105,10 +124,12 @@ export default function Pipeline() {
           {COLUMNS.map((col) => (
             <div
               key={col.id}
-              className="flex-shrink-0 w-80 bg-gray-50/50 rounded-xl border border-gray-200 flex flex-col h-full max-h-[calc(100vh-12rem)]"
+              className="flex-shrink-0 w-80 bg-gray-50/50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col h-full max-h-[calc(100vh-12rem)]"
             >
-              <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50 rounded-t-xl">
-                <h3 className="font-semibold text-gray-900">{col.label}</h3>
+              <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-t-xl">
+                <h3 className="font-semibold text-gray-900 dark:text-white">
+                  {col.label}
+                </h3>
                 <span
                   className={`px-2 py-0.5 rounded-full text-xs font-bold ${col.color}`}
                 >
@@ -121,7 +142,7 @@ export default function Pipeline() {
                   <div
                     {...provided.droppableProps}
                     ref={provided.innerRef}
-                    className={`p-3 flex-1 overflow-y-auto space-y-3 transition-colors ${snapshot.isDraggingOver ? "bg-blue-50/50" : ""}`}
+                    className={`p-3 flex-1 overflow-y-auto space-y-3 transition-colors ${snapshot.isDraggingOver ? "bg-blue-50/50 dark:bg-blue-900/20" : ""}`}
                   >
                     {filteredJobs
                       .filter((j) => j.status === col.id)

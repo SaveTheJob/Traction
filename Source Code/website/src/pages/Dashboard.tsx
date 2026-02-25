@@ -103,10 +103,10 @@ export default function Dashboard() {
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             Welcome back, {firstName}!
           </h1>
-          <p className="text-gray-500 mt-1 text-sm md:text-base">
+          <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm md:text-base">
             Here is your application overview.
           </p>
         </div>
@@ -125,11 +125,11 @@ export default function Dashboard() {
       {/* Metrics Grid */}
       <MetricsGrid metrics={metrics} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 gap-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 gap-y-6 md:gap-y-8">
         {/* Recent Activity Table */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <h2 className="text-lg font-bold text-gray-900">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">
               Your Applications
             </h2>
             <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -140,7 +140,7 @@ export default function Dashboard() {
                   placeholder="Search..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full pl-9 pr-4 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                 />
               </div>
               <div className="relative">
@@ -148,7 +148,7 @@ export default function Dashboard() {
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="pl-9 pr-8 py-1.5 text-sm border border-gray-200 rounded-md appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                  className="pl-9 pr-8 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-md appearance-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                 >
                   <option value="All">All</option>
                   <option value="Wishlist">Wishlist</option>
@@ -160,45 +160,45 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50/50">
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Company & Role
                     </th>
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Applied
                     </th>
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">
+                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {displayJobs.length > 0 ? (
                     displayJobs.map((activity, idx) => (
                       <tr
                         key={idx}
-                        className="hover:bg-gray-50/50 transition-colors"
+                        className="hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-colors"
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-md bg-gray-100 flex items-center justify-center border border-gray-200">
-                              <Building2 className="w-5 h-5 text-gray-500" />
+                            <div className="w-10 h-10 rounded-md bg-gray-100 dark:bg-gray-700 flex items-center justify-center border border-gray-200 dark:border-gray-600">
+                              <Building2 className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                             </div>
                             <div>
-                              <p className="text-sm font-bold text-gray-900">
+                              <p className="text-sm font-bold text-gray-900 dark:text-white">
                                 {activity.link ? (
                                   <a
                                     href={activity.link}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-blue-600 hover:text-blue-800 hover:underline"
+                                    className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
                                   >
                                     {activity.company}
                                   </a>
@@ -206,7 +206,7 @@ export default function Dashboard() {
                                   activity.company
                                 )}
                               </p>
-                              <p className="text-xs text-gray-500 mt-0.5">
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                                 {activity.title}
                                 {activity.location
                                   ? ` • ${activity.location}`
@@ -219,7 +219,7 @@ export default function Dashboard() {
                           <StatusBadge status={activity.status} />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <p className="text-sm text-gray-900 font-medium">
+                          <p className="text-sm text-gray-900 dark:text-gray-300 font-medium">
                             {activity.dateApplied}
                           </p>
                         </td>
@@ -227,14 +227,14 @@ export default function Dashboard() {
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => openModal(activity.id)}
-                              className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors inline-flex"
+                              className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors inline-flex"
                               title="Edit"
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDelete(activity.id)}
-                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors inline-flex"
+                              className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors inline-flex"
                               title="Delete"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -247,7 +247,7 @@ export default function Dashboard() {
                     <tr>
                       <td colSpan={4}>
                         <div className="text-center py-12">
-                          <p className="text-gray-500">
+                          <p className="text-gray-500 dark:text-gray-400">
                             No applications found matching your criteria.
                           </p>
                         </div>

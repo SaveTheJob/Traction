@@ -16,7 +16,61 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeBtn = document.getElementById("close-btn");
   const logoutBtn = document.getElementById("logout-btn");
 
-  // Auth elements
+  // Theme elements
+  const themeToggle = document.getElementById("theme-toggle");
+  const sunIcon = themeToggle ? themeToggle.querySelector(".sun-icon") : null;
+  const moonIcon = themeToggle ? themeToggle.querySelector(".moon-icon") : null;
+
+  function setTheme(isDark) {
+    if (isDark) {
+      document.body.classList.add("dark");
+      if (sunIcon) sunIcon.classList.remove("hidden");
+      if (moonIcon) moonIcon.classList.add("hidden");
+    } else {
+      document.body.classList.remove("dark");
+      if (sunIcon) sunIcon.classList.add("hidden");
+      if (moonIcon) moonIcon.classList.remove("hidden");
+    }
+  }
+
+  // Initial Theme Load
+  chrome.storage.local.get(["theme"], (result) => {
+    const isSystemDark = window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    ).matches;
+    // Default to system preference if no stored theme
+    const storedTheme = result.theme;
+
+    let isDark;
+    if (storedTheme === "dark") {
+      isDark = true;
+    } else if (storedTheme === "light") {
+      isDark = false;
+    } else {
+      isDark = isSystemDark;
+    }
+
+    setTheme(isDark);
+  });
+
+  if (themeToggle) {
+    themeToggle.addEventListener("click", () => {
+      // Toggle based on current state of body class
+      const isDark = document.body.classList.contains("dark");
+      const newTheme = !isDark;
+
+      setTheme(newTheme);
+      // Save preference
+      chrome.storage.local.set({ theme: newTheme ? "dark" : "light" }, () => {
+        if (chrome.runtime.lastError) {
+          console.error(
+            "Error saving theme preference:",
+            chrome.runtime.lastError,
+          );
+        }
+      });
+    });
+  }
   const authEmail = document.getElementById("auth-email");
   const authPassword = document.getElementById("auth-password");
   const btnAuthSubmit = document.getElementById("btn-auth-submit");

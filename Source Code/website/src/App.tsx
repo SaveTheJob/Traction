@@ -6,6 +6,7 @@ import NewContactModal from "./components/NewContactModal";
 import { AuthProvider } from "./context/AuthContext";
 import { JobProvider } from "./context/JobContext";
 import { NetworkProvider } from "./context/NetworkContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import Account from "./pages/Account";
 import Analytics from "./pages/Analytics";
 import Dashboard from "./pages/Dashboard";
@@ -59,17 +60,19 @@ function AppRoutes() {
 
 function App() {
   return (
-    <AuthProvider>
-      <JobProvider>
-        <NetworkProvider>
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-          <NewApplicationModal />
-          <NewContactModal />
-        </NetworkProvider>
-      </JobProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <JobProvider>
+          <NetworkProvider>
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+            <NewApplicationModal />
+            <NewContactModal />
+          </NetworkProvider>
+        </JobProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

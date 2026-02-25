@@ -7,6 +7,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useTheme } from "../context/ThemeContext";
 
 interface ApplicationVelocityChartProps {
   data: { name: string; applications: number }[];
@@ -19,27 +20,30 @@ export default function ApplicationVelocityChart({
   timeFilter,
   setTimeFilter,
 }: ApplicationVelocityChartProps) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 shadow-sm">
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 md:p-8 shadow-sm">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
             Application Velocity
           </h2>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Number of applications submitted over time
           </p>
         </div>
-        <div className="inline-flex bg-gray-100 p-0.5 rounded-lg border border-gray-200">
+        <div className="inline-flex bg-gray-100 dark:bg-gray-700 p-0.5 rounded-lg border border-gray-200 dark:border-gray-600">
           <button
             onClick={() => setTimeFilter("weekly")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${timeFilter === "weekly" ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${timeFilter === "weekly" ? "bg-white dark:bg-gray-600 text-blue-700 dark:text-blue-300 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"}`}
           >
             Weekly
           </button>
           <button
             onClick={() => setTimeFilter("monthly")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${timeFilter === "monthly" ? "bg-white text-blue-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${timeFilter === "monthly" ? "bg-white dark:bg-gray-600 text-blue-700 dark:text-blue-300 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"}`}
           >
             Monthly
           </button>
@@ -61,17 +65,17 @@ export default function ApplicationVelocityChart({
               <CartesianGrid
                 strokeDasharray="3 3"
                 vertical={false}
-                stroke="#f3f4f6"
+                stroke={isDark ? "#374151" : "#f3f4f6"}
               />
               <XAxis
                 dataKey="name"
-                tick={{ fontSize: 13, fill: "#6b7280" }}
+                tick={{ fontSize: 13, fill: isDark ? "#9ca3af" : "#6b7280" }}
                 axisLine={false}
                 tickLine={false}
                 dy={10}
               />
               <YAxis
-                tick={{ fontSize: 13, fill: "#6b7280" }}
+                tick={{ fontSize: 13, fill: isDark ? "#9ca3af" : "#6b7280" }}
                 axisLine={false}
                 tickLine={false}
                 dx={-10}
@@ -79,8 +83,10 @@ export default function ApplicationVelocityChart({
               />
               <Tooltip
                 contentStyle={{
+                  backgroundColor: isDark ? "#1f2937" : "#fff",
+                  borderColor: isDark ? "#374151" : "#e5e7eb",
+                  color: isDark ? "#fff" : "#111827",
                   borderRadius: "12px",
-                  border: "1px solid #e5e7eb",
                   boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
                 }}
                 itemStyle={{ color: "#4f46e5", fontWeight: 600 }}

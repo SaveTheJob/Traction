@@ -80,8 +80,10 @@ export default function Analytics() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 h-full overflow-y-auto pb-24">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
-        <p className="text-gray-500 mt-1 text-base">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          Analytics
+        </h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-1 text-base">
           Visualize your job search momentum and conversion rates.
         </p>
       </div>
