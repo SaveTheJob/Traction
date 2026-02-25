@@ -24,7 +24,7 @@ export default function ApplicationVelocityChart({
   const isDark = theme === "dark";
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 md:p-8 shadow-sm">
+    <div className="glass-card rounded-2xl p-6 md:p-8 shadow-sm">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
         <div>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">
@@ -34,16 +34,24 @@ export default function ApplicationVelocityChart({
             Number of applications submitted over time
           </p>
         </div>
-        <div className="inline-flex bg-gray-100 dark:bg-gray-700 p-0.5 rounded-lg border border-gray-200 dark:border-gray-600">
+        <div className="inline-flex bg-gray-100/50 dark:bg-gray-700/50 p-1 rounded-xl border border-gray-200/50 dark:border-white/10 backdrop-blur-sm">
           <button
             onClick={() => setTimeFilter("weekly")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${timeFilter === "weekly" ? "bg-white dark:bg-gray-600 text-blue-700 dark:text-blue-300 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"}`}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              timeFilter === "weekly"
+                ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-300 shadow-sm"
+                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+            }`}
           >
             Weekly
           </button>
           <button
             onClick={() => setTimeFilter("monthly")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${timeFilter === "monthly" ? "bg-white dark:bg-gray-600 text-blue-700 dark:text-blue-300 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"}`}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              timeFilter === "monthly"
+                ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-300 shadow-sm"
+                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+            }`}
           >
             Monthly
           </button>

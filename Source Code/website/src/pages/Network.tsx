@@ -20,31 +20,32 @@ export default function Network() {
   );
 
   return (
-    <div className="p-4 md:p-8 max-w-[1600px] mx-auto space-y-8 h-full">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="p-4 md:p-8 max-w-[1700px] mx-auto space-y-8 h-full">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">
             Professional Network
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm md:text-base">
+          <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm md:text-base font-medium">
             Manage your referrals, recruiters, and coffee chats.
           </p>
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-64">
-            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <div className="relative flex-1 sm:w-72 group">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl blur-lg transition-opacity opacity-0 group-hover:opacity-100" />
+            <Search className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 z-10" />
             <input
               type="text"
               placeholder="Search names or companies..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+              className="w-full pl-10 pr-4 py-3 text-sm border border-white/20 dark:border-white/10 rounded-xl bg-white/50 dark:bg-black/20 backdrop-blur-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-inner relative z-0 transition-all"
             />
           </div>
           <button
             onClick={() => openNetworkModal()}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium text-sm transition-colors shadow-sm flex items-center gap-2 shrink-0"
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-5 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-2 shrink-0 backdrop-blur-sm"
           >
             <Plus className="w-4 h-4" />{" "}
             <span className="hidden sm:inline">Add Contact</span>
@@ -52,42 +53,43 @@ export default function Network() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
+      <div className="glass rounded-3xl border border-white/40 dark:border-white/5 overflow-hidden shadow-2xl ring-1 ring-white/10 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-white/40 to-white/0 dark:from-white/5 dark:to-transparent pointer-events-none" />
+        <div className="overflow-x-auto relative z-10">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
-                <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <tr className="border-b border-white/20 dark:border-white/5 bg-white/30 dark:bg-white/5">
+                <th className="px-6 py-5 text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest bg-transparent">
                   Contact
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-5 text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest bg-transparent">
                   Company & Role
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-5 text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest bg-transparent">
                   Status
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-5 text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest bg-transparent">
                   Last Contacted
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">
+                <th className="px-6 py-5 text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-right bg-transparent">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="divide-y divide-white/10 dark:divide-white/5">
               {filteredNetwork.length > 0 ? (
                 filteredNetwork.map((contact) => (
                   <tr
                     key={contact.id}
-                    className="hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-colors"
+                    className="hover:bg-white/40 dark:hover:bg-white/5 transition-all duration-200 group relative"
                   >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-700 dark:text-blue-400 font-bold border border-blue-200 dark:border-blue-800">
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <div className="flex items-center gap-4">
+                        <div className="icon-3d-container w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/40 dark:to-slate-900 border border-white/50 dark:border-white/10 shadow-inner flex items-center justify-center text-blue-600 dark:text-blue-400 font-black text-lg group-hover:scale-110 transition-transform duration-300">
                           {contact.name.charAt(0)}
                         </div>
                         <div className="flex-1">
-                          <div className="font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          <div className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors text-base">
                             {contact.name}
                           </div>
                           {contact.email && (
@@ -95,7 +97,7 @@ export default function Network() {
                               onClick={(e) =>
                                 handleCopyEmail(e, contact.email!)
                               }
-                              className="text-sm text-blue-600 dark:text-blue-400 flex items-center gap-1 mt-0.5 hover:underline w-fit text-left bg-transparent border-none p-0 cursor-pointer"
+                              className="text-xs text-blue-500 dark:text-blue-400 flex items-center gap-1.5 mt-1 hover:underline w-fit text-left bg-transparent border-none p-0 cursor-pointer font-medium"
                               title="Copy email to clipboard"
                             >
                               <Mail className="w-3 h-3" />
@@ -103,35 +105,39 @@ export default function Network() {
                             </button>
                           )}
                           {contact.notes && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic line-clamp-1 border-l-2 border-blue-200 dark:border-blue-800 pl-2">
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic line-clamp-1 border-l-2 border-blue-200 dark:border-blue-800 pl-2 opacity-80 group-hover:opacity-100 transition-opacity">
                               "{contact.notes}"
                             </div>
                           )}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <p className="text-sm font-bold text-gray-900 dark:text-white">
-                        {contact.company}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        {contact.role}
-                      </p>
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-0.5">
+                          {contact.company}
+                        </span>
+                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100/50 dark:bg-gray-800/50 px-2 py-0.5 rounded-full w-fit border border-gray-200/50 dark:border-gray-700/50">
+                          {contact.role}
+                        </span>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <NetworkStatusBadge status={contact.status} />
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <div className="scale-95 origin-left group-hover:scale-100 transition-transform">
+                        <NetworkStatusBadge status={contact.status} />
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <p className="text-sm text-gray-600 dark:text-gray-300 font-mono">
                         {contact.lastContacted}
                       </p>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="flex items-center justify-end gap-2">
+                    <td className="px-6 py-5 whitespace-nowrap text-right">
+                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
                         {contact.email && (
                           <button
                             onClick={(e) => handleCopyEmail(e, contact.email!)}
-                            className="p-1.5 text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-md transition-colors inline-flex border-none bg-transparent cursor-pointer"
+                            className="p-2 text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-xl transition-all inline-flex border-none bg-transparent cursor-pointer hover:shadow-sm"
                             title="Copy email to clipboard"
                           >
                             <Copy className="w-4 h-4" />
@@ -139,7 +145,7 @@ export default function Network() {
                         )}
                         <button
                           onClick={() => openNetworkModal(contact.id)}
-                          className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors inline-flex"
+                          className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-xl transition-all inline-flex hover:shadow-sm"
                           title="Edit"
                         >
                           <Edit2 className="w-4 h-4" />
@@ -154,7 +160,7 @@ export default function Network() {
                               deleteContact(contact.id);
                             }
                           }}
-                          className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors inline-flex"
+                          className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl transition-all inline-flex hover:shadow-sm"
                           title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -166,8 +172,11 @@ export default function Network() {
               ) : (
                 <tr>
                   <td colSpan={5}>
-                    <div className="text-center py-12">
-                      <p className="text-gray-500 dark:text-gray-400">
+                    <div className="text-center py-20 flex flex-col items-center justify-center">
+                      <div className="w-16 h-16 mb-4 rounded-full bg-gray-50 dark:bg-white/5 flex items-center justify-center">
+                        <Search className="w-8 h-8 text-gray-300" />
+                      </div>
+                      <p className="text-gray-500 dark:text-gray-400 font-medium">
                         No contacts found. Add someone to your network!
                       </p>
                     </div>

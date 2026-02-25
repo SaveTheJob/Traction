@@ -10,28 +10,32 @@ const COLUMNS: { id: Status; label: string; color: string }[] = [
   {
     id: "Wishlist",
     label: "Wishlist",
-    color: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+    color:
+      "bg-gray-100/50 text-gray-700 dark:bg-gray-800/30 dark:text-gray-300 border-gray-200/50 dark:border-gray-700/30",
   },
   {
     id: "Applied",
     label: "Applied",
-    color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+    color:
+      "bg-blue-50/50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 border-blue-200/50 dark:border-blue-800/30",
   },
   {
     id: "Interviewing",
     label: "Interviewing",
-    color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+    color:
+      "bg-purple-50/50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300 border-purple-200/50 dark:border-purple-800/30",
   },
   {
     id: "Offer",
     label: "Offer",
     color:
-      "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+      "bg-green-50/50 text-green-700 dark:bg-green-900/20 dark:text-green-300 border-green-200/50 dark:border-green-800/30",
   },
   {
     id: "Rejected",
     label: "Rejected",
-    color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+    color:
+      "bg-red-50/50 text-red-700 dark:bg-red-900/20 dark:text-red-300 border-red-200/50 dark:border-red-800/30",
   },
 ];
 
@@ -72,37 +76,39 @@ export default function Pipeline() {
   });
 
   return (
-    <div className="p-4 md:p-8 h-full flex flex-col max-w-[1600px] mx-auto overflow-hidden">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 flex-shrink-0 gap-4">
+    <div className="p-4 md:p-8 h-full flex flex-col max-w-[1700px] mx-auto overflow-hidden">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 flex-shrink-0 gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">
             Pipeline
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm md:text-base">
+          <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm md:text-base font-medium">
             Track your job applications across different stages.
           </p>
         </div>
         <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="relative flex-1 md:w-64">
-            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <div className="relative flex-1 md:w-72 group">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl blur-lg transition-opacity opacity-0 group-hover:opacity-100" />
+            <Search className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 z-10" />
             <input
               type="text"
               placeholder="Search company or role..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+              className="w-full pl-10 pr-4 py-3 text-sm border border-white/20 dark:border-white/10 rounded-xl bg-white/50 dark:bg-black/20 backdrop-blur-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-inner relative z-0 transition-all"
             />
           </div>
           <div className="relative">
-            <Filter className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Filter className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-xl blur-sm" />
             <select
               value={filterPriority}
               onChange={(e) =>
                 setFilterPriority(e.target.value as Priority | "All")
               }
-              className="pl-9 pr-8 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-md appearance-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="pl-10 pr-10 py-3 text-sm border border-white/20 dark:border-white/10 rounded-xl appearance-none bg-white/50 dark:bg-black/20 backdrop-blur-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer shadow-sm relative z-0 font-medium"
             >
-              <option value="All">All</option>
+              <option value="All">All Priorities</option>
               <option value="High">High Priority</option>
               <option value="Medium">Medium Priority</option>
               <option value="Low">Low Priority</option>
@@ -110,7 +116,7 @@ export default function Pipeline() {
           </div>
           <button
             onClick={() => openModal()}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium text-sm transition-colors shadow-sm cursor-pointer border border-transparent flex items-center gap-2 shrink-0"
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-5 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-2 shrink-0 backdrop-blur-sm"
           >
             <Plus className="w-4 h-4" />{" "}
             <span className="hidden sm:inline">New Application</span>
@@ -120,18 +126,18 @@ export default function Pipeline() {
 
       {/* Kanban Board */}
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex-1 flex gap-6 overflow-x-auto pb-4 items-start h-full">
+        <div className="flex-1 flex gap-6 overflow-x-auto pb-6 items-start h-full px-1">
           {COLUMNS.map((col) => (
             <div
               key={col.id}
-              className="flex-shrink-0 w-80 bg-gray-50/50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col h-full max-h-[calc(100vh-12rem)]"
+              className="flex-shrink-0 w-80 glass rounded-3xl border border-white/40 dark:border-white/5 flex flex-col h-full max-h-[calc(100vh-12rem)] shadow-xl overflow-hidden"
             >
-              <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-t-xl">
-                <h3 className="font-semibold text-gray-900 dark:text-white">
+              <div className="p-4 border-b border-white/10 flex items-center justify-between bg-gradient-to-b from-white/50 to-transparent dark:from-white/5">
+                <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
                   {col.label}
                 </h3>
                 <span
-                  className={`px-2 py-0.5 rounded-full text-xs font-bold ${col.color}`}
+                  className={`px-2.5 py-0.5 rounded-lg text-xs font-black shadow-sm flex items-center justify-center min-w-[1.5rem] border ${col.color}`}
                 >
                   {filteredJobs.filter((j) => j.status === col.id).length}
                 </span>
@@ -142,7 +148,7 @@ export default function Pipeline() {
                   <div
                     {...provided.droppableProps}
                     ref={provided.innerRef}
-                    className={`p-3 flex-1 overflow-y-auto space-y-3 transition-colors ${snapshot.isDraggingOver ? "bg-blue-50/50 dark:bg-blue-900/20" : ""}`}
+                    className={`p-3 flex-1 overflow-y-auto space-y-3 transition-colors scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent ${snapshot.isDraggingOver ? "bg-blue-50/30 dark:bg-blue-900/10" : ""}`}
                   >
                     {filteredJobs
                       .filter((j) => j.status === col.id)

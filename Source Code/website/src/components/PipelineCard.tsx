@@ -1,5 +1,5 @@
 import { Draggable } from "@hello-pangea/dnd";
-import { Building2, Calendar, Edit2, GripVertical, Trash2 } from "lucide-react";
+import { Building2, Calendar, Edit2, Trash2 } from "lucide-react";
 import type { Job, Priority } from "../context/JobContext";
 
 interface PipelineCardProps {
@@ -32,72 +32,92 @@ export default function PipelineCard({
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
-          className={`bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing group ${snapshot.isDragging ? "shadow-lg ring-2 ring-blue-500 ring-opacity-50 rotate-2" : ""}`}
+          {...provided.dragHandleProps}
+          className={`
+            group relative p-5 rounded-2xl transition-all duration-300
+            ${
+              snapshot.isDragging
+                ? "rotate-3 scale-105 z-50 shadow-2xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl border-blue-500/50"
+                : "bg-white/40 dark:bg-gray-800/40 backdrop-blur-md border-white/20 dark:border-white/5 hover:-translate-y-1 hover:shadow-lg card-3d"
+            }
+            border shadow-sm
+          `}
           style={provided.draggableProps.style}
         >
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <div
-                {...provided.dragHandleProps}
-                className="text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 cursor-grab active:cursor-grabbing transition-colors hidden group-hover:block -ml-2"
-              >
-                <GripVertical className="w-4 h-4" />
-              </div>
-              <div className="w-10 h-10 rounded bg-gray-50 dark:bg-gray-700 border border-gray-100 dark:border-gray-600 flex items-center justify-center flex-shrink-0 group-hover:border-blue-100 dark:group-hover:border-blue-800 transition-colors">
-                <Building2 className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors" />
+          {/* Decorative Gradient Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/0 dark:from-white/5 dark:to-transparent rounded-2xl pointer-events-none" />
+
+          <div className="relative z-10 flex items-start justify-between mb-3 gap-3">
+            <div className="icon-3d-container w-10 h-10 rounded-xl bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 border border-white/50 dark:border-white/10 shadow-inner flex items-center justify-center flex-shrink-0">
+              <Building2 className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors" />
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <h4 className="font-bold text-gray-800 dark:text-gray-100 text-sm truncate pr-2">
+                {job.title}
+              </h4>
+              <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                <span
+                  className="font-medium truncate max-w-[120px]"
+                  title={job.company}
+                >
+                  {job.company}
+                </span>
+                {job.location && (
+                  <>
+                    <span className="text-gray-300">•</span>
+                    <span
+                      className="truncate max-w-[80px]"
+                      title={job.location}
+                    >
+                      {job.location}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
-            <div className="flex items-center gap-2">
+
+            <div
+              className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border shadow-sm ${
+                job.priority === "High"
+                  ? "bg-red-100/80 text-red-600 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800"
+                  : job.priority === "Medium"
+                    ? "bg-amber-100/80 text-amber-600 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800"
+                    : "bg-gray-100/80 text-gray-600 border-gray-200 dark:bg-gray-800/30 dark:text-gray-400 dark:border-gray-700"
+              }`}
+            >
+              {job.priority}
+            </div>
+          </div>
+
+          <div className="relative z-10 flex items-center justify-between mt-4 pl-1">
+            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
                 onClick={() => openModal(job.id)}
-                className="p-1 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors hidden group-hover:block"
-                title="Edit"
+                className="p-1.5 text-gray-400 hover:text-blue-600 dark:text-gray-500 dark:hover:text-blue-400 bg-transparent hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                title="Edit Application"
               >
                 <Edit2 className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => handleDelete(job.id)}
-                className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors hidden group-hover:block"
-                title="Force Delete"
+                className="p-1.5 text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400 bg-transparent hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                title="Delete Application"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
-              <span
-                className={`px-2 py-1 rounded text-xs font-semibold border ${getPriorityColor(job.priority)}`}
-              >
-                {job.priority}
-              </span>
             </div>
-          </div>
-          <h4 className="font-bold text-gray-900 dark:text-white text-sm">
-            {job.title}
-          </h4>
-          {job.link ? (
-            <a
-              href={job.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline text-sm mt-0.5 max-w-[220px] truncate block"
-              title={`${job.company}${job.location ? ` • ${job.location}` : ""}`}
-            >
-              {job.company}
-              {job.location ? ` • ${job.location}` : ""}
-            </a>
-          ) : (
-            <p
-              className="text-gray-500 dark:text-gray-400 text-sm mt-0.5 max-w-[220px] truncate"
-              title={`${job.company}${job.location ? ` • ${job.location}` : ""}`}
-            >
-              {job.company}
-              {job.location ? ` • ${job.location}` : ""}
-            </p>
-          )}
 
-          {job.notes && (
-            <div className="mt-3 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 p-2 rounded border border-gray-100 dark:border-gray-600 italic line-clamp-2">
-              "{job.notes}"
-            </div>
-          )}
+            {job.dateAdded && (
+              <div className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500 font-mono">
+                <Calendar className="w-3 h-3" />
+                {new Date(job.dateAdded).toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                })}
+              </div>
+            )}
+          </div>
 
           <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
             <div className="flex items-center gap-1.5">

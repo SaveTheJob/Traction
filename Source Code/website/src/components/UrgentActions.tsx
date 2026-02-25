@@ -13,43 +13,53 @@ interface UrgentActionsProps {
 
 export default function UrgentActions({ actions }: UrgentActionsProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-red-600 dark:text-red-400">
-          Urgent Actions
-        </h2>
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <Bell className="w-5 h-5" />
+        <h2 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-pink-600 uppercase tracking-widest">
+          Needs Attention
         </h2>
       </div>
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden flex flex-col">
-        <div className="divide-y divide-gray-100 dark:divide-gray-700 flex-1">
-          {actions.map((action, idx) => (
-            <div
-              key={idx}
-              className="p-5 hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer group"
-            >
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                    {action.title}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {action.description}
-                  </p>
+      <div className="card-3d rounded-3xl overflow-hidden shadow-2xl flex flex-col items-center justify-center p-6 text-center border-t-4 border-red-500/80 dark:border-red-500/50 relative">
+        <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+          <Bell className="w-32 h-32 text-red-500 transform -rotate-12 translate-x-8 -translate-y-8" />
+        </div>
+
+        {actions.length > 0 ? (
+          <div className="w-full relative z-10 space-y-4">
+            {actions.map((action, idx) => (
+              <div
+                key={idx}
+                className="group relative bg-white/60 dark:bg-gray-800/40 backdrop-blur-md p-5 rounded-2xl border border-white/40 dark:border-white/5 hover:border-red-200 dark:hover:border-red-900/50 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 cursor-pointer text-left overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-red-500/0 via-red-500/0 to-red-500/0 group-hover:from-red-500/5 group-hover:to-pink-500/5 transition-colors duration-500" />
+
+                <div className="flex justify-between items-start mb-2 relative z-10">
+                  <span className="bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest shadow-sm">
+                    {action.priority}
+                  </span>
+                  <span className="text-xs font-bold text-gray-400 font-mono tracking-tight">
+                    {action.time}
+                  </span>
                 </div>
-                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap ml-4">
-                  {action.time}
-                </span>
+                <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-1 relative z-10">
+                  {action.title}
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 relative z-10">
+                  {action.description}
+                </p>
               </div>
-            </div>
-          ))}
-        </div>
-        <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-center">
-          <button className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center justify-center gap-1 w-full">
-            View Calendar <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="py-12">
+            <p className="text-gray-400 font-medium">No urgent actions.</p>
+          </div>
+        )}
+
+        <button className="mt-6 w-full py-4 bg-gradient-to-r from-red-500 to-pink-600 text-white font-bold rounded-xl shadow-lg shadow-red-500/20 hover:shadow-red-500/40 hover:-translate-y-1 active:translate-y-0 transition-all flex items-center justify-center gap-2 group">
+          View Calendar{" "}
+          <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+        </button>
       </div>
     </div>
   );

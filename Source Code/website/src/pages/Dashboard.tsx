@@ -3,7 +3,6 @@ import {
   Edit2,
   FileText,
   Filter,
-  Percent,
   Plus,
   Search,
   Trash2,
@@ -30,12 +29,7 @@ export default function Dashboard() {
   const offerNumber = jobs.filter((j) => j.status === "Offer").length;
 
   // Calculate simple metrics derived from job state
-  const interviewRate =
-    totalApplications > 0
-      ? Math.round(
-          ((interviewingNumber + offerNumber) / totalApplications) * 100,
-        )
-      : 0;
+  const interviewCount = interviewingNumber + offerNumber;
   const activeLeads = jobs.filter(
     (j) => j.status === "Applied" || j.status === "Interviewing",
   ).length;
@@ -46,14 +40,14 @@ export default function Dashboard() {
       value: totalApplications.toString(),
       icon: FileText,
       change: "All time",
-      trend: "neutral",
+      trend: "neutral", // You can calculate real trends if you have historical data
     },
     {
-      label: "Interview Rate",
-      value: `${interviewRate}%`,
-      icon: Percent,
-      change: "Current conversion",
-      trend: interviewRate > 10 ? "up" : "neutral",
+      label: "Interviews",
+      value: interviewCount.toString(),
+      icon: UserCheck,
+      change: "Lined up",
+      trend: "neutral",
     },
     {
       label: "Active Leads",
@@ -125,10 +119,10 @@ export default function Dashboard() {
       {/* Metrics Grid */}
       <MetricsGrid metrics={metrics} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 gap-y-6 md:gap-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 gap-y-6 md:gap-y-8 pb-12">
         {/* Recent Activity Table */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="lg:col-span-2 space-y-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-1">
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">
               Your Applications
             </h2>
@@ -160,39 +154,39 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
+          <div className="card-3d rounded-3xl overflow-visible shadow-2xl transition-all hover:shadow-3xl transform hover:-translate-y-1 duration-500">
+            <div className="overflow-x-auto rounded-3xl">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <tr className="border-b border-gray-200/40 dark:border-white/5 bg-gray-50/30 dark:bg-black/20 backdrop-blur-md">
+                    <th className="px-8 py-5 text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest pl-8">
                       Company & Role
                     </th>
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-5 text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
                       Status
                     </th>
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-5 text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
                       Applied
                     </th>
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">
+                    <th className="px-8 py-5 text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest text-right pr-8">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="divide-y divide-gray-100/50 dark:divide-white/5">
                   {displayJobs.length > 0 ? (
                     displayJobs.map((activity, idx) => (
                       <tr
                         key={idx}
-                        className="hover:bg-gray-50/50 dark:hover:bg-gray-700/50 transition-colors"
+                        className="hover:bg-white/40 dark:hover:bg-white/5 transition-all duration-300 group relative"
                       >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-md bg-gray-100 dark:bg-gray-700 flex items-center justify-center border border-gray-200 dark:border-gray-600">
-                              <Building2 className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                        <td className="px-8 py-5 whitespace-nowrap">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl icon-3d-container bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                              <Building2 className="w-6 h-6 text-gray-400 dark:text-gray-500 group-hover:text-blue-500 transition-colors" />
                             </div>
                             <div>
-                              <p className="text-sm font-bold text-gray-900 dark:text-white">
+                              <p className="text-base font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors tracking-tight">
                                 {activity.link ? (
                                   <a
                                     href={activity.link}
@@ -223,18 +217,18 @@ export default function Dashboard() {
                             {activity.dateApplied}
                           </p>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="px-8 py-5 whitespace-nowrap text-right pr-8">
+                          <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
                             <button
                               onClick={() => openModal(activity.id)}
-                              className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors inline-flex"
+                              className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/40 rounded-xl transition-all hover:scale-110 active:scale-95 shadow-sm"
                               title="Edit"
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDelete(activity.id)}
-                              className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors inline-flex"
+                              className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/40 rounded-xl transition-all hover:scale-110 active:scale-95 shadow-sm"
                               title="Delete"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -246,9 +240,12 @@ export default function Dashboard() {
                   ) : (
                     <tr>
                       <td colSpan={4}>
-                        <div className="text-center py-12">
-                          <p className="text-gray-500 dark:text-gray-400">
-                            No applications found matching your criteria.
+                        <div className="text-center py-24 glass rounded-3xl m-4 border-dashed border-2 border-gray-300 dark:border-gray-700">
+                          <p className="text-xl font-bold text-gray-400 dark:text-gray-600 animate-pulse">
+                            No applications found... yet.
+                          </p>
+                          <p className="text-sm text-gray-400 dark:text-gray-600 mt-2">
+                            Time to start your job hunt!
                           </p>
                         </div>
                       </td>

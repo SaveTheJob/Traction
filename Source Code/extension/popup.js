@@ -178,49 +178,65 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 1. On load, inject content.js into the active tab to scrape data
   function scrapePage() {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const activeTab = tabs[0];
-      if (activeTab && activeTab.id) {
-        // Execute the scraper in the context of the webpage
-        chrome.scripting.executeScript(
-          {
-            target: { tabId: activeTab.id },
-            files: ["content.js"],
-          },
-          () => {
-            // Send message to the scraper
-            chrome.tabs.sendMessage(
-              activeTab.id,
-              { action: "scrapeJob" },
-              (response) => {
-                if (chrome.runtime.lastError) {
-                  console.warn(
-                    "Could not scrape page (maybe it's a restricted Chrome URL?). Defaulting to empty.",
-                    chrome.runtime.lastError.message,
-                  );
-                  // We can try to use standard tab info as fallback
-                  titleInput.value = activeTab.title || "";
-                  linkInput.value = activeTab.url || "";
-                  return;
-                }
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramTabId = urlParams.get("tabId");
 
-                if (response) {
-                  // Pre-fill fields
-                  titleInput.value = response.title || activeTab.title || "";
-                  companyInput.value = response.company || "";
-                  locationInput.value = response.location || "";
-                  linkInput.value = response.url || activeTab.url || "";
-                } else {
-                  // If no content script response (e.g. non-supported page), still save the URL
-                  titleInput.value = activeTab.title || "";
-                  linkInput.value = activeTab.url || "";
-                }
-              },
-            );
-          },
-        );
-      }
-    });
+    if (paramTabId) {
+      const tabId = parseInt(paramTabId, 10);
+      chrome.tabs.get(tabId, (tab) => {
+        if (chrome.runtime.lastError || !tab) {
+          console.error("Target tab not found or closed.");
+          return;
+        }
+        performScrape(tab);
+      });
+    } else {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const activeTab = tabs[0];
+        if (activeTab) performScrape(activeTab);
+      });
+    }
+  }
+
+  function performScrape(activeTab) {
+    if (activeTab && activeTab.id) {
+      // Execute the scraper in the context of the webpage
+      chrome.scripting.executeScript(
+        {
+          target: { tabId: activeTab.id },
+          files: ["content.js"],
+        },
+        () => {
+          // Send message to the scraper
+          chrome.tabs.sendMessage(
+            activeTab.id,
+            { action: "scrapeJob" },
+            (response) => {
+              if (chrome.runtime.lastError) {
+                console.warn(
+                  "Could not scrape page (maybe it's a restricted Chrome URL?). Defaulting to empty.",
+                  chrome.runtime.lastError.message,
+                );
+                titleInput.value = activeTab.title || "";
+                linkInput.value = activeTab.url || "";
+                return;
+              }
+
+              if (response) {
+                // Pre-fill fields
+                titleInput.value = response.title || activeTab.title || "";
+                companyInput.value = response.company || "";
+                locationInput.value = response.location || "";
+                linkInput.value = response.url || activeTab.url || "";
+              } else {
+                titleInput.value = activeTab.title || "";
+                linkInput.value = activeTab.url || "";
+              }
+            },
+          );
+        },
+      );
+    }
   }
 
   // 2. Handle Save Button click (Push to Firestore)

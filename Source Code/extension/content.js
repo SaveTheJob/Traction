@@ -1,63 +1,218 @@
 // Scrape logic to extract Job Title and Company from standard pages
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === "scrapeJob") {
-        let title = "";
-        let company = "";
-        let location = "";
-        let url = window.location.href;
+  if (request.action === "scrapeJob") {
+    const jobData = getJobDetails();
+    sendResponse(jobData);
+  } else if (request.action === "checkIfJobPage") {
+    const jobData = getJobDetails();
 
-        const hostname = window.location.hostname;
+    // Stricter check for generic pages to avoid false positives
+    let isLikelyJobPage = false;
 
-        if (hostname.includes("linkedin.com")) {
-            // LinkedIn specific scraping
-            const titleElement = document.querySelector(".job-details-jobs-unified-top-card__job-title, .top-card-layout__title");
-            if (titleElement) title = titleElement.innerText.trim();
+    // If we used a specific scraper (LinkedIn, Indeed, etc), trust the result more
+    const hostname = window.location.hostname;
+    const knownSites = [
+      "linkedin.com",
+      "indeed.com",
+      "joinhandshake.com",
+      "glassdoor.com",
+      "ziprecruiter.com",
+      "workday.com",
+      "greenhouse.io",
+      "lever.co",
+    ];
 
-            const companyElement = document.querySelector(".job-details-jobs-unified-top-card__company-name, .topcard__org-name-link");
-            if (companyElement) company = companyElement.innerText.trim();
+    if (knownSites.some((site) => hostname.includes(site))) {
+      isLikelyJobPage = !!(jobData.title && jobData.company);
+    } else {
+      // For generic sites, attempt intelligent JSON-LD extraction first
+      const metadata = extractJobMetadata();
+      if (
+        metadata &&
+        metadata.title &&
+        (metadata.company || metadata.location)
+      ) {
+        isLikelyJobPage = true;
+      }
 
-            const locElement = document.querySelector(".job-details-jobs-unified-top-card__bullet");
-            if (locElement) location = locElement.innerText.trim();
+      // Fallback to text heuristics
+      const hasJobKeywords =
+        /job|career|opening|position|apply/i.test(document.title) ||
+        /job|career|opening|position/i.test(window.location.href);
 
-        } else if (hostname.includes("indeed.com")) {
-            // Indeed specific scraping
-            const titleElement = document.querySelector(".jobsearch-JobInfoHeader-title");
-            if (titleElement) title = titleElement.innerText.trim();
+      const hasApplyButton = !!document.querySelector(
+        'a[href*="apply"], button[class*="apply"], input[value*="Apply"]',
+      );
 
-            const companyElement = document.querySelector('[data-testid="inlineHeader-companyName"]');
-            if (companyElement) company = companyElement.innerText.trim();
-
-            const locElement = document.querySelector('[data-testid="inlineHeader-companyLocation"]');
-            if (locElement) location = locElement.innerText.trim();
-
-        } else if (hostname.includes("joinhandshake.com")) {
-            // Handshake specific scraping
-            const titleElement = document.querySelector("h1.style__job-title___H1111, h1"); // Handshake class names change, fallback to h1
-            if (titleElement) title = titleElement.innerText.trim();
-
-            const companyElement = document.querySelector("a[href*='/employers/']");
-            if (companyElement) company = companyElement.innerText.trim();
-
-            // Handshake location is usually in a div with a specific class or nearby
-            const detailsElement = document.querySelector(".style__details-container___11111");
-            if (detailsElement) location = detailsElement.innerText.split('\\n')[0].trim();
-
-        } else {
-            // Generic Fallback (best effort)
-            const h1 = document.querySelector('h1');
-            title = h1 ? h1.innerText.trim() : document.title.split('-')[0].split('|')[0].trim();
-
-            // Try to find company name based on meta properties or hostname
-            const ogSiteName = document.querySelector('meta[property="og:site_name"]');
-            if (ogSiteName) {
-                company = ogSiteName.getAttribute('content');
-            } else {
-                company = hostname.replace('www.', '').split('.')[0];
-                company = company.charAt(0).toUpperCase() + company.slice(1);
-            }
-        }
-
-        sendResponse({ title, company, location, url });
+      isLikelyJobPage =
+        isLikelyJobPage ||
+        !!(
+          jobData.title &&
+          jobData.company &&
+          (hasJobKeywords || hasApplyButton)
+        );
     }
+
+    sendResponse({ isJobPage: isLikelyJobPage });
+  } else if (request.action === "showSaveButton") {
+    if (!document.getElementById("traction-save-button")) {
+      createSaveButton();
+    }
+  }
 });
+
+function createSaveButton() {
+  // Check if we have job details first
+  const jobData = getJobDetails();
+  if (!jobData.title) return; // Don't show if we failed to get a title
+
+  const btn = document.createElement("button");
+  btn.id = "traction-save-button";
+  btn.className = "traction-overlay-button";
+  btn.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      </svg>
+      <span>Save to Traction</span>
+    `;
+
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    // Option 1: Open the popup window manually
+    const width = 400;
+    const height = 600;
+    const left = window.screen.width / 2 - width / 2;
+    const top = window.screen.height / 2 - height / 2;
+
+    // We use a postMessage approach to tell the background script to open the window properly
+    // Or simply open it here using window.open if it's allowed
+    chrome.runtime.sendMessage({ action: "openPopup" });
+  };
+
+  document.body.appendChild(btn);
+}
+
+function extractJobMetadata() {
+  let jobData = {
+    title: "",
+    company: "",
+    location: "",
+    url: window.location.href,
+    description: "",
+  };
+
+  // 1. Try JSON-LD (Standard for Jobs)
+  const jsonLdScripts = document.querySelectorAll(
+    'script[type="application/ld+json"]',
+  );
+  for (const script of jsonLdScripts) {
+    try {
+      const data = JSON.parse(script.textContent);
+      const items = Array.isArray(data) ? data : data["@graph"] || [data];
+      for (const item of items) {
+        if (item["@type"] === "JobPosting") {
+          jobData.title = item.title || "";
+
+          if (item.hiringOrganization) {
+            if (typeof item.hiringOrganization === "string") {
+              jobData.company = item.hiringOrganization;
+            } else {
+              jobData.company = item.hiringOrganization.name || "";
+            }
+          }
+
+          /* Location detection disabled by user request - manual entry only
+          if (item.jobLocation) {
+             // ... code omitted ...
+          }
+          */
+
+          jobData.description = item.description || "";
+          // If we found a valid JobPosting, we stop and use it
+          if (jobData.title && jobData.company) return jobData;
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 2. Meta Tag Fallback
+  if (!jobData.title)
+    jobData.title =
+      document.querySelector('meta[property="og:title"]')?.content || "";
+  if (!jobData.company)
+    jobData.company =
+      document.querySelector('meta[property="og:site_name"]')?.content || "";
+
+  // Location detection disabled
+  jobData.location = "";
+
+  return jobData;
+}
+
+function getJobDetails() {
+  // Use smart metadata extraction first
+  let jobData = extractJobMetadata();
+
+  // Initialize with what we found
+  let title = jobData.title || "";
+  let company = jobData.company || "";
+  let location = jobData.location || "";
+  let url = window.location.href;
+  const hostname = window.location.hostname;
+
+  // Site-Specific Scrapers (Only overwrite if we find something better/specific)
+  if (hostname.includes("linkedin.com")) {
+    const titleElement = document.querySelector(
+      ".job-details-jobs-unified-top-card__job-title, .top-card-layout__title",
+    );
+    if (titleElement) title = titleElement.innerText.trim();
+
+    const companyElement = document.querySelector(
+      ".job-details-jobs-unified-top-card__company-name, .topcard__org-name-link",
+    );
+    if (companyElement) company = companyElement.innerText.trim();
+  } else if (hostname.includes("indeed.com")) {
+    const titleElement = document.querySelector(
+      ".jobsearch-JobInfoHeader-title",
+    );
+    if (titleElement) title = titleElement.innerText.trim();
+
+    const companyElement = document.querySelector(
+      '[data-testid="inlineHeader-companyName"]',
+    );
+    if (companyElement) company = companyElement.innerText.trim();
+  } else if (hostname.includes("joinhandshake.com")) {
+    const titleElement = document.querySelector(
+      "h1.style__job-title___H1111, h1",
+    );
+    if (titleElement) title = titleElement.innerText.trim();
+
+    const companyElement = document.querySelector("a[href*='/employers/']");
+    if (companyElement) company = companyElement.innerText.trim();
+  } else {
+    // Generic Fallback (Only use if metadata missed it)
+    if (!title) {
+      const h1 = document.querySelector("h1");
+      title = h1
+        ? h1.innerText.trim()
+        : document.title.split("-")[0].split("|")[0].trim();
+    }
+
+    if (!company) {
+      const ogSiteName = document.querySelector(
+        'meta[property="og:site_name"]',
+      );
+      if (ogSiteName) {
+        company = ogSiteName.getAttribute("content");
+      } else {
+        company = hostname.replace("www.", "").split(".")[0];
+        company = company.charAt(0).toUpperCase() + company.slice(1);
+      }
+    }
+  }
+
+  // Universal Location Fallback removed per user request
+
+  return { title, company, location, url, date: new Date().toISOString() };
+}
