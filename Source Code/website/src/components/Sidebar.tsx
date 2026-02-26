@@ -3,14 +3,11 @@ import {
   KanbanSquare,
   LayoutDashboard,
   LogOut,
-  Moon,
-  Sun,
   Users,
   X,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useTheme } from "../context/ThemeContext";
 import Logo from "./Logo";
 
 interface SidebarProps {
@@ -21,7 +18,6 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const { theme, toggleTheme } = useTheme();
 
   const navItems = [
     { label: "Dashboard", path: "/", icon: LayoutDashboard },
@@ -35,6 +31,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       className={`fixed inset-y-0 left-0 z-40 w-72 premium-glass transition-transform duration-300 ease-in-out md:static md:translate-x-0 flex flex-col h-screen shrink-0 border-r border-white/20 dark:border-white/10 ${isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
         }`}
     >
+      {/* Logo */}
       <div className="p-8 flex items-center justify-between shrink-0">
         <Logo className="h-9" />
         <button
@@ -45,6 +42,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </button>
       </div>
 
+      {/* Nav */}
       <div className="flex-1 px-5 py-6 overflow-y-auto scrollbar-hide flex flex-col gap-2">
         <div className="text-xs font-semibold text-gray-400 dark:text-gray-500 tracking-wider uppercase mb-4 px-3">
           Menu
@@ -78,36 +76,19 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           })}
         </nav>
 
-        <div className="mt-auto flex flex-col gap-1 pt-6 before:content-[''] before:block before:h-px before:w-full before:bg-slate-300/50 dark:before:bg-slate-600/50 before:mb-6">
-          <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider uppercase mb-3 px-3">
-            System
+        {/* Sign Out */}
+        <button
+          onClick={signOut}
+          className="mt-auto flex items-center gap-4 px-4 py-3 rounded-2xl text-[15px] font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10 hover:text-red-700 dark:hover:text-red-300 transition-all w-full text-left group"
+        >
+          <div className="relative z-10 flex items-center justify-center w-8 h-8 rounded-full bg-red-500/10 dark:bg-red-500/20 group-hover:bg-red-500/20 dark:group-hover:bg-red-500/30 transition-colors">
+            <LogOut className="w-[18px] h-[18px]" strokeWidth={2} />
           </div>
-          <button
-            onClick={toggleTheme}
-            className="flex items-center gap-4 px-4 py-3 rounded-2xl text-[15px] font-medium text-slate-600 dark:text-slate-300 hover:bg-white/20 dark:hover:bg-black/20 hover:text-slate-900 dark:hover:text-white transition-all w-full text-left group"
-          >
-            <div className="relative z-10 flex items-center justify-center w-8 h-8 rounded-full bg-transparent text-slate-500 dark:text-slate-400 group-hover:bg-white/50 group-hover:text-slate-800 dark:group-hover:bg-white/10 dark:group-hover:text-white transition-all shadow-sm">
-              {theme === "dark" ? (
-                <Sun className="w-[18px] h-[18px]" strokeWidth={2} />
-              ) : (
-                <Moon className="w-[18px] h-[18px]" strokeWidth={2} />
-              )}
-            </div>
-            {theme === "dark" ? "Light Theme" : "Dark Theme"}
-          </button>
-
-          <button
-            onClick={signOut}
-            className="flex items-center gap-4 px-4 py-3 rounded-2xl text-[15px] font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10 hover:text-red-700 dark:hover:text-red-300 transition-all w-full text-left group"
-          >
-            <div className="relative z-10 flex items-center justify-center w-8 h-8 rounded-full bg-red-500/10 dark:bg-red-500/20 group-hover:bg-red-500/20 dark:group-hover:bg-red-500/30 transition-colors">
-              <LogOut className="w-[18px] h-[18px]" strokeWidth={2} />
-            </div>
-            Sign Out
-          </button>
-        </div>
+          Sign Out
+        </button>
       </div>
 
+      {/* Account card */}
       <div className="p-5 mx-5 mb-6 mt-2 rounded-2xl premium-glass-heavy shadow-lg">
         <Link
           to="/account"
