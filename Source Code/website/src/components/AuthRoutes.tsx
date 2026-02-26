@@ -3,14 +3,14 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
+  const { user, isLocalAdmin, loading } = useAuth();
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="w-8 h-8 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"></div>
       </div>
     );
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user && !isLocalAdmin) return <Navigate to="/login" replace />;
   return <>{children}</>;
 };
 

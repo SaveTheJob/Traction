@@ -2,36 +2,10 @@ import { Check, Edit2, Image as ImageIcon, RotateCcw, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTheme } from "../context/ThemeContext";
 
-// Add a hook to persist the selected background theme
-function useAppTheme() {
-    const [themeConfig, setThemeConfig] = useState<{ value: string; type: 'color' | 'image' }>(() => {
-        try {
-            const stored = localStorage.getItem("app-theme-config");
-            return stored ? JSON.parse(stored) : { value: "/wallpapers/default.jpeg", type: "image" };
-        } catch (e) {
-            return { value: "/wallpapers/default.jpeg", type: "image" };
-        }
-    });
-
-    useEffect(() => {
-        // Apply logic to document root
-        if (themeConfig.type === 'image') {
-            document.documentElement.style.setProperty("--primary-gradient", `url('${themeConfig.value}')`);
-        } else {
-            document.documentElement.style.setProperty("--primary-gradient", themeConfig.value);
-        }
-
-        localStorage.setItem("app-theme-config", JSON.stringify(themeConfig));
-    }, [themeConfig]);
-
-    return { themeConfig, setThemeConfig };
-}
-
 export default function ThemeCustomizer() {
     const [isOpen, setIsOpen] = useState(false);
     const [currentView, setCurrentView] = useState<'appearance' | 'themes'>('appearance');
-    const { theme: _t, setThemeMode: _s } = useTheme();
-    const { themeConfig, setThemeConfig } = useAppTheme();
+    const { theme: _t, setThemeMode: _s, backgroundConfig: themeConfig, setBackgroundConfig: setThemeConfig } = useTheme();
     const sidebarRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -267,14 +241,14 @@ export default function ThemeCustomizer() {
 
                                 {/* Custom Color Button */}
                                 <button
-                                    onClick={() => setThemeConfig({ value: "/wallpapers/default1.jpg", type: "image" })}
-                                    className={`aspect-square rounded-[18px] flex items-center justify-center transition-all relative shadow-inner ${themeConfig.value === "/wallpapers/default1.jpg"
+                                    onClick={() => setThemeConfig({ value: "/wallpapers/default.jpeg", type: "image" })}
+                                    className={`aspect-square rounded-[18px] flex items-center justify-center transition-all relative shadow-inner ${themeConfig.value === "/wallpapers/default.jpeg"
                                         ? "bg-blue-600 dark:bg-[#125881]"
                                         : "bg-slate-50 dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-800"
                                         }`}
                                 >
-                                    <Edit2 className={`w-5 h-5 ${themeConfig.value === "/wallpapers/default1.jpg" ? "text-white" : "text-blue-500 dark:text-[#8ab4f8]"}`} strokeWidth={2.5} />
-                                    {themeConfig.value === "/wallpapers/default1.jpg" && (
+                                    <Edit2 className={`w-5 h-5 ${themeConfig.value === "/wallpapers/default.jpeg" ? "text-white" : "text-blue-500 dark:text-[#8ab4f8]"}`} strokeWidth={2.5} />
+                                    {themeConfig.value === "/wallpapers/default.jpeg" && (
                                         <div className="absolute top-1 right-1 bg-white text-[#125881] rounded-full p-0.5 shadow-md transform translate-x-1.5 -translate-y-1.5">
                                             <Check className="w-[9px] h-[9px]" strokeWidth={4} />
                                         </div>
@@ -286,7 +260,7 @@ export default function ThemeCustomizer() {
 
                             {/* Reset Button */}
                             <button
-                                onClick={() => setThemeConfig({ value: "/wallpapers/default1.jpg", type: "image" })}
+                                onClick={() => setThemeConfig({ value: "/wallpapers/default.jpeg", type: "image" })}
                                 className="w-full flex items-center justify-between py-3 px-1 text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors group"
                             >
                                 <span className="text-[13px] font-medium text-slate-700 dark:text-[#e8eaed]">Reset to default</span>

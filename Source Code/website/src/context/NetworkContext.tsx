@@ -35,18 +35,20 @@ interface NetworkContextType {
 const NetworkContext = createContext<NetworkContextType | undefined>(undefined);
 
 export function NetworkProvider({ children }: { children: ReactNode }) {
-    const { user } = useAuth();
+    const { user, isAdmin, impersonatedUser } = useAuth();
     const [isNetworkModalOpen, setIsNetworkModalOpen] = useState(false);
     const [editingContactId, setEditingContactId] = useState<string | null>(null);
     const [contacts, setContacts] = useState<Contact[]>([]);
 
+    const effectiveUserId = (isAdmin && impersonatedUser) ? impersonatedUser.uid : user?.uid;
+
     useEffect(() => {
-        if (!user) {
+        if (!effectiveUserId) {
             setContacts([]);
             return;
         }
 
-        const q = query(collection(db, 'contacts'), where('userId', '==', user.uid));
+        const q = query(collection(db, 'contacts'), where('userId', '==', effectiveUserId));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const contactsData: Contact[] = [];
             snapshot.forEach((document) => {
@@ -61,13 +63,13 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
         });
 
         return unsubscribe;
-    }, [user]);
+    }, [effectiveUserId]);
 
     const addContact = async (contactData: ContactDataPayload) => {
         if (!user) return;
         const newContact = {
             ...contactData,
-            userId: user.uid,
+            userId: effectiveUserId,
             createdAt: serverTimestamp()
         };
         try {

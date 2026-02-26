@@ -2,10 +2,17 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 
 type Theme = 'light' | 'dark' | 'system';
 
+interface BackgroundConfig {
+  value: string;
+  type: 'color' | 'image';
+}
+
 interface ThemeContextType {
   theme: Theme;
   toggleTheme: () => void;
   setThemeMode: (mode: Theme) => void;
+  backgroundConfig: BackgroundConfig;
+  setBackgroundConfig: (config: BackgroundConfig) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -17,6 +24,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       return savedTheme as Theme;
     }
     return 'system';
+  });
+
+  const [backgroundConfig, setBackgroundConfig] = useState<BackgroundConfig>(() => {
+    try {
+      const stored = localStorage.getItem("app-theme-config");
+      return stored ? JSON.parse(stored) : { value: "/wallpapers/default.jpeg", type: "image" };
+    } catch (e) {
+      return { value: "/wallpapers/default.jpeg", type: "image" };
+    }
   });
 
   useEffect(() => {
@@ -36,7 +52,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     applyTheme(theme);
     localStorage.setItem('theme', theme);
 
-    // Listen to system changes if in system mode
     if (theme === 'system') {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       const handleChange = () => applyTheme('system');
@@ -46,11 +61,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [theme]);
 
+  useEffect(() => {
+    // Apply background logic to document root
+    if (backgroundConfig.type === 'image') {
+      document.documentElement.style.setProperty("--primary-gradient", `url('${backgroundConfig.value}')`);
+    } else {
+      document.documentElement.style.setProperty("--primary-gradient", backgroundConfig.value);
+    }
+
+    localStorage.setItem("app-theme-config", JSON.stringify(backgroundConfig));
+  }, [backgroundConfig]);
+
   const toggleTheme = () => {
     setTheme((prev) => {
       if (prev === 'light') return 'dark';
       if (prev === 'dark') return 'light';
-      // If currently system, figure out what it mapped to and flip it
       const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       return systemPrefersDark ? 'light' : 'dark';
     });
@@ -61,7 +86,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, setThemeMode }}>
+    <ThemeContext.Provider value={{
+      theme,
+      toggleTheme,
+      setThemeMode,
+      backgroundConfig,
+      setBackgroundConfig
+    }}>
       {children}
     </ThemeContext.Provider>
   );

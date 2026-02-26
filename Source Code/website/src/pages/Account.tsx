@@ -4,22 +4,46 @@ import {
   Database,
   FileText,
   KeyRound,
+  LogOut,
   ShieldCheck,
+  Calendar,
+  Check,
+  Zap,
+  Crown,
+  Sparkles,
+  Edit2,
+  X,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useJobs } from "../context/JobContext";
 import { seedDemoData } from "../lib/seedData";
 
 export default function Account() {
-  const { user, updatePassword } = useAuth();
+  const { user, userProfile, updatePassword, signOut } = useAuth();
   const { jobs } = useJobs();
+
+  const [firstName, setFirstName] = useState(userProfile?.firstName || "");
+  const [lastName, setLastName] = useState(userProfile?.lastName || "");
+  const [dob, setDob] = useState(userProfile?.dob || "");
+
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [profileMessage, setProfileMessage] = useState({ type: "", text: "" });
+  const [passwordMessage, setPasswordMessage] = useState({ type: "", text: "" });
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
-  const [message, setMessage] = useState({ type: "", text: "" });
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+
+  // Sync state with userProfile once it loads
+  useEffect(() => {
+    if (userProfile) {
+      setFirstName(userProfile.firstName || "");
+      setLastName(userProfile.lastName || "");
+      setDob(userProfile.dob || "");
+    }
+  }, [userProfile]);
 
   const handleSeedData = async () => {
     if (!user) return;
@@ -29,10 +53,10 @@ export default function Account() {
     setIsSeeding(true);
     try {
       await seedDemoData(user.uid);
-      setMessage({ type: "success", text: "Demo data added successfully!" });
+      setProfileMessage({ type: "success", text: "Demo data added successfully!" });
     } catch (error) {
       console.error(error);
-      setMessage({ type: "error", text: "Failed to add demo data." });
+      setProfileMessage({ type: "error", text: "Failed to add demo data." });
     } finally {
       setIsSeeding(false);
     }
@@ -40,15 +64,15 @@ export default function Account() {
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage({ type: "", text: "" });
+    setPasswordMessage({ type: "", text: "" });
 
     if (newPassword !== confirmPassword) {
-      setMessage({ type: "error", text: "Passwords do not match." });
+      setPasswordMessage({ type: "error", text: "Passwords do not match." });
       return;
     }
 
     if (newPassword.length < 6) {
-      setMessage({
+      setPasswordMessage({
         type: "error",
         text: "Password should be at least 6 characters.",
       });
@@ -58,18 +82,17 @@ export default function Account() {
     setIsUpdating(true);
     try {
       await updatePassword(newPassword);
-      setMessage({ type: "success", text: "Password updated successfully!" });
+      setPasswordMessage({ type: "success", text: "Password updated successfully!" });
       setNewPassword("");
       setConfirmPassword("");
     } catch (error: any) {
-      // Provide a user friendly error for recent-login requirement
       if (error?.code === "auth/requires-recent-login") {
-        setMessage({
+        setPasswordMessage({
           type: "error",
           text: "Please sign out and sign back in to update your password for security purposes.",
         });
       } else {
-        setMessage({
+        setPasswordMessage({
           type: "error",
           text: error.message || "Failed to update password.",
         });
@@ -79,220 +102,340 @@ export default function Account() {
     }
   };
 
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    setIsUpdating(true);
+    try {
+      const { doc, updateDoc } = await import('firebase/firestore');
+      const { db } = await import('../lib/firebase');
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, {
+        firstName,
+        lastName,
+        dob
+      });
+      setProfileMessage({ type: "success", text: "Profile updated successfully!" });
+      setIsEditingProfile(false);
+    } catch (error: any) {
+      setProfileMessage({ type: "error", text: error.message || "Failed to update profile." });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const isOverLimit = jobs.length >= 50;
 
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">
-          Account Settings
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm md:text-base font-medium">
-          Manage your profile, security, and subscription.
-        </p>
+    <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6 pb-24">
+      {/* Profile Header */}
+      <div className="premium-glass rounded-2xl overflow-hidden shadow-xl border border-white/10 dark:border-white/5">
+        <div className="p-6 flex flex-col sm:flex-row items-start sm:items-center gap-5">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-2xl font-black uppercase shadow-lg shadow-blue-500/20 shrink-0">
+            {userProfile?.firstName ? userProfile.firstName.charAt(0) : "U"}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+              {userProfile?.firstName || ""} {userProfile?.lastName || ""}
+            </h1>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 truncate mt-0.5">
+              {user?.email || "No email"}
+            </p>
+          </div>
+          <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border ${userProfile?.plan === 'Pro'
+            ? 'text-purple-400 bg-purple-500/10 border-purple-500/20'
+            : 'text-blue-400 bg-blue-500/10 border-blue-500/20'
+            }`}>
+            {userProfile?.plan === 'Pro' ? '👑 Pro Plan' : 'Free Plan'}
+          </span>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Profile Information */}
-        <div className="space-y-6">
-          <div className="premium-glass rounded-2xl overflow-hidden shadow-xl border-t border-white/20 dark:border-white/5 relative">
-            <div className="p-5 border-b border-white/10 dark:border-white/5 bg-white/20 dark:bg-black/20 flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <h2 className="font-bold text-slate-900 dark:text-white tracking-wide">
-                Profile Information
-              </h2>
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Left — Profile & Security */}
+        <div className="lg:col-span-3">
+          <div className="premium-glass rounded-2xl overflow-hidden shadow-xl border border-white/10 dark:border-white/5">
+            <div className="p-5 border-b border-white/10 dark:border-white/5 bg-white/10 dark:bg-black/10 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-blue-500" />
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white">Profile Information</h2>
+              </div>
+              {!isEditingProfile && (
+                <button
+                  onClick={() => { setIsEditingProfile(true); setProfileMessage({ type: '', text: '' }); }}
+                  className="flex items-center gap-1.5 text-[11px] font-bold text-blue-500 hover:text-blue-400 transition-colors"
+                >
+                  <Edit2 className="w-3.5 h-3.5" /> Edit
+                </button>
+              )}
             </div>
             <div className="p-5 space-y-4">
+              {profileMessage.text && (
+                <div className={`p-3 rounded-xl text-xs font-bold ${profileMessage.type === "error" ? "bg-red-500/10 border border-red-500/20 text-red-500" : "bg-emerald-500/10 border border-emerald-500/20 text-emerald-500"}`}>
+                  {profileMessage.text}
+                </div>
+              )}
+
               <div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5 px-1">
-                  Email Address
-                </label>
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Email</label>
                 <input
                   type="text"
                   disabled
-                  className="w-full px-4 py-2.5 bg-white/30 dark:bg-black/30 border border-white/20 dark:border-white/10 rounded-xl text-slate-700 dark:text-slate-300 cursor-not-allowed text-sm font-medium"
+                  className="w-full px-4 py-2.5 bg-white/20 dark:bg-black/20 border border-white/10 dark:border-white/5 rounded-xl text-sm font-medium text-slate-500 dark:text-slate-400 cursor-not-allowed"
                   value={user?.email || "No email attached"}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center justify-between px-1">
-                  <span>User ID (UID)</span>
-                  <span className="text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-full font-black uppercase tracking-wider border border-blue-500/20">For Extension Link</span>
-                </label>
-                <div className="flex gap-2">
+
+              <form onSubmit={handleUpdateProfile} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">First Name</label>
+                    <input
+                      type="text"
+                      placeholder="First name"
+                      disabled={!isEditingProfile}
+                      className={`w-full px-4 py-2.5 border rounded-xl text-sm font-medium transition-all ${isEditingProfile ? 'bg-white/30 dark:bg-black/20 border-white/10 dark:border-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/30 outline-none' : 'bg-white/20 dark:bg-black/20 border-white/10 dark:border-white/5 text-slate-500 dark:text-slate-400 cursor-not-allowed'}`}
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Last Name</label>
+                    <input
+                      type="text"
+                      placeholder="Last name"
+                      disabled={!isEditingProfile}
+                      className={`w-full px-4 py-2.5 border rounded-xl text-sm font-medium transition-all ${isEditingProfile ? 'bg-white/30 dark:bg-black/20 border-white/10 dark:border-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/30 outline-none' : 'bg-white/20 dark:bg-black/20 border-white/10 dark:border-white/5 text-slate-500 dark:text-slate-400 cursor-not-allowed'}`}
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5" /> Date of Birth
+                  </label>
                   <input
-                    type="text"
-                    readOnly
-                    className="flex-1 px-4 py-2.5 bg-white/30 dark:bg-black/30 border border-white/20 dark:border-white/10 rounded-xl text-slate-500 dark:text-slate-400 cursor-text text-xs font-mono shadow-inner"
-                    value={user?.uid || ""}
+                    type="date"
+                    disabled={!isEditingProfile}
+                    className={`w-full px-4 py-2.5 border rounded-xl text-sm font-medium transition-all ${isEditingProfile ? 'bg-white/30 dark:bg-black/20 border-white/10 dark:border-white/5 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/30 outline-none' : 'bg-white/20 dark:bg-black/20 border-white/10 dark:border-white/5 text-slate-500 dark:text-slate-400 cursor-not-allowed'}`}
+                    value={dob}
+                    onChange={(e) => setDob(e.target.value)}
                   />
-                  <button
-                    onClick={() => {
-                      if (user?.uid) navigator.clipboard.writeText(user.uid);
-                      alert("UID copied to clipboard!");
-                    }}
-                    className="px-4 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl transition-all text-xs font-black shadow-lg shadow-blue-500/10 active:scale-95 cursor-pointer"
-                  >
-                    COPY
-                  </button>
                 </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Billing & Usage */}
-          <div className="premium-glass rounded-2xl overflow-hidden shadow-xl border-t border-white/20 dark:border-white/5 relative">
-            <div className="p-5 border-b border-white/10 dark:border-white/5 bg-white/20 dark:bg-black/20 flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <h2 className="font-bold text-slate-900 dark:text-white tracking-wide">
-                Billing & Usage
-              </h2>
+                {isEditingProfile && (
+                  <div className="flex gap-3">
+                    <button
+                      type="submit"
+                      disabled={isUpdating}
+                      className="flex-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold py-2.5 rounded-xl hover:shadow-lg transition-all text-xs tracking-wide active:scale-[0.98] shadow-sm"
+                    >
+                      {isUpdating ? "Saving..." : "Save Changes"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setIsEditingProfile(false); setFirstName(userProfile?.firstName || ''); setLastName(userProfile?.lastName || ''); setDob(userProfile?.dob || ''); }}
+                      className="px-5 bg-white/10 dark:bg-white/5 border border-white/10 text-slate-500 dark:text-slate-400 font-bold py-2.5 rounded-xl hover:bg-white/20 transition-all text-xs tracking-wide active:scale-[0.98] flex items-center gap-1.5"
+                    >
+                      <X className="w-3.5 h-3.5" /> Cancel
+                    </button>
+                  </div>
+                )}
+              </form>
             </div>
-            <div className="p-5">
-              <div className="flex justify-between items-end mb-3 px-1">
-                <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                  Applications
-                </span>
-                <span
-                  className={`text-xs font-black ${isOverLimit ? "text-red-500" : "text-slate-500 dark:text-slate-400"}`}
+
+            {/* Password */}
+            <div className="border-t border-white/10 dark:border-white/5">
+              <div className="p-5 bg-white/10 dark:bg-black/10 flex items-center gap-2">
+                <KeyRound className="w-4 h-4 text-blue-500" />
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white">Change Password</h2>
+              </div>
+              <form onSubmit={handleUpdatePassword} className="p-5 pt-0 space-y-4">
+                {passwordMessage.text && (
+                  <div className={`p-3 rounded-xl text-xs font-bold ${passwordMessage.type === "error" ? "bg-red-500/10 border border-red-500/20 text-red-500" : "bg-emerald-500/10 border border-emerald-500/20 text-emerald-500"}`}>
+                    {passwordMessage.text}
+                  </div>
+                )}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">New Password</label>
+                  <input
+                    type="password"
+                    required
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    minLength={6}
+                    className="w-full px-4 py-2.5 bg-white/30 dark:bg-black/20 border border-white/10 dark:border-white/5 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/30 outline-none transition-all"
+                    placeholder="Min. 6 characters"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Confirm Password</label>
+                  <input
+                    type="password"
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    minLength={6}
+                    className="w-full px-4 py-2.5 bg-white/30 dark:bg-black/20 border border-white/10 dark:border-white/5 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/30 outline-none transition-all"
+                    placeholder="Re-enter password"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={isUpdating || !newPassword || !confirmPassword}
+                  className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold py-2.5 rounded-xl hover:shadow-lg transition-all text-xs tracking-wide active:scale-[0.98] shadow-sm disabled:opacity-40"
                 >
-                  {jobs.length} / 50
-                </span>
-              </div>
-
-              <div className="w-full bg-slate-200 dark:bg-white/10 rounded-full h-3 mb-5 overflow-hidden shadow-inner">
-                <div
-                  className={`h-3 rounded-full transition-all duration-500 ${isOverLimit ? "bg-red-500" : "bg-gradient-to-r from-blue-600 to-indigo-600"}`}
-                  style={{
-                    width: `${Math.min((jobs.length / 50) * 100, 100)}%`,
-                  }}
-                ></div>
-              </div>
-
-              {isOverLimit ? (
-                <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl flex items-start gap-3 mb-5">
-                  <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-                  <p className="text-xs font-bold text-red-600 dark:text-red-400">
-                    You have reached the free limit. Upgrade to Pro to continue
-                    tracking jobs.
-                  </p>
-                </div>
-              ) : (
-                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-5 leading-relaxed px-1">
-                  You can track up to 50 applications for free. After that, it's
-                  just $5/month for unlimited active tracking!
-                </p>
-              )}
-
-              <button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black py-3 rounded-xl hover:shadow-lg hover:shadow-blue-500/20 transition-all text-xs uppercase tracking-widest active:scale-95 shadow-lg">
-                Upgrade to Pro for $5/mo
-              </button>
-            </div>
-          </div>
-
-          {/* Demo Data */}
-          <div className="premium-glass rounded-2xl overflow-hidden shadow-xl border-t border-white/20 dark:border-white/5 relative">
-            <div className="p-5 border-b border-white/10 dark:border-white/5 bg-white/20 dark:bg-black/20 flex items-center gap-2">
-              <Database className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              <h2 className="font-bold text-slate-900 dark:text-white tracking-wide">
-                Demo Data
-              </h2>
-            </div>
-            <div className="p-5">
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-5 px-1 leading-relaxed">
-                Populate your account with sample jobs and contacts for
-                demonstration purposes.
-              </p>
-              <button
-                onClick={handleSeedData}
-                disabled={isSeeding}
-                className="w-full bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 text-slate-700 dark:text-slate-300 font-black py-3 rounded-xl hover:bg-white/20 transition-all text-xs uppercase tracking-widest disabled:opacity-50 active:scale-95 shadow-sm"
-              >
-                {isSeeding ? "Adding Data..." : "Load Demo Data"}
-              </button>
+                  {isUpdating ? "Updating..." : "Update Password"}
+                </button>
+              </form>
             </div>
           </div>
         </div>
 
-        {/* Right Column */}
-        <div className="space-y-6">
-          {/* Security */}
-          <div className="premium-glass rounded-2xl overflow-hidden shadow-xl border-t border-white/20 dark:border-white/5 relative h-fit">
-            <div className="p-5 border-b border-white/10 dark:border-white/5 bg-white/20 dark:bg-black/20 flex items-center gap-2">
-              <KeyRound className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <h2 className="font-bold text-slate-900 dark:text-white tracking-wide">
-                Change Password
-              </h2>
+        {/* Right — Plans & Pricing */}
+        <div className="lg:col-span-2">
+          <div className="premium-glass rounded-2xl overflow-hidden shadow-xl border border-white/10 dark:border-white/5">
+            <div className="p-5 border-b border-white/10 dark:border-white/5 bg-white/10 dark:bg-black/10 flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-blue-500" />
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Plans & Pricing</h2>
             </div>
-            <form onSubmit={handleUpdatePassword} className="p-5 space-y-4">
-              {message.text && (
-                <div
-                  className={`p-3 rounded-md text-sm ${message.type === "error" ? "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-800" : "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-100 dark:border-green-800"}`}
-                >
-                  {message.text}
+            <div className="p-5 space-y-5">
+              {/* Usage */}
+              <div>
+                <div className="flex justify-between items-end mb-2">
+                  <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Usage</span>
+                  <span className={`text-[11px] font-black ${isOverLimit ? "text-red-500" : "text-slate-400"}`}>{jobs.length}/50</span>
+                </div>
+                <div className="w-full bg-white/10 dark:bg-white/5 rounded-full h-2 overflow-hidden">
+                  <div
+                    className={`h-2 rounded-full transition-all duration-500 ${isOverLimit ? "bg-red-500" : "bg-gradient-to-r from-blue-500 to-indigo-500"}`}
+                    style={{ width: `${Math.min((jobs.length / 50) * 100, 100)}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              {isOverLimit && (
+                <div className="bg-red-500/10 border border-red-500/20 p-2.5 rounded-xl flex items-start gap-2">
+                  <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
+                  <p className="text-[11px] font-bold text-red-500">Limit reached. Upgrade to continue.</p>
                 </div>
               )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  New Password
-                </label>
-                <input
-                  type="password"
-                  required
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  minLength={6}
-                  className="w-full px-4 py-2.5 bg-white/30 dark:bg-black/30 border border-white/20 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm font-medium transition-all"
-                  placeholder="Enter new password"
-                />
+              {/* Free Plan */}
+              <div className={`rounded-xl p-4 border transition-all ${userProfile?.plan !== 'Pro' ? 'border-blue-500/30 bg-blue-500/5' : 'border-white/5 bg-white/5'
+                }`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wide">Free</h3>
+                    <p className="text-xl font-black text-slate-900 dark:text-white">$0<span className="text-[10px] font-bold text-slate-400">/mo</span></p>
+                  </div>
+                  {userProfile?.plan !== 'Pro' && (
+                    <span className="text-[9px] font-black uppercase tracking-widest text-blue-400 bg-blue-500/10 px-2 py-1 rounded-full border border-blue-500/20">Current</span>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  {['50 applications', 'Basic analytics', 'Pipeline tools', '25 contacts', 'CSV export'].map((f, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <Check className="w-3 h-3 text-emerald-400 shrink-0" strokeWidth={3} />
+                      <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{f}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Confirm New Password
-                </label>
-                <input
-                  type="password"
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  minLength={6}
-                  className="w-full px-4 py-2.5 bg-white/30 dark:bg-black/30 border border-white/20 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm font-medium transition-all"
-                  placeholder="Confirm new password"
-                />
+              {/* Pro Plan */}
+              <div className={`rounded-xl p-4 border transition-all relative overflow-hidden ${userProfile?.plan === 'Pro' ? 'border-purple-500/30 bg-purple-500/5' : 'border-purple-500/20 bg-gradient-to-br from-indigo-500/5 to-purple-500/5'
+                }`}>
+                {userProfile?.plan !== 'Pro' && (
+                  <div className="absolute top-3 right-3">
+                    <span className="text-[8px] font-black uppercase tracking-widest text-white bg-gradient-to-r from-indigo-600 to-purple-600 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <Sparkles className="w-2 h-2" /> Popular
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wide flex items-center gap-1.5">
+                      <Crown className="w-3.5 h-3.5 text-purple-300" /> Pro
+                    </h3>
+                    <p className="text-xl font-black text-slate-900 dark:text-white">$5<span className="text-[10px] font-bold text-slate-400">/mo</span></p>
+                  </div>
+                  {userProfile?.plan === 'Pro' && (
+                    <span className="text-[9px] font-black uppercase tracking-widest text-purple-400 bg-purple-500/10 px-2 py-1 rounded-full border border-purple-500/20">Current</span>
+                  )}
+                </div>
+                <div className="space-y-1.5 mb-4">
+                  {['Unlimited apps', 'Advanced analytics', 'Priority tools', 'Unlimited contacts', 'CSV & PDF export', 'Priority support'].map((f, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <Check className="w-3 h-3 text-purple-300 shrink-0" strokeWidth={3} />
+                      <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{f}</span>
+                    </div>
+                  ))}
+                </div>
+                {userProfile?.plan === 'Pro' ? (
+                  <div className="w-full py-2 text-center rounded-lg text-[11px] font-bold text-purple-400 bg-purple-500/10 border border-purple-500/20">Active Plan</div>
+                ) : (
+                  <button className="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold text-[11px] tracking-wide transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:brightness-110 active:scale-[0.98] flex items-center justify-center gap-2 whitespace-nowrap">
+                    <Zap className="w-3.5 h-3.5 shrink-0" /> Upgrade to Pro
+                  </button>
+                )}
               </div>
 
-              <button
-                type="submit"
-                disabled={isUpdating || !newPassword || !confirmPassword}
-                className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black py-3 rounded-xl hover:shadow-lg transition-all text-xs uppercase tracking-widest mt-4 active:scale-95 shadow-lg"
-              >
-                {isUpdating ? "UPDATING..." : "UPDATE PASSWORD"}
-              </button>
-            </form>
-          </div>
-
-          {/* Legal */}
-          <div className="premium-glass rounded-2xl overflow-hidden shadow-xl border-t border-white/20 dark:border-white/5 relative h-fit">
-            <div className="p-5 border-b border-white/10 dark:border-white/5 bg-white/20 dark:bg-black/20 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <h2 className="font-bold text-slate-900 dark:text-white tracking-wide">
-                Legal
-              </h2>
-            </div>
-            <div className="p-5">
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-5 px-1 leading-relaxed">
-                View our privacy policy and terms of service.
+              <p className="text-[10px] text-center font-medium text-slate-300">
+                ✨ Pro plan is <span className="text-purple-300 font-bold">free for all priority users</span>.
               </p>
-              <Link
-                to="/privacy-policy"
-                className="w-full bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 text-slate-700 dark:text-slate-300 font-black py-3 rounded-xl hover:bg-white/20 transition-all text-xs uppercase tracking-widest text-center block shadow-sm"
-              >
-                PRIVACY POLICY
-              </Link>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Bottom Utilities */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="premium-glass rounded-2xl p-4 shadow-lg border border-white/10 dark:border-white/5">
+          <div className="flex items-center gap-2 mb-3">
+            <Database className="w-4 h-4 text-purple-400" />
+            <h3 className="text-xs font-bold text-slate-900 dark:text-white">Demo Data</h3>
+          </div>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">Load sample applications and contacts.</p>
+          <button
+            onClick={handleSeedData}
+            disabled={isSeeding}
+            className="w-full py-2 bg-white/10 dark:bg-white/5 border border-white/10 text-slate-600 dark:text-slate-300 font-bold rounded-xl text-[11px] tracking-wide hover:bg-white/20 transition-all active:scale-[0.98] disabled:opacity-40"
+          >
+            {isSeeding ? "Loading..." : "Load Demo Data"}
+          </button>
+        </div>
+
+        <div className="premium-glass rounded-2xl p-4 shadow-lg border border-white/10 dark:border-white/5">
+          <div className="flex items-center gap-2 mb-3">
+            <FileText className="w-4 h-4 text-blue-400" />
+            <h3 className="text-xs font-bold text-slate-900 dark:text-white">Legal</h3>
+          </div>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">Privacy policy and terms of service.</p>
+          <Link
+            to="/privacy-policy"
+            className="w-full py-2 bg-white/10 dark:bg-white/5 border border-white/10 text-slate-600 dark:text-slate-300 font-bold rounded-xl text-[11px] tracking-wide text-center block hover:bg-white/20 transition-all active:scale-[0.98]"
+          >
+            Privacy Policy
+          </Link>
+        </div>
+
+        <div className="premium-glass rounded-2xl p-4 shadow-lg border border-white/10 dark:border-white/5 flex flex-col">
+          <div className="flex items-center gap-2 mb-3">
+            <LogOut className="w-4 h-4 text-red-400" />
+            <h3 className="text-xs font-bold text-slate-900 dark:text-white">Session</h3>
+          </div>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">End your current session securely.</p>
+          <button
+            onClick={signOut}
+            className="w-full py-2 bg-red-500/10 border border-red-500/20 text-red-500 font-bold rounded-xl text-[11px] tracking-wide hover:bg-red-500/20 transition-all active:scale-[0.98] mt-auto"
+          >
+            Sign Out
+          </button>
         </div>
       </div>
     </div>

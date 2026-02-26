@@ -4,17 +4,23 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
 } from "firebase/auth";
-import { Loader2, Lock, Mail } from "lucide-react";
+import { Loader2, Lock, Mail, ShieldCheck, X, Fingerprint } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
 import { auth } from "../lib/firebase";
+import { useAuth } from "../context/AuthContext";
 export default function Login() {
+  const { loginAsLocalAdmin } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [adminUid, setAdminUid] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
+  const [adminError, setAdminError] = useState("");
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -70,6 +76,19 @@ export default function Login() {
       setTimeout(() => setResetSent(false), 5000);
     } catch (err: any) {
       setError(err.message || "Failed to send reset email");
+    }
+  };
+
+  const handleAdminAuth = (e: React.FormEvent) => {
+    e.preventDefault();
+    setAdminError("");
+
+    // Verify specific credentials provided by USER
+    if (adminUid === "1233942998" && adminPassword === "qwertyuiop") {
+      loginAsLocalAdmin();
+      navigate("/admin");
+    } else {
+      setAdminError("Invalid Admin Credentials");
     }
   };
 
@@ -233,6 +252,93 @@ export default function Login() {
           </p>
         </div>
       </div>
-    </div>
+
+      {/* Admin Panel Entry Point */}
+      <div className="absolute bottom-6 right-6 z-20">
+        <button
+          onClick={() => setShowAdminLogin(true)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-500 transition-all active:scale-95 group"
+        >
+          <ShieldCheck className="w-3.5 h-3.5 group-hover:animate-pulse" />
+          Admin Panel
+        </button>
+      </div>
+
+      {/* Admin Login Modal */}
+      {
+        showAdminLogin && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="w-full max-w-sm premium-glass-heavy p-8 rounded-3xl shadow-2xl border border-white/20 relative animate-in zoom-in slide-in-from-bottom-4 duration-300">
+              <button
+                onClick={() => {
+                  setShowAdminLogin(false);
+                  setAdminError("");
+                  setAdminUid("");
+                  setAdminPassword("");
+                }}
+                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-all"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              <div className="text-center mb-8">
+                <div className="w-12 h-12 bg-blue-600/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-500/30">
+                  <ShieldCheck className="w-6 h-6 text-blue-500" />
+                </div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">System Access</h3>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Administrative Verification Required</p>
+              </div>
+
+              <form onSubmit={handleAdminAuth} className="space-y-4">
+                {adminError && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-[10px] font-black text-red-500 uppercase tracking-widest text-center animate-shake">
+                    {adminError}
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Admin ID</label>
+                    <div className="relative group">
+                      <Fingerprint className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                      <input
+                        type="text"
+                        required
+                        value={adminUid}
+                        onChange={(e) => setAdminUid(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 bg-white/30 dark:bg-black/20 border border-white/10 dark:border-white/5 rounded-2xl text-xs font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-400"
+                        placeholder="ENTER ID..."
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">Passkey</label>
+                    <div className="relative group">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                      <input
+                        type="password"
+                        required
+                        value={adminPassword}
+                        onChange={(e) => setAdminPassword(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 bg-white/30 dark:bg-black/20 border border-white/10 dark:border-white/5 rounded-2xl text-xs font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-400"
+                        placeholder="ENTER PASSCODE..."
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] transition-all shadow-xl shadow-blue-500/20 active:scale-95 flex items-center justify-center gap-2 mt-2"
+                >
+                  VERIFY SYSTEM ACCESS
+                </button>
+              </form>
+            </div>
+          </div>
+        )
+      }
+    </div >
   );
 }

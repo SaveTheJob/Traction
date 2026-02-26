@@ -17,7 +17,7 @@ import { useJobs } from "../context/JobContext";
 import MetricsGrid from "../components/MetricsGrid";
 import StatusBadge from "../components/StatusBadge";
 import UrgentActions from "../components/UrgentActions";
-
+import NotificationDropdown from "../components/NotificationDropdown";
 export default function Dashboard() {
   const { jobs, openModal, deleteJob } = useJobs();
   const { user } = useAuth();
@@ -341,23 +341,19 @@ export default function Dashboard() {
   return (
     <div className="p-4 md:p-8 max-w-[1700px] mx-auto space-y-8">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <img
-            src="/dog-mascot.png"
-            alt="Traction Mascot"
-            className="w-16 h-16 object-contain drop-shadow-md pb-1"
-          />
-          <div>
-            <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-1">
-              Welcome back, {firstName}!
-            </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-widest opacity-80">
-              Station Overview: Active Control Hub
-            </p>
-          </div>
+        <div>
+          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-1">
+            Welcome back, {firstName}!
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-widest opacity-80">
+            Station Overview: Active Control Hub
+          </p>
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
+          {/* Notification Bell */}
+          <NotificationDropdown />
+
           {/* Export Button */}
           <div className="relative" ref={exportMenuRef}>
             <button
@@ -512,7 +508,7 @@ export default function Dashboard() {
                         </p>
                       </td>
                       <td className="px-8 py-5 whitespace-nowrap text-right pr-8">
-                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center justify-end gap-2 transition-opacity">
                           <button
                             onClick={() => openModal(activity.id)}
                             className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full transition-colors"
