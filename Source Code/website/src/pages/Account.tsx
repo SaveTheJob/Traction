@@ -84,10 +84,10 @@ export default function Account() {
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">
           Account Settings
         </h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
+        <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm md:text-base font-medium">
           Manage your profile, security, and subscription.
         </p>
       </div>
@@ -95,35 +95,35 @@ export default function Account() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Profile Information */}
         <div className="space-y-6">
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
-            <div className="p-5 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center gap-2">
+          <div className="premium-glass rounded-2xl overflow-hidden shadow-xl border-t border-white/20 dark:border-white/5 relative">
+            <div className="p-5 border-b border-white/10 dark:border-white/5 bg-white/20 dark:bg-black/20 flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <h2 className="font-semibold text-gray-900 dark:text-white">
+              <h2 className="font-bold text-slate-900 dark:text-white tracking-wide">
                 Profile Information
               </h2>
             </div>
             <div className="p-5 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5 px-1">
                   Email Address
                 </label>
                 <input
                   type="text"
                   disabled
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-md text-gray-500 dark:text-gray-400 cursor-not-allowed text-sm"
+                  className="w-full px-4 py-2.5 bg-white/30 dark:bg-black/30 border border-white/20 dark:border-white/10 rounded-xl text-slate-700 dark:text-slate-300 cursor-not-allowed text-sm font-medium"
                   value={user?.email || "No email attached"}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center justify-between">
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center justify-between px-1">
                   <span>User ID (UID)</span>
-                  <span className="text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">For Extension Link</span>
+                  <span className="text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-full font-black uppercase tracking-wider border border-blue-500/20">For Extension Link</span>
                 </label>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     readOnly
-                    className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-md text-gray-500 dark:text-gray-400 cursor-text text-sm font-mono"
+                    className="flex-1 px-4 py-2.5 bg-white/30 dark:bg-black/30 border border-white/20 dark:border-white/10 rounded-xl text-slate-500 dark:text-slate-400 cursor-text text-xs font-mono shadow-inner"
                     value={user?.uid || ""}
                   />
                   <button
@@ -131,9 +131,9 @@ export default function Account() {
                       if (user?.uid) navigator.clipboard.writeText(user.uid);
                       alert("UID copied to clipboard!");
                     }}
-                    className="px-3 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-md transition-colors text-sm font-medium"
+                    className="px-4 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl transition-all text-xs font-black shadow-lg shadow-blue-500/10 active:scale-95 cursor-pointer"
                   >
-                    Copy
+                    COPY
                   </button>
                 </div>
               </div>
@@ -141,28 +141,28 @@ export default function Account() {
           </div>
 
           {/* Billing & Usage */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
-            <div className="p-5 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center gap-2">
+          <div className="premium-glass rounded-2xl overflow-hidden shadow-xl border-t border-white/20 dark:border-white/5 relative">
+            <div className="p-5 border-b border-white/10 dark:border-white/5 bg-white/20 dark:bg-black/20 flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <h2 className="font-semibold text-gray-900 dark:text-white">
+              <h2 className="font-bold text-slate-900 dark:text-white tracking-wide">
                 Billing & Usage
               </h2>
             </div>
             <div className="p-5">
-              <div className="flex justify-between items-end mb-2">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Free Tier Usage
+              <div className="flex justify-between items-end mb-3 px-1">
+                <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                  Applications
                 </span>
                 <span
-                  className={`text-xs font-bold ${isOverLimit ? "text-red-600 dark:text-red-400" : "text-gray-500 dark:text-gray-400"}`}
+                  className={`text-xs font-black ${isOverLimit ? "text-red-500" : "text-slate-500 dark:text-slate-400"}`}
                 >
                   {jobs.length} / 50
                 </span>
               </div>
 
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-4 overflow-hidden">
+              <div className="w-full bg-slate-200 dark:bg-white/10 rounded-full h-3 mb-5 overflow-hidden shadow-inner">
                 <div
-                  className={`h-2.5 rounded-full ${isOverLimit ? "bg-red-600 dark:bg-red-500" : "bg-blue-600 dark:bg-blue-500"}`}
+                  className={`h-3 rounded-full transition-all duration-500 ${isOverLimit ? "bg-red-500" : "bg-gradient-to-r from-blue-600 to-indigo-600"}`}
                   style={{
                     width: `${Math.min((jobs.length / 50) * 100, 100)}%`,
                   }}
@@ -170,43 +170,43 @@ export default function Account() {
               </div>
 
               {isOverLimit ? (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 p-3 rounded-md flex items-start gap-2 mb-4">
-                  <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-800 dark:text-red-300">
+                <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl flex items-start gap-3 mb-5">
+                  <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                  <p className="text-xs font-bold text-red-600 dark:text-red-400">
                     You have reached the free limit. Upgrade to Pro to continue
                     tracking jobs.
                   </p>
                 </div>
               ) : (
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-5 leading-relaxed px-1">
                   You can track up to 50 applications for free. After that, it's
                   just $5/month for unlimited active tracking!
                 </p>
               )}
 
-              <button className="w-full bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 text-blue-700 dark:text-blue-400 font-medium py-2 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors text-sm flex items-center justify-center gap-2">
+              <button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black py-3 rounded-xl hover:shadow-lg hover:shadow-blue-500/20 transition-all text-xs uppercase tracking-widest active:scale-95 shadow-lg">
                 Upgrade to Pro for $5/mo
               </button>
             </div>
           </div>
 
           {/* Demo Data */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
-            <div className="p-5 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center gap-2">
+          <div className="premium-glass rounded-2xl overflow-hidden shadow-xl border-t border-white/20 dark:border-white/5 relative">
+            <div className="p-5 border-b border-white/10 dark:border-white/5 bg-white/20 dark:bg-black/20 flex items-center gap-2">
               <Database className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              <h2 className="font-semibold text-gray-900 dark:text-white">
+              <h2 className="font-bold text-slate-900 dark:text-white tracking-wide">
                 Demo Data
               </h2>
             </div>
             <div className="p-5">
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-5 px-1 leading-relaxed">
                 Populate your account with sample jobs and contacts for
                 demonstration purposes.
               </p>
               <button
                 onClick={handleSeedData}
                 disabled={isSeeding}
-                className="w-full bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 text-purple-700 dark:text-purple-400 font-medium py-2 rounded-md hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="w-full bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 text-slate-700 dark:text-slate-300 font-black py-3 rounded-xl hover:bg-white/20 transition-all text-xs uppercase tracking-widest disabled:opacity-50 active:scale-95 shadow-sm"
               >
                 {isSeeding ? "Adding Data..." : "Load Demo Data"}
               </button>
@@ -217,10 +217,10 @@ export default function Account() {
         {/* Right Column */}
         <div className="space-y-6">
           {/* Security */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm h-fit">
-            <div className="p-5 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center gap-2">
+          <div className="premium-glass rounded-2xl overflow-hidden shadow-xl border-t border-white/20 dark:border-white/5 relative h-fit">
+            <div className="p-5 border-b border-white/10 dark:border-white/5 bg-white/20 dark:bg-black/20 flex items-center gap-2">
               <KeyRound className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <h2 className="font-semibold text-gray-900 dark:text-white">
+              <h2 className="font-bold text-slate-900 dark:text-white tracking-wide">
                 Change Password
               </h2>
             </div>
@@ -243,7 +243,7 @@ export default function Account() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   minLength={6}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm placeholder-gray-400 dark:placeholder-gray-500"
+                  className="w-full px-4 py-2.5 bg-white/30 dark:bg-black/30 border border-white/20 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm font-medium transition-all"
                   placeholder="Enter new password"
                 />
               </div>
@@ -258,7 +258,7 @@ export default function Account() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   minLength={6}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm placeholder-gray-400 dark:placeholder-gray-500"
+                  className="w-full px-4 py-2.5 bg-white/30 dark:bg-black/30 border border-white/20 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm font-medium transition-all"
                   placeholder="Confirm new password"
                 />
               </div>
@@ -266,30 +266,30 @@ export default function Account() {
               <button
                 type="submit"
                 disabled={isUpdating || !newPassword || !confirmPassword}
-                className="w-full bg-blue-600 text-white font-medium py-2 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm mt-4"
+                className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black py-3 rounded-xl hover:shadow-lg transition-all text-xs uppercase tracking-widest mt-4 active:scale-95 shadow-lg"
               >
-                {isUpdating ? "Updating..." : "Update Password"}
+                {isUpdating ? "UPDATING..." : "UPDATE PASSWORD"}
               </button>
             </form>
           </div>
 
           {/* Legal */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm h-fit">
-            <div className="p-5 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center gap-2">
+          <div className="premium-glass rounded-2xl overflow-hidden shadow-xl border-t border-white/20 dark:border-white/5 relative h-fit">
+            <div className="p-5 border-b border-white/10 dark:border-white/5 bg-white/20 dark:bg-black/20 flex items-center gap-2">
               <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <h2 className="font-semibold text-gray-900 dark:text-white">
+              <h2 className="font-bold text-slate-900 dark:text-white tracking-wide">
                 Legal
               </h2>
             </div>
             <div className="p-5">
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-5 px-1 leading-relaxed">
                 View our privacy policy and terms of service.
               </p>
               <Link
                 to="/privacy-policy"
-                className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors text-sm flex items-center justify-center gap-2"
+                className="w-full bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 text-slate-700 dark:text-slate-300 font-black py-3 rounded-xl hover:bg-white/20 transition-all text-xs uppercase tracking-widest text-center block shadow-sm"
               >
-                Privacy Policy
+                PRIVACY POLICY
               </Link>
             </div>
           </div>

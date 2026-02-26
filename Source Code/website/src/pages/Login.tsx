@@ -74,25 +74,29 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8 bg-white p-8 sm:p-10 rounded-2xl shadow-xl shadow-gray-200/50">
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden">
+      {/* Decorative Blur Backgrounds */}
+      <div className="absolute top-0 -left-4 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-0 -right-4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse delay-700" />
+
+      <div className="w-full max-w-md space-y-8 premium-glass-heavy p-8 sm:p-10 rounded-3xl shadow-2xl relative z-10 border-t border-white/20 dark:border-white/5">
         <div className="text-center">
-          <Logo className="h-12 justify-center mb-4" iconOnly />
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900">
-            Sign in to Traction
+          <Logo className="h-14 justify-center mb-6" iconOnly />
+          <h2 className="text-4xl font-black tracking-tight text-slate-900 dark:text-white leading-tight">
+            Welcome Back
           </h2>
-          <p className="mt-2 text-sm text-gray-500">
-            Track your job applications seamlessly
+          <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
+            Track your job applications with <span className="text-blue-600 dark:text-blue-400 font-bold">Traction</span>
           </p>
         </div>
 
         <div className="mt-8 space-y-6">
-          <div className="space-y-4">
-            <button
-              onClick={signInWithGoogle}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-            >
+          <button
+            onClick={signInWithGoogle}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-4 px-4 py-3 border border-white/20 dark:border-white/10 rounded-2xl shadow-lg bg-white/50 dark:bg-black/20 text-[15px] font-black text-slate-700 dark:text-slate-200 hover:bg-white/80 dark:hover:bg-black/40 focus:outline-none transition-all duration-300 disabled:opacity-50 active:scale-[0.98] group"
+          >
+            <div className="bg-white p-1 rounded-lg shadow-sm">
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -111,96 +115,94 @@ export default function Login() {
                   fill="#EA4335"
                 />
               </svg>
-              Sign in with Google
-            </button>
-          </div>
+            </div>
+            <span className="group-hover:translate-x-0.5 transition-transform">Sign in with Google</span>
+          </button>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
+              <div className="w-full border-t border-slate-300 dark:border-slate-700" />
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-2 text-gray-500">
-                Or continue with email
+            <div className="relative flex justify-center text-xs">
+              <span className="premium-glass px-4 py-1.5 rounded-full text-slate-500 font-black uppercase tracking-widest text-[10px]">
+                Or email
               </span>
             </div>
           </div>
 
           <form className="space-y-4" onSubmit={handleLogin}>
             {error && (
-              <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg border border-red-100 flex items-start gap-2">
-                <span className="block sm:inline">{error}</span>
+              <div className="p-4 text-xs font-bold text-red-600 bg-red-500/10 rounded-2xl border border-red-500/20 flex items-start gap-2 animate-in fade-in zoom-in">
+                <span>{error}</span>
               </div>
             )}
             {resetSent && (
-              <div className="p-3 text-sm text-green-700 bg-green-50 rounded-lg border border-green-100 flex items-start gap-2">
-                <span className="block sm:inline">
-                  Password reset email sent! Please check your inbox.
-                </span>
+              <div className="p-4 text-xs font-bold text-green-600 bg-green-500/10 rounded-2xl border border-green-500/20 flex items-start gap-2 animate-in fade-in zoom-in">
+                <span>Password reset email sent! Check your inbox.</span>
               </div>
             )}
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 px-1">
                   Email address
                 </label>
-                <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-gray-400" />
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                    <Mail className="h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                   </div>
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors"
+                    className="block w-full pl-11 pr-4 py-3.5 bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500/50 outline-none text-[15px] font-medium transition-all shadow-inner"
                     placeholder="Enter Email"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 px-1">
                   Password
                 </label>
-                <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-gray-400" />
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                    <Lock className="h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                   </div>
                   <input
                     type="password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors"
+                    className="block w-full pl-11 pr-4 py-3.5 bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500/50 outline-none text-[15px] font-medium transition-all shadow-inner"
                     placeholder="Enter Password"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between px-1">
               <div className="flex items-center">
                 <input
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-white/20 rounded cursor-pointer accent-blue-600"
                 />
                 <label
                   htmlFor="remember-me"
-                  className="ml-2 block text-sm text-gray-700 cursor-pointer"
+                  className="ml-2 block text-xs font-bold text-slate-600 dark:text-slate-400 cursor-pointer"
                 >
                   Remember me
                 </label>
               </div>
 
-              <div className="text-sm">
+              <div className="text-xs">
                 <button
                   type="button"
                   onClick={handlePasswordReset}
-                  className="font-medium text-blue-600 hover:text-blue-500 cursor-pointer outline-none focus:underline"
+                  className="font-black text-blue-600 hover:text-blue-500 cursor-pointer outline-none hover:underline"
                 >
                   Forgot password?
                 </button>
@@ -210,21 +212,21 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="w-full flex justify-center py-4 px-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl shadow-xl shadow-blue-500/10 text-xs font-black uppercase tracking-widest hover:translate-y-[-1px] active:translate-y-[0px] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {loading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
-                "Log in"
+                "Sign In"
               )}
             </button>
           </form>
 
-          <p className="mt-8 text-center text-sm text-gray-600">
+          <p className="mt-8 text-center text-xs font-bold text-slate-500 dark:text-slate-400">
             Don't have an account?{" "}
             <Link
               to="/signup"
-              className="font-medium text-blue-600 hover:text-blue-500"
+              className="font-black text-blue-600 hover:text-blue-500 transition-colors"
             >
               Sign up for free
             </Link>

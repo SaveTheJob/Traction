@@ -1,4 +1,4 @@
-import { Check, Edit2, Image as ImageIcon, Laptop, RotateCcw, Sun, X } from "lucide-react";
+import { Check, Edit2, Image as ImageIcon, RotateCcw, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTheme } from "../context/ThemeContext";
 
@@ -20,6 +20,7 @@ function useAppTheme() {
         } else {
             document.documentElement.style.setProperty("--primary-gradient", themeConfig.value);
         }
+
         localStorage.setItem("app-theme-config", JSON.stringify(themeConfig));
     }, [themeConfig]);
 
@@ -29,7 +30,7 @@ function useAppTheme() {
 export default function ThemeCustomizer() {
     const [isOpen, setIsOpen] = useState(false);
     const [currentView, setCurrentView] = useState<'appearance' | 'themes'>('appearance');
-    const { theme, setThemeMode } = useTheme();
+    const { theme: _t, setThemeMode: _s } = useTheme();
     const { themeConfig, setThemeConfig } = useAppTheme();
     const sidebarRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -131,14 +132,15 @@ export default function ThemeCustomizer() {
         { id: "default", title: "Default", img: "/wallpapers/default.jpeg", isUpload: false },
         { id: "upload", title: "Upload an image", icon: <ImageIcon className="w-8 h-8 opacity-70" />, isUpload: true },
         { id: "solid", title: "Solid colours", color: "#B8A5D8", isUpload: false },
-        { id: "rising", title: "Rising artists", img: "/wallpapers/christian-boragine-w6UZD2RUq4o-unsplash.jpg", isUpload: false },
-        { id: "asian", title: "Asian and Pacific Islander artists", img: "/wallpapers/city-lights-through-rain-window.jpg", isUpload: false },
-        { id: "native", title: "Native American artists", img: "/wallpapers/doncoombez-OLv0kaeekGo-unsplash (1).jpg", isUpload: false },
-        { id: "lgbtq", title: "LGBTQ+ artists", img: "/wallpapers/evgeni-tcherkasski-kow5jLC9IPI-unsplash.jpg", isUpload: false },
-        { id: "latino", title: "Latino artists", img: "/wallpapers/kristaps-ungurs-MivRywDQOjs-unsplash.jpg", isUpload: false },
-        { id: "black", title: "Black artists", img: "/wallpapers/liana-s-BV9vbI8ZkZM-unsplash.jpg", isUpload: false },
-        { id: "landscapes", title: "Landscapes", img: "/wallpapers/nastia-petruk-FkM3BDS8F3E-unsplash.jpg", isUpload: false },
-        { id: "textures", title: "Textures", img: "/wallpapers/nguyen-vanh-1m8E6OTLzRk-unsplash.jpg", isUpload: false },
+        { id: "birdingo", title: "Birdingo", img: "/wallpapers/Birdingo.jpg", isUpload: false },
+        { id: "droplets", title: "Droplets", img: "/wallpapers/Droplets.jpg", isUpload: false },
+        { id: "flowers", title: "Flowers", img: "/wallpapers/Flowers.jpg", isUpload: false },
+        { id: "greenaven", title: "Greenaven", img: "/wallpapers/Greenaven.jpg", isUpload: false },
+        { id: "liana", title: "Liana", img: "/wallpapers/Liana.jpg", isUpload: false },
+        { id: "procks", title: "Procks", img: "/wallpapers/Procks.jpg", isUpload: false },
+        { id: "sflar", title: "Sflar", img: "/wallpapers/Sflar.jpg", isUpload: false },
+        { id: "slade", title: "Slade", img: "/wallpapers/Slade.jpg", isUpload: false },
+        { id: "stars", title: "Stars", img: "/wallpapers/Stars.jpg", isUpload: false },
     ];
 
     return (
@@ -246,43 +248,6 @@ export default function ThemeCustomizer() {
                                 </button>
                             </div>
 
-                            <div className="h-px w-full bg-slate-200 dark:bg-[#40485a]" />
-
-                            {/* Light/Dark Toggle */}
-                            <div className="flex bg-slate-100 dark:bg-[#0f172a] p-1 rounded-full border border-slate-200 dark:border-[#40485a]">
-                                <button
-                                    onClick={() => setThemeMode('light')}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-[13px] font-medium transition-all ${theme === 'light'
-                                        ? "bg-white dark:bg-[#8ab4f8] text-blue-600 dark:text-[#202124] shadow-sm"
-                                        : "text-slate-500 dark:text-[#e8eaed] hover:bg-black/5 dark:hover:bg-white/5"
-                                        }`}
-                                >
-                                    {theme === 'light' && <Check className="w-[16px] h-[16px] mr-[-4px]" strokeWidth={3} />}
-                                    <Sun className="w-[18px] h-[18px]" />
-                                    Light
-                                </button>
-                                <button
-                                    onClick={() => setThemeMode('dark')}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-[13px] font-medium transition-all ${theme === 'dark'
-                                        ? "bg-white dark:bg-[#8ab4f8] text-blue-600 dark:text-[#202124] shadow-sm"
-                                        : "text-slate-500 dark:text-[#e8eaed] hover:bg-black/5 dark:hover:bg-white/5"
-                                        }`}
-                                >
-                                    {theme === 'dark' && <Check className="w-[16px] h-[16px] mr-[-4px]" strokeWidth={3} />}
-                                    Dark
-                                </button>
-                                <button
-                                    onClick={() => setThemeMode('system')}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-[13px] font-medium transition-all ${theme === 'system'
-                                        ? "bg-white dark:bg-[#8ab4f8] text-blue-600 dark:text-[#202124] shadow-sm"
-                                        : "text-slate-500 dark:text-[#e8eaed] hover:bg-black/5 dark:hover:bg-white/5"
-                                        }`}
-                                >
-                                    {theme === 'system' && <Check className="w-[16px] h-[16px] mr-[-4px]" strokeWidth={3} />}
-                                    <Laptop className="w-[18px] h-[18px]" />
-                                    Device
-                                </button>
-                            </div>
 
                             {/* Colors Grid */}
                             <div className="grid grid-cols-4 gap-[10px]">
@@ -302,14 +267,14 @@ export default function ThemeCustomizer() {
 
                                 {/* Custom Color Button */}
                                 <button
-                                    onClick={() => setThemeConfig({ value: "/wallpapers/default.jpeg", type: "image" })}
-                                    className={`aspect-square rounded-[18px] flex items-center justify-center transition-all relative shadow-inner ${themeConfig.value === "/wallpapers/default.jpeg"
+                                    onClick={() => setThemeConfig({ value: "/wallpapers/default1.jpg", type: "image" })}
+                                    className={`aspect-square rounded-[18px] flex items-center justify-center transition-all relative shadow-inner ${themeConfig.value === "/wallpapers/default1.jpg"
                                         ? "bg-blue-600 dark:bg-[#125881]"
                                         : "bg-slate-50 dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-800"
                                         }`}
                                 >
-                                    <Edit2 className={`w-5 h-5 ${themeConfig.value === "/wallpapers/default.jpeg" ? "text-white" : "text-blue-500 dark:text-[#8ab4f8]"}`} strokeWidth={2.5} />
-                                    {themeConfig.value === "/wallpapers/default.jpeg" && (
+                                    <Edit2 className={`w-5 h-5 ${themeConfig.value === "/wallpapers/default1.jpg" ? "text-white" : "text-blue-500 dark:text-[#8ab4f8]"}`} strokeWidth={2.5} />
+                                    {themeConfig.value === "/wallpapers/default1.jpg" && (
                                         <div className="absolute top-1 right-1 bg-white text-[#125881] rounded-full p-0.5 shadow-md transform translate-x-1.5 -translate-y-1.5">
                                             <Check className="w-[9px] h-[9px]" strokeWidth={4} />
                                         </div>
@@ -321,7 +286,7 @@ export default function ThemeCustomizer() {
 
                             {/* Reset Button */}
                             <button
-                                onClick={() => setThemeConfig({ value: "/wallpapers/default.jpeg", type: "image" })}
+                                onClick={() => setThemeConfig({ value: "/wallpapers/default1.jpg", type: "image" })}
                                 className="w-full flex items-center justify-between py-3 px-1 text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors group"
                             >
                                 <span className="text-[13px] font-medium text-slate-700 dark:text-[#e8eaed]">Reset to default</span>

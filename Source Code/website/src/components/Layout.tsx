@@ -21,8 +21,8 @@ export default function Layout() {
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {/* Main Content Area - Adds padding around the edges to let the cards "float" */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden md:p-6 md:pl-0">
-        <div className="flex-1 overflow-hidden bg-transparent flex flex-col rounded-[2.5rem] relative">
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <div className="flex-1 overflow-hidden bg-transparent flex flex-col relative">
 
           {/* Mobile Header (Hidden on Desktop) */}
           <div className="md:hidden flex items-center justify-between p-4 premium-glass border-b-0 shrink-0 sticky top-0 z-10 m-2 rounded-2xl">
@@ -35,7 +35,7 @@ export default function Layout() {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto w-full h-full scrollbar-hide">
+          <div className="flex-1 overflow-y-auto w-full h-full">
             <Outlet />
           </div>
         </div>

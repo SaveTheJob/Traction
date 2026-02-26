@@ -3,14 +3,11 @@ import {
   KanbanSquare,
   LayoutDashboard,
   LogOut,
-  Moon,
-  Sun,
   Users,
   X,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useTheme } from "../context/ThemeContext";
 import Logo from "./Logo";
 
 interface SidebarProps {
@@ -21,7 +18,6 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const { theme, toggleTheme } = useTheme();
 
   const navItems = [
     { label: "Dashboard", path: "/", icon: LayoutDashboard },
@@ -77,54 +73,36 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             );
           })}
         </nav>
+      </div>
 
-        <div className="mt-auto flex flex-col gap-1 pt-6 before:content-[''] before:block before:h-px before:w-full before:bg-slate-300/50 dark:before:bg-slate-600/50 before:mb-6">
-          <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider uppercase mb-3 px-3">
-            System
-          </div>
-          <button
-            onClick={toggleTheme}
-            className="flex items-center gap-4 px-4 py-3 rounded-2xl text-[15px] font-medium text-slate-600 dark:text-slate-300 hover:bg-white/20 dark:hover:bg-black/20 hover:text-slate-900 dark:hover:text-white transition-all w-full text-left group"
+      {/* Account pod at the very bottom */}
+      <div className="p-4 mt-auto">
+        <div className="premium-engraved rounded-[2rem] p-4 flex flex-col gap-4">
+          <Link
+            to="/account"
+            className="flex items-center gap-3 cursor-pointer group"
           >
-            <div className="relative z-10 flex items-center justify-center w-8 h-8 rounded-full bg-transparent text-slate-500 dark:text-slate-400 group-hover:bg-white/50 group-hover:text-slate-800 dark:group-hover:bg-white/10 dark:group-hover:text-white transition-all shadow-sm">
-              {theme === "dark" ? (
-                <Sun className="w-[18px] h-[18px]" strokeWidth={2} />
-              ) : (
-                <Moon className="w-[18px] h-[18px]" strokeWidth={2} />
-              )}
+            <div className="w-10 h-10 rounded-full bg-slate-900 dark:bg-slate-700 flex items-center justify-center text-white font-bold text-sm shrink-0 uppercase shadow-inner group-hover:scale-105 transition-transform duration-300">
+              {user?.email ? user.email.charAt(0) : "U"}
             </div>
-            {theme === "dark" ? "Light Theme" : "Dark Theme"}
-          </button>
+            <div className="overflow-hidden">
+              <div className="text-[14px] font-bold text-slate-900 dark:text-slate-100 truncate">
+                {user?.displayName || "My Account"}
+              </div>
+              <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                {user?.email || "Manage settings"}
+              </div>
+            </div>
+          </Link>
 
           <button
             onClick={signOut}
-            className="flex items-center gap-4 px-4 py-3 rounded-2xl text-[15px] font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10 hover:text-red-700 dark:hover:text-red-300 transition-all w-full text-left group"
+            className="flex items-center gap-3 px-3 py-2 rounded-xl text-[12px] font-bold text-red-500/80 hover:text-red-500 hover:bg-red-500/10 transition-all w-full text-left group"
           >
-            <div className="relative z-10 flex items-center justify-center w-8 h-8 rounded-full bg-red-500/10 dark:bg-red-500/20 group-hover:bg-red-500/20 dark:group-hover:bg-red-500/30 transition-colors">
-              <LogOut className="w-[18px] h-[18px]" strokeWidth={2} />
-            </div>
+            <LogOut className="w-4 h-4" strokeWidth={2.5} />
             Sign Out
           </button>
         </div>
-      </div>
-
-      <div className="p-5 mx-5 mb-6 mt-2 rounded-2xl premium-glass-heavy shadow-lg">
-        <Link
-          to="/account"
-          className="flex items-center gap-3 cursor-pointer group"
-        >
-          <div className="w-10 h-10 rounded-full bg-slate-900 dark:bg-slate-700 flex items-center justify-center text-white font-bold text-sm shrink-0 uppercase shadow-inner group-hover:scale-105 transition-transform duration-300">
-            {user?.email ? user.email.charAt(0) : "U"}
-          </div>
-          <div className="overflow-hidden">
-            <div className="text-[14px] font-semibold text-slate-900 dark:text-slate-100 truncate">
-              {user?.displayName || "My Account"}
-            </div>
-            <div className="text-[12px] font-medium text-slate-400 truncate mt-0.5">
-              {user?.email || "Manage settings"}
-            </div>
-          </div>
-        </Link>
       </div>
     </div>
   );

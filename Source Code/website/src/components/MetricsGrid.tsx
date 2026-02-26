@@ -14,11 +14,11 @@ interface MetricsGridProps {
 
 export default function MetricsGrid({ metrics }: MetricsGridProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 lg:gap-10">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
       {metrics.map((metric, idx) => (
         <div
           key={idx}
-          className="premium-glass rounded-[2rem] p-6 md:p-8 relative group overflow-hidden shadow-xl"
+          className="premium-glass rounded-[2rem] p-10 relative group overflow-hidden shadow-xl"
           style={{
             animationDelay: `${idx * 0.15}s`,
             perspective: "1000px",
@@ -29,7 +29,8 @@ export default function MetricsGrid({ metrics }: MetricsGridProps) {
 
           <div className="flex items-center justify-between relative z-10">
             <div>
-              <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              <p className="text-sm font-semibold text-gray-500 dark:text-slate-300 uppercase tracking-wide">
+
                 {metric.label}
               </p>
               <p className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-gray-900 via-gray-700 to-gray-500 dark:from-white dark:via-gray-200 dark:to-gray-500 mt-2 tracking-tight drop-shadow-sm">
