@@ -1,4 +1,5 @@
 import {
+  Activity,
   Download,
   Edit2,
   FileSpreadsheet,
@@ -49,7 +50,7 @@ export default function Dashboard() {
   const metrics = [
     { label: "Total Applications", value: totalApplications.toString(), icon: FileText, change: "All time", trend: "neutral" },
     { label: "Interviews", value: interviewCount.toString(), icon: UserCheck, change: "Lined up", trend: "neutral" },
-    { label: "Active Leads", value: activeLeads.toString(), icon: UserCheck, change: "In progress", trend: "neutral" },
+    { label: "Active Leads", value: activeLeads.toString(), icon: Activity, change: "In progress", trend: "neutral" },
   ];
 
   const urgentActions = [
@@ -347,11 +348,11 @@ export default function Dashboard() {
             className="w-16 h-16 object-contain drop-shadow-md pb-1"
           />
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+            <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-1">
               Welcome back, {firstName}!
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1.5 text-sm font-medium">
-              Here is your application overview.
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-widest opacity-80">
+              Station Overview: Active Control Hub
             </p>
           </div>
         </div>
@@ -361,10 +362,10 @@ export default function Dashboard() {
           <div className="relative" ref={exportMenuRef}>
             <button
               onClick={() => setShowExportMenu((p) => !p)}
-              className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-full font-semibold text-sm transition-all shadow-sm flex items-center gap-2 shrink-0"
+              className="border border-white/20 dark:border-white/10 bg-white/40 dark:bg-black/20 hover:bg-white/60 dark:hover:bg-black/40 text-slate-700 dark:text-slate-200 px-5 py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-lg flex items-center gap-2 shrink-0 group active:scale-95"
             >
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Export</span>
+              <Download className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
+              <span className="hidden sm:inline">Export Data</span>
             </button>
 
             {showExportMenu && (
@@ -401,9 +402,9 @@ export default function Dashboard() {
 
           <button
             onClick={() => openModal()}
-            className="bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-slate-900 px-6 py-2.5 rounded-full font-semibold text-sm transition-all shadow-md hover:shadow-lg flex items-center gap-2 shrink-0"
+            className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-7 py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-xl shadow-blue-500/20 hover:shadow-blue-500/40 flex items-center gap-2 shrink-0 active:scale-95"
           >
-            <Plus className="w-4 h-4" />{" "}
+            <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">New Application</span>
           </button>
         </div>
@@ -412,22 +413,25 @@ export default function Dashboard() {
       {/* Metrics Grid */}
       <MetricsGrid metrics={metrics} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 gap-y-6 md:gap-y-8 pb-12">
-        {/* Recent Activity Table */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 pb-2">
-            <h2 className="text-[17px] font-bold text-slate-900 dark:text-white tracking-wide">
-              Your Applications
+      {/* Recent Activity Table */}
+      <div className="lg:col-span-9 space-y-6 flex flex-col h-full">
+        <div className="premium-glass rounded-3xl border border-white/30 dark:border-white/5 overflow-hidden shadow-2xl relative flex-1">
+          <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent dark:from-white/5 dark:to-transparent pointer-events-none" />
+
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-5 border-b border-white/10 dark:border-white/5 relative z-10 bg-white/30 dark:bg-black/20 backdrop-blur-md">
+            <h2 className="text-[14px] font-black text-slate-900 dark:text-white tracking-widest uppercase flex items-center gap-2">
+              <span className="w-1.5 h-4 bg-blue-600 dark:bg-blue-500 rounded-full" />
+              Active Tracklist
             </h2>
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <div className="relative flex-1 sm:w-56">
                 <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Search..."
+                  placeholder="SEARCH APPLICATIONS..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-11 pr-4 py-2 text-sm border border-slate-200 dark:border-slate-700/50 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400"
+                  className="w-full pl-11 pr-4 py-2.5 text-[11px] border border-white/20 dark:border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all bg-white/40 dark:bg-black/20 text-slate-900 dark:text-white placeholder-slate-400 font-black tracking-widest shadow-inner uppercase"
                 />
               </div>
               <div className="relative">
@@ -435,118 +439,118 @@ export default function Dashboard() {
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="pl-11 pr-10 py-2 text-sm border border-slate-200 dark:border-slate-700/50 rounded-full appearance-none bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer font-medium"
+                  className="pl-11 pr-10 py-2.5 text-[11px] border border-white/20 dark:border-white/10 rounded-2xl appearance-none bg-white/40 dark:bg-black/20 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer font-black tracking-widest uppercase shadow-inner"
                 >
-                  <option value="All">All Statuses</option>
-                  <option value="Wishlist">Wishlist</option>
-                  <option value="Applied">Applied</option>
-                  <option value="Interviewing">Interviewing</option>
-                  <option value="Offer">Offer</option>
-                  <option value="Rejected">Rejected</option>
+                  <option value="All">ALL STATUS</option>
+                  <option value="Wishlist">WISHLIST</option>
+                  <option value="Applied">APPLIED</option>
+                  <option value="Interviewing">INTERVIEWING</option>
+                  <option value="Offer">OFFER</option>
+                  <option value="Rejected">REJECTED</option>
                 </select>
               </div>
             </div>
           </div>
-          <div className="premium-glass overflow-hidden shadow-2xl rounded-[2rem]">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-white/20 dark:border-white/10 bg-white/20 dark:bg-black/20 backdrop-blur-md">
-                    <th className="px-8 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest pl-8">
-                      Company &amp; Role
-                    </th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                      Status
-                    </th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                      Applied
-                    </th>
-                    <th className="px-8 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right pr-8">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
-                  {displayJobs.length > 0 ? (
-                    displayJobs.map((activity, idx) => (
-                      <tr
-                        key={idx}
-                        className="hover:bg-white/40 dark:hover:bg-white/10 transition-colors group relative"
-                      >
-                        <td className="px-8 py-5">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full premium-glass-heavy text-slate-800 dark:text-white flex items-center justify-center flex-shrink-0 font-bold text-lg shadow-inner">
-                              {activity.company.charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                              <p className="text-[15px] font-bold text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors tracking-tight">
-                                {activity.link ? (
-                                  <a
-                                    href={activity.link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="hover:underline"
-                                  >
-                                    {activity.company}
-                                  </a>
-                                ) : (
-                                  activity.company
-                                )}
-                              </p>
-                              <p className="text-[13px] text-slate-500 mt-0.5 font-medium">
-                                {activity.title}
-                                {activity.location ? ` • ${activity.location}` : ""}
-                              </p>
-                            </div>
+          <div className="overflow-x-auto relative z-10">
+            <table className="w-full text-left border-collapse min-w-[800px]">
+              <thead>
+                <tr className="border-b border-white/20 dark:border-white/10 bg-white/20 dark:bg-black/20 backdrop-blur-md">
+                  <th className="px-8 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest pl-8">
+                    Company &amp; Role
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                    Applied
+                  </th>
+                  <th className="px-8 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right pr-8">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+                {displayJobs.length > 0 ? (
+                  displayJobs.map((activity, idx) => (
+                    <tr
+                      key={idx}
+                      className="hover:bg-white/40 dark:hover:bg-white/10 transition-colors group relative"
+                    >
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full premium-glass-heavy text-slate-800 dark:text-white flex items-center justify-center flex-shrink-0 font-bold text-lg shadow-inner">
+                            {activity.company.charAt(0).toUpperCase()}
                           </div>
-                        </td>
-                        <td className="px-6 py-5 whitespace-nowrap">
-                          <StatusBadge status={activity.status} />
-                        </td>
-                        <td className="px-6 py-5 whitespace-nowrap">
-                          <p className="text-[14px] text-slate-600 dark:text-slate-400 font-medium">
-                            {activity.dateApplied}
-                          </p>
-                        </td>
-                        <td className="px-8 py-5 whitespace-nowrap text-right pr-8">
-                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={() => openModal(activity.id)}
-                              className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full transition-colors"
-                              title="Edit"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(activity.id)}
-                              className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                          <div>
+                            <p className="text-[15px] font-bold text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors tracking-tight">
+                              {activity.link ? (
+                                <a
+                                  href={activity.link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="hover:underline"
+                                >
+                                  {activity.company}
+                                </a>
+                              ) : (
+                                activity.company
+                              )}
+                            </p>
+                            <p className="text-[13px] text-slate-500 dark:text-slate-300 mt-0.5 font-medium">
+                              {activity.title}
+                              {activity.location ? ` • ${activity.location}` : ""}
+                            </p>
                           </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={4}>
-                        <div className="text-center py-20 m-6 border-dashed border-2 border-white/40 dark:border-white/20 rounded-2xl bg-white/10 dark:bg-black/10">
-                          <p className="text-[15px] font-bold text-slate-400 dark:text-slate-500">
-                            No applications found.
-                          </p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 whitespace-nowrap">
+                        <StatusBadge status={activity.status} />
+                      </td>
+                      <td className="px-6 py-5 whitespace-nowrap">
+                        <p className="text-[14px] text-slate-600 dark:text-slate-300 font-medium">
+                          {activity.dateApplied}
+                        </p>
+                      </td>
+                      <td className="px-8 py-5 whitespace-nowrap text-right pr-8">
+                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => openModal(activity.id)}
+                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full transition-colors"
+                            title="Edit"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(activity.id)}
+                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </td>
                     </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4}>
+                      <div className="text-center py-20 m-6 border-dashed border-2 border-white/40 dark:border-white/20 rounded-2xl bg-white/10 dark:bg-black/10">
+                        <p className="text-[15px] font-bold text-slate-400 dark:text-slate-500">
+                          No applications found.
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        {/* Urgent Actions Section */}
-        <UrgentActions actions={urgentActions} />
+        {/* Right Column: Urgent Actions */}
+        <div className="lg:col-span-3 h-full">
+          <UrgentActions actions={urgentActions} />
+        </div>
       </div>
     </div>
   );

@@ -53,25 +53,25 @@ export default function Network() {
         </div>
       </div>
 
-      <div className="glass rounded-3xl border border-white/40 dark:border-white/5 overflow-hidden shadow-2xl ring-1 ring-white/10 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-white/40 to-white/0 dark:from-white/5 dark:to-transparent pointer-events-none" />
+      <div className="premium-glass rounded-3xl border border-white/30 dark:border-white/5 overflow-hidden shadow-2xl relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent dark:from-white/5 dark:to-transparent pointer-events-none" />
         <div className="overflow-x-auto relative z-10">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-white/20 dark:border-white/5 bg-white/30 dark:bg-white/5">
-                <th className="px-6 py-5 text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest bg-transparent">
+              <tr className="border-b border-white/10 dark:border-white/5 bg-white/40 dark:bg-black/40">
+                <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-transparent">
                   Contact
                 </th>
-                <th className="px-6 py-5 text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest bg-transparent">
+                <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-transparent">
                   Company & Role
                 </th>
-                <th className="px-6 py-5 text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest bg-transparent">
+                <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-transparent">
                   Status
                 </th>
-                <th className="px-6 py-5 text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest bg-transparent">
-                  Last Contacted
+                <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-transparent">
+                  Last Contact
                 </th>
-                <th className="px-6 py-5 text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest text-right bg-transparent">
+                <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right bg-transparent">
                   Actions
                 </th>
               </tr>
@@ -81,15 +81,15 @@ export default function Network() {
                 filteredNetwork.map((contact) => (
                   <tr
                     key={contact.id}
-                    className="hover:bg-white/40 dark:hover:bg-white/5 transition-all duration-200 group relative"
+                    className="hover:bg-white/60 dark:hover:bg-white/5 transition-all duration-300 group relative border-b border-white/5 dark:border-white/5 last:border-0"
                   >
                     <td className="px-6 py-5 whitespace-nowrap">
                       <div className="flex items-center gap-4">
-                        <div className="icon-3d-container w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/40 dark:to-slate-900 border border-white/50 dark:border-white/10 shadow-inner flex items-center justify-center text-blue-600 dark:text-blue-400 font-black text-lg group-hover:scale-110 transition-transform duration-300">
+                        <div className="icon-3d-container w-11 h-11 rounded-xl bg-white dark:bg-slate-800 border border-white/50 dark:border-white/10 shadow-lg flex items-center justify-center text-blue-600 dark:text-blue-400 font-black text-base group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
                           {contact.name.charAt(0)}
                         </div>
                         <div className="flex-1">
-                          <div className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors text-base">
+                          <div className="font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors text-[15px]">
                             {contact.name}
                           </div>
                           {contact.email && (
@@ -105,8 +105,8 @@ export default function Network() {
                             </button>
                           )}
                           {contact.notes && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic line-clamp-1 border-l-2 border-blue-200 dark:border-blue-800 pl-2 opacity-80 group-hover:opacity-100 transition-opacity">
-                              "{contact.notes}"
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 italic line-clamp-1 border-l-2 border-blue-400/30 pl-2 opacity-80 group-hover:opacity-100 transition-opacity font-medium">
+                              {contact.notes}
                             </div>
                           )}
                         </div>
@@ -137,7 +137,7 @@ export default function Network() {
                         {contact.email && (
                           <button
                             onClick={(e) => handleCopyEmail(e, contact.email!)}
-                            className="p-2 text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-xl transition-all inline-flex border-none bg-transparent cursor-pointer hover:shadow-sm"
+                            className="p-2 text-slate-400 hover:text-green-500 dark:hover:text-green-400 hover:bg-green-500/10 rounded-xl transition-all inline-flex bg-transparent cursor-pointer border-none"
                             title="Copy email to clipboard"
                           >
                             <Copy className="w-4 h-4" />

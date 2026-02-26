@@ -31,7 +31,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       className={`fixed inset-y-0 left-0 z-40 w-72 premium-glass transition-transform duration-300 ease-in-out md:static md:translate-x-0 flex flex-col h-screen shrink-0 border-r border-white/20 dark:border-white/10 ${isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
         }`}
     >
-      {/* Logo */}
       <div className="p-8 flex items-center justify-between shrink-0">
         <Logo className="h-9" />
         <button
@@ -42,7 +41,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </button>
       </div>
 
-      {/* Nav */}
       <div className="flex-1 px-5 py-6 overflow-y-auto scrollbar-hide flex flex-col gap-2">
         <div className="text-xs font-semibold text-gray-400 dark:text-gray-500 tracking-wider uppercase mb-4 px-3">
           Menu
@@ -75,37 +73,36 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             );
           })}
         </nav>
-
-        {/* Sign Out */}
-        <button
-          onClick={signOut}
-          className="mt-auto flex items-center gap-4 px-4 py-3 rounded-2xl text-[15px] font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10 hover:text-red-700 dark:hover:text-red-300 transition-all w-full text-left group"
-        >
-          <div className="relative z-10 flex items-center justify-center w-8 h-8 rounded-full bg-red-500/10 dark:bg-red-500/20 group-hover:bg-red-500/20 dark:group-hover:bg-red-500/30 transition-colors">
-            <LogOut className="w-[18px] h-[18px]" strokeWidth={2} />
-          </div>
-          Sign Out
-        </button>
       </div>
 
-      {/* Account card */}
-      <div className="p-5 mx-5 mb-6 mt-2 rounded-2xl premium-glass-heavy shadow-lg">
-        <Link
-          to="/account"
-          className="flex items-center gap-3 cursor-pointer group"
-        >
-          <div className="w-10 h-10 rounded-full bg-slate-900 dark:bg-slate-700 flex items-center justify-center text-white font-bold text-sm shrink-0 uppercase shadow-inner group-hover:scale-105 transition-transform duration-300">
-            {user?.email ? user.email.charAt(0) : "U"}
-          </div>
-          <div className="overflow-hidden">
-            <div className="text-[14px] font-semibold text-slate-900 dark:text-slate-100 truncate">
-              {user?.displayName || "My Account"}
+      {/* Account pod at the very bottom */}
+      <div className="p-4 mt-auto">
+        <div className="premium-engraved rounded-[2rem] p-4 flex flex-col gap-4">
+          <Link
+            to="/account"
+            className="flex items-center gap-3 cursor-pointer group"
+          >
+            <div className="w-10 h-10 rounded-full bg-slate-900 dark:bg-slate-700 flex items-center justify-center text-white font-bold text-sm shrink-0 uppercase shadow-inner group-hover:scale-105 transition-transform duration-300">
+              {user?.email ? user.email.charAt(0) : "U"}
             </div>
-            <div className="text-[12px] font-medium text-slate-400 truncate mt-0.5">
-              {user?.email || "Manage settings"}
+            <div className="overflow-hidden">
+              <div className="text-[14px] font-bold text-slate-900 dark:text-slate-100 truncate">
+                {user?.displayName || "My Account"}
+              </div>
+              <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                {user?.email || "Manage settings"}
+              </div>
             </div>
-          </div>
-        </Link>
+          </Link>
+
+          <button
+            onClick={signOut}
+            className="flex items-center gap-3 px-3 py-2 rounded-xl text-[12px] font-bold text-red-500/80 hover:text-red-500 hover:bg-red-500/10 transition-all w-full text-left group"
+          >
+            <LogOut className="w-4 h-4" strokeWidth={2.5} />
+            Sign Out
+          </button>
+        </div>
       </div>
     </div>
   );

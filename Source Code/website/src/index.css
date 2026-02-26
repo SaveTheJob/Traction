@@ -5,7 +5,7 @@
 
 body {
   font-family: "Inter", system-ui, sans-serif;
-  background: var(--primary-gradient, linear-gradient(-45deg, #e0e7ff, #f3e8ff, #fbcfe8, #dbeafe));
+  background: var(--primary-gradient, linear-gradient(-45deg, #f8fafc, #f1f5f9, #e2e8f0, #f8fafc));
   background-size: cover;
   background-attachment: fixed;
   background-position: center;
@@ -18,8 +18,12 @@ body {
 
 
 
+
+
+
+
 .dark body {
-  background: var(--primary-gradient, linear-gradient(-45deg, #020617, #0f172a, #1e1b4b, #020617));
+  background: var(--primary-gradient, linear-gradient(-45deg, #020617, #0f172a, #020617, #020617));
   background-size: cover;
   background-attachment: fixed;
   background-position: center;
@@ -50,20 +54,20 @@ h6 {
 
 /* Premium Glass Utilities */
 .premium-glass {
-  background: rgba(255, 255, 255, 0.40);
-  backdrop-filter: blur(24px) saturate(200%);
-  -webkit-backdrop-filter: blur(24px) saturate(200%);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dark .premium-glass {
-  background: rgba(15, 23, 42, 0.3);
-  backdrop-filter: blur(24px) saturate(200%);
-  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.05), 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 32px 0 rgba(0, 0, 0, 0.4);
 }
 
 .premium-glass:hover {
@@ -72,8 +76,9 @@ h6 {
 }
 
 .dark .premium-glass:hover {
-  background: rgba(15, 23, 42, 0.4);
-  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.1), 0 12px 40px 0 rgba(0, 0, 0, 0.4);
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 12px 40px 0 rgba(0, 0, 0, 0.3);
 }
 
 /* Heavy version for deeper contrast */
@@ -87,9 +92,23 @@ h6 {
 }
 
 .dark .premium-glass-heavy {
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(15, 23, 42, 0.75);
   backdrop-filter: blur(32px) saturate(200%);
   -webkit-backdrop-filter: blur(32px) saturate(200%);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.08), 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 48px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* 3D Engraved Effect - Deeper and more realistic */
+.premium-engraved {
+  background: rgba(0, 0, 0, 0.1);
+  box-shadow:
+    inset 0 4px 12px rgba(0, 0, 0, 0.5),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05),
+    0 1px 0 rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.dark .premium-engraved {
+  background: rgba(0, 0, 0, 0.25);
 }
