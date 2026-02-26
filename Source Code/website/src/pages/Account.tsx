@@ -114,6 +114,29 @@ export default function Account() {
                   value={user?.email || "No email attached"}
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center justify-between">
+                  <span>User ID (UID)</span>
+                  <span className="text-[10px] bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">For Extension Link</span>
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-md text-gray-500 dark:text-gray-400 cursor-text text-sm font-mono"
+                    value={user?.uid || ""}
+                  />
+                  <button
+                    onClick={() => {
+                      if (user?.uid) navigator.clipboard.writeText(user.uid);
+                      alert("UID copied to clipboard!");
+                    }}
+                    className="px-3 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-md transition-colors text-sm font-medium"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 

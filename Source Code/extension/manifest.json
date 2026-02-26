@@ -3,7 +3,12 @@
   "name": "Traction",
   "version": "1.0",
   "description": "Save jobs directly from LinkedIn, Handshake, and company websites into your Traction Dashboard.",
-  "permissions": ["activeTab", "scripting", "storage", "identity"],
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "identity"
+  ],
   "oauth2": {
     "client_id": "27606484237-b8qv20dk4v23aiivh7gdo6q8o7rf71bu.apps.googleusercontent.com",
     "scopes": [
@@ -11,7 +16,9 @@
       "https://www.googleapis.com/auth/userinfo.profile"
     ]
   },
-  "host_permissions": ["<all_urls>"],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_title": "Traction",
@@ -31,9 +38,30 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "css": ["css/content.css"],
-      "js": ["content.js"]
+      "matches": [
+        "<all_urls>"
+      ],
+      "css": [
+        "css/content.css"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "popup.html",
+        "popup.js",
+        "config.js",
+        "firebase-app-compat.js",
+        "firebase-auth-compat.js",
+        "firebase-firestore-compat.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ],
   "content_security_policy": {

@@ -22,6 +22,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
+
   const navItems = [
     { label: "Dashboard", path: "/", icon: LayoutDashboard },
     { label: "Pipeline", path: "/pipeline", icon: KanbanSquare },
@@ -31,80 +32,99 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <div
-      className={`fixed inset-y-0 left-0 z-40 w-64 backdrop-blur-xl bg-white/70 dark:bg-gray-900/80 border-r border-white/20 dark:border-white/10 shadow-lg transition-transform duration-300 ease-in-out md:static md:translate-x-0 flex flex-col h-screen shrink-0 ${
-        isOpen ? "translate-x-0" : "-translate-x-full"
-      }`}
+      className={`fixed inset-y-0 left-0 z-40 w-72 premium-glass transition-transform duration-300 ease-in-out md:static md:translate-x-0 flex flex-col h-screen shrink-0 border-r border-white/20 dark:border-white/10 ${isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
+        }`}
     >
-      <div className="p-6 flex items-center justify-between">
-        <Logo className="h-8" />
+      <div className="p-8 flex items-center justify-between shrink-0">
+        <Logo className="h-9" />
         <button
           onClick={onClose}
-          className="md:hidden p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-transform hover:rotate-90"
+          className="md:hidden p-2 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors premium-glass rounded-full shadow-sm"
         >
           <X className="w-5 h-5" />
         </button>
       </div>
-      <nav className="flex-1 px-4 space-y-1 mt-2">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.label}
-              to={item.path}
-              onClick={() => onClose && onClose()}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${
-                isActive
-                  ? "bg-gradient-to-r from-blue-500/10 to-blue-600/5 text-blue-700 dark:text-blue-400 shadow-sm border border-blue-100/50 dark:border-blue-500/10"
-                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-50/50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white hover:translate-x-1"
-              }`}
-            >
-              <Icon
-                className={`w-5 h-5 transition-colors ${
-                  isActive
-                    ? "text-blue-700 dark:text-blue-400"
-                    : "text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300"
-                }`}
-              />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-      <div className="p-4 border-t border-gray-200/50 dark:border-white/10">
-        <div className="flex flex-col gap-2">
+
+      <div className="flex-1 px-5 py-6 overflow-y-auto scrollbar-hide flex flex-col gap-2">
+        <div className="text-xs font-semibold text-gray-400 dark:text-gray-500 tracking-wider uppercase mb-4 px-3">
+          Menu
+        </div>
+        <nav className="space-y-1.5 flex-1">
+          {navItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.label}
+                to={item.path}
+                onClick={() => onClose && onClose()}
+                className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl text-[15px] font-medium transition-all duration-300 group relative overflow-hidden ${isActive
+                  ? "text-white shadow-lg shadow-blue-500/20"
+                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/20 dark:hover:bg-black/20"
+                  }`}
+              >
+                {isActive && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600/90 to-indigo-600/90 dark:from-blue-500/80 dark:to-indigo-500/80 rounded-2xl -z-10 transition-all duration-300 backdrop-blur-md border border-white/20" />
+                )}
+                <div className={`flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 ${isActive
+                  ? "bg-white/20 text-white shadow-inner"
+                  : "bg-transparent text-slate-500 dark:text-slate-400 group-hover:bg-white/50 group-hover:text-slate-800 dark:group-hover:bg-white/10 dark:group-hover:text-white group-hover:shadow-sm"
+                  }`}>
+                  <Icon className="w-[18px] h-[18px]" strokeWidth={isActive ? 2.5 : 2} />
+                </div>
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="mt-auto flex flex-col gap-1 pt-6 before:content-[''] before:block before:h-px before:w-full before:bg-slate-300/50 dark:before:bg-slate-600/50 before:mb-6">
+          <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider uppercase mb-3 px-3">
+            System
+          </div>
           <button
             onClick={toggleTheme}
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors w-full text-left cursor-pointer"
+            className="flex items-center gap-4 px-4 py-3 rounded-2xl text-[15px] font-medium text-slate-600 dark:text-slate-300 hover:bg-white/20 dark:hover:bg-black/20 hover:text-slate-900 dark:hover:text-white transition-all w-full text-left group"
           >
-            {theme === "dark" ? (
-              <Sun className="w-4 h-4" />
-            ) : (
-              <Moon className="w-4 h-4" />
-            )}
-            {theme === "dark" ? "Light Mode" : "Dark Mode"}
-          </button>
-          <Link
-            to="/account"
-            className="flex items-center gap-3 px-2 py-2 hover:bg-gray-50/50 dark:hover:bg-white/5 rounded-xl cursor-pointer transition-colors block group"
-          >
-            <div className="flex items-center gap-3 w-full">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm shrink-0 uppercase shadow-md group-hover:scale-105 transition-transform">
-                {user?.email ? user.email.charAt(0) : "U"}
-              </div>
-              <div className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate block">
-                {user?.displayName || user?.email || "User"}
-              </div>
+            <div className="relative z-10 flex items-center justify-center w-8 h-8 rounded-full bg-transparent text-slate-500 dark:text-slate-400 group-hover:bg-white/50 group-hover:text-slate-800 dark:group-hover:bg-white/10 dark:group-hover:text-white transition-all shadow-sm">
+              {theme === "dark" ? (
+                <Sun className="w-[18px] h-[18px]" strokeWidth={2} />
+              ) : (
+                <Moon className="w-[18px] h-[18px]" strokeWidth={2} />
+              )}
             </div>
-          </Link>
+            {theme === "dark" ? "Light Theme" : "Dark Theme"}
+          </button>
+
           <button
             onClick={signOut}
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50/50 dark:hover:bg-red-900/20 transition-colors w-full text-left cursor-pointer"
+            className="flex items-center gap-4 px-4 py-3 rounded-2xl text-[15px] font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10 hover:text-red-700 dark:hover:text-red-300 transition-all w-full text-left group"
           >
-            <LogOut className="w-4 h-4" />
-            Sign out
+            <div className="relative z-10 flex items-center justify-center w-8 h-8 rounded-full bg-red-500/10 dark:bg-red-500/20 group-hover:bg-red-500/20 dark:group-hover:bg-red-500/30 transition-colors">
+              <LogOut className="w-[18px] h-[18px]" strokeWidth={2} />
+            </div>
+            Sign Out
           </button>
         </div>
+      </div>
+
+      <div className="p-5 mx-5 mb-6 mt-2 rounded-2xl premium-glass-heavy shadow-lg">
+        <Link
+          to="/account"
+          className="flex items-center gap-3 cursor-pointer group"
+        >
+          <div className="w-10 h-10 rounded-full bg-slate-900 dark:bg-slate-700 flex items-center justify-center text-white font-bold text-sm shrink-0 uppercase shadow-inner group-hover:scale-105 transition-transform duration-300">
+            {user?.email ? user.email.charAt(0) : "U"}
+          </div>
+          <div className="overflow-hidden">
+            <div className="text-[14px] font-semibold text-slate-900 dark:text-slate-100 truncate">
+              {user?.displayName || "My Account"}
+            </div>
+            <div className="text-[12px] font-medium text-slate-400 truncate mt-0.5">
+              {user?.email || "Manage settings"}
+            </div>
+          </div>
+        </Link>
       </div>
     </div>
   );

@@ -62,6 +62,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
+let popupIframe = null;
+
 function createSaveButton() {
   // Check if we have job details first
   const jobData = getJobDetails();
@@ -79,16 +81,44 @@ function createSaveButton() {
 
   btn.onclick = (e) => {
     e.stopPropagation();
-    // Option 1: Open the popup window manually
-    const width = 400;
-    const height = 600;
-    const left = window.screen.width / 2 - width / 2;
-    const top = window.screen.height / 2 - height / 2;
 
-    // We use a postMessage approach to tell the background script to open the window properly
-    // Or simply open it here using window.open if it's allowed
-    chrome.runtime.sendMessage({ action: "openPopup" });
+    if (popupIframe) {
+      if (popupIframe.classList.contains('show')) {
+        popupIframe.classList.remove('show');
+      } else {
+        popupIframe.classList.add('show');
+      }
+    } else {
+      popupIframe = document.createElement("iframe");
+      popupIframe.id = "traction-popup-iframe";
+      popupIframe.className = "traction-popup-iframe";
+      popupIframe.src = chrome.runtime.getURL("popup.html?isIframe=true");
+      // Allow it to have camera access or whatever is needed later
+      popupIframe.setAttribute("allow", "clipboard-write");
+
+      document.body.appendChild(popupIframe);
+
+      // Trigger animation next frame
+      requestAnimationFrame(() => {
+        popupIframe.classList.add('show');
+      });
+    }
   };
+
+  // Close popup if clicking outside
+  document.addEventListener("click", (e) => {
+    // Only close if the click is outside both the button and the iframe
+    if (popupIframe && popupIframe.classList.contains('show') && !btn.contains(e.target)) {
+      popupIframe.classList.remove('show');
+    }
+  });
+
+  // Listen for close message from iframe
+  window.addEventListener("message", (event) => {
+    if (event.data === "closeTractionPopup" && popupIframe) {
+      popupIframe.classList.remove('show');
+    }
+  });
 
   document.body.appendChild(btn);
 }
@@ -133,7 +163,7 @@ function extractJobMetadata() {
           if (jobData.title && jobData.company) return jobData;
         }
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // 2. Meta Tag Fallback

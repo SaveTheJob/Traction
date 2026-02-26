@@ -76,24 +76,58 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnAuthSubmit = document.getElementById("btn-auth-submit");
   const btnGoogle = document.getElementById("btn-google");
   const authToggle = document.getElementById("auth-toggle");
+  const btnUidSubmit = document.getElementById("btn-uid-submit");
+  const uidInput = document.getElementById("auth-uid");
 
   let isSignUp = false;
+  let manualUid = null; // Store for manual bypass
   const auth = firebase.auth();
   const db = firebase.firestore();
+
+  // Check storage first for manual UID
+  chrome.storage.local.get(["manualUid"], (result) => {
+    if (result.manualUid) {
+      manualUid = result.manualUid;
+      showMainView();
+    }
+  });
+
+  function showMainView() {
+    authView.classList.add("hidden");
+    mainView.classList.remove("hidden");
+    successView.classList.add("hidden");
+    scrapePage();
+  }
+
+  function showAuthView() {
+    authView.classList.remove("hidden");
+    mainView.classList.add("hidden");
+    successView.classList.add("hidden");
+  }
 
   // Listen for auth state changes
   auth.onAuthStateChanged((user) => {
     if (user && !user.isAnonymous) {
-      authView.classList.add("hidden");
-      mainView.classList.remove("hidden");
-      successView.classList.add("hidden");
-      scrapePage();
-    } else {
-      authView.classList.remove("hidden");
-      mainView.classList.add("hidden");
-      successView.classList.add("hidden");
+      showMainView();
+    } else if (!manualUid) {
+      showAuthView();
     }
   });
+
+  // Manual UID Flow
+  if (btnUidSubmit) {
+    btnUidSubmit.addEventListener("click", () => {
+      const uid = uidInput.value.trim();
+      if (!uid) {
+        showAuthError("Please paste a valid UID from your Account settings");
+        return;
+      }
+      chrome.storage.local.set({ manualUid: uid }, () => {
+        manualUid = uid;
+        showMainView();
+      });
+    });
+  }
 
   // Toggle between Sign In and Sign Up
   authToggle.addEventListener("click", () => {
@@ -170,7 +204,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // Handle Logout
   logoutBtn.addEventListener("click", async () => {
     try {
+      manualUid = null;
+      chrome.storage.local.remove(["manualUid"]);
       await auth.signOut();
+      showAuthView();
     } catch (err) {
       console.error("Logout error:", err);
     }
@@ -200,40 +237,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function performScrape(activeTab) {
     if (activeTab && activeTab.id) {
-      // Execute the scraper in the context of the webpage
-      chrome.scripting.executeScript(
-        {
-          target: { tabId: activeTab.id },
-          files: ["content.js"],
-        },
-        () => {
-          // Send message to the scraper
-          chrome.tabs.sendMessage(
-            activeTab.id,
-            { action: "scrapeJob" },
-            (response) => {
-              if (chrome.runtime.lastError) {
-                console.warn(
-                  "Could not scrape page (maybe it's a restricted Chrome URL?). Defaulting to empty.",
-                  chrome.runtime.lastError.message,
-                );
-                titleInput.value = activeTab.title || "";
-                linkInput.value = activeTab.url || "";
-                return;
-              }
+      // The content script is already injected via manifest.json on <all_urls>.
+      // We just send the message to the active tab.
+      chrome.tabs.sendMessage(
+        activeTab.id,
+        { action: "scrapeJob" },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            console.warn(
+              "Could not scrape page (maybe it's a restricted Chrome URL?). Defaulting to empty.",
+              chrome.runtime.lastError.message,
+            );
+            titleInput.value = activeTab.title || "";
+            linkInput.value = activeTab.url || "";
+            return;
+          }
 
-              if (response) {
-                // Pre-fill fields
-                titleInput.value = response.title || activeTab.title || "";
-                companyInput.value = response.company || "";
-                locationInput.value = response.location || "";
-                linkInput.value = response.url || activeTab.url || "";
-              } else {
-                titleInput.value = activeTab.title || "";
-                linkInput.value = activeTab.url || "";
-              }
-            },
-          );
+          if (response) {
+            // Pre-fill fields
+            titleInput.value = response.title || activeTab.title || "";
+            companyInput.value = response.company || "";
+            locationInput.value = response.location || "";
+            linkInput.value = response.url || activeTab.url || "";
+          } else {
+            titleInput.value = activeTab.title || "";
+            linkInput.value = activeTab.url || "";
+          }
         },
       );
     }
@@ -248,7 +277,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const user = auth.currentUser;
-    if (!user || user.isAnonymous) {
+    const activeUserId = manualUid || (user && !user.isAnonymous ? user.uid : null);
+
+    if (!activeUserId) {
       showError("You must be logged in to save jobs.");
       return;
     }
@@ -265,7 +296,7 @@ document.addEventListener("DOMContentLoaded", () => {
         priority: prioritySelect.value,
         status: statusSelect.value,
         link: linkInput.value || null,
-        userId: user.uid,
+        userId: activeUserId,
         dateApplied: new Intl.DateTimeFormat("en-US", {
           month: "short",
           day: "numeric",
@@ -300,6 +331,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Close popup
   closeBtn.addEventListener("click", () => {
-    window.close();
+    if (window.parent !== window) {
+      // We are inside an iframe on the page
+      window.parent.postMessage("closeTractionPopup", "*");
+    } else {
+      // We are in a normal Chrome popup window
+      window.close();
+    }
   });
 });

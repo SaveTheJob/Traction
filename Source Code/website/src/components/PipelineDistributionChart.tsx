@@ -14,12 +14,12 @@ export default function PipelineDistributionChart({
   const isDark = theme === "dark";
 
   return (
-    <div className="glass-card rounded-2xl p-6 md:p-8 shadow-sm">
+    <div className="premium-glass rounded-[2rem] shadow-2xl p-6 md:p-8 relative overflow-hidden">
       <div className="mb-8">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
           Pipeline Distribution
         </h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">
           Current breakdown of all active and past applications
         </p>
       </div>
@@ -31,8 +31,8 @@ export default function PipelineDistributionChart({
                 data={data}
                 cx="50%"
                 cy="50%"
-                innerRadius={80}
-                outerRadius={120}
+                innerRadius={60}
+                outerRadius={90}
                 paddingAngle={5}
                 dataKey="value"
                 label={({ name, percent }) =>
@@ -50,10 +50,12 @@ export default function PipelineDistributionChart({
               <Tooltip
                 formatter={(value: any) => [`${value} applications`, "Count"]}
                 contentStyle={{
-                  backgroundColor: isDark ? "#1f2937" : "#fff",
-                  borderColor: isDark ? "#374151" : "#e5e7eb",
+                  backgroundColor: isDark ? "rgba(15, 23, 42, 0.7)" : "rgba(255, 255, 255, 0.7)",
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.5)",
                   color: isDark ? "#fff" : "#111827",
-                  borderRadius: "12px",
+                  borderRadius: "16px",
                   boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
                 }}
                 itemStyle={{ color: isDark ? "#e5e7eb" : "#374151" }}
@@ -62,7 +64,7 @@ export default function PipelineDistributionChart({
           </ResponsiveContainer>
         </div>
       ) : (
-        <div className="h-80 flex items-center justify-center text-gray-400 dark:text-gray-500 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
+        <div className="h-80 flex items-center justify-center text-slate-500 border-2 border-dashed border-white/20 rounded-2xl bg-white/5">
           Not enough data to calculate distribution
         </div>
       )}

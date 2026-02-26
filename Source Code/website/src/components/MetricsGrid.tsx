@@ -18,7 +18,7 @@ export default function MetricsGrid({ metrics }: MetricsGridProps) {
       {metrics.map((metric, idx) => (
         <div
           key={idx}
-          className="card-3d rounded-2xl p-6 md:p-8 relative group overflow-hidden"
+          className="premium-glass rounded-[2rem] p-6 md:p-8 relative group overflow-hidden shadow-xl"
           style={{
             animationDelay: `${idx * 0.15}s`,
             perspective: "1000px",
@@ -38,7 +38,7 @@ export default function MetricsGrid({ metrics }: MetricsGridProps) {
             </div>
 
             {/* 3D Icon Container */}
-            <div className="w-16 h-16 rounded-xl icon-3d-container flex items-center justify-center transform group-hover:rotate-6 transition-transform duration-300 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
+            <div className="w-16 h-16 rounded-2xl premium-glass-heavy flex items-center justify-center transform group-hover:rotate-6 transition-transform duration-300">
               <metric.icon className="w-8 h-8 text-blue-600 dark:text-blue-400 drop-shadow-md" />
             </div>
           </div>
@@ -47,11 +47,10 @@ export default function MetricsGrid({ metrics }: MetricsGridProps) {
             <div
               className={`
               text-xs font-bold px-3 py-1 rounded-full shadow-inner flex items-center gap-1
-              ${
-                metric.trend === "up"
-                  ? "bg-green-100/80 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200/50 dark:border-green-500/20"
-                  : "bg-gray-100/80 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400 border border-gray-200/50 dark:border-gray-600/20"
-              }
+              ${metric.trend === "up"
+                  ? "bg-green-500/20 text-green-700 dark:text-green-400 border border-green-500/30 backdrop-blur-sm"
+                  : "premium-glass-heavy text-slate-700 dark:text-slate-300"
+                }
             `}
             >
               {metric.trend === "up" && (
