@@ -23,7 +23,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
       return savedTheme as Theme;
     }
-    return 'system';
+    return 'dark';
   });
 
   const [backgroundConfig, setBackgroundConfig] = useState<BackgroundConfig>(() => {
