@@ -5,7 +5,7 @@ import { useTheme } from "../context/ThemeContext";
 export default function ThemeCustomizer() {
     const [isOpen, setIsOpen] = useState(false);
     const [currentView, setCurrentView] = useState<'appearance' | 'themes'>('appearance');
-    const { theme: _t, setThemeMode: _s, backgroundConfig: themeConfig, setBackgroundConfig: setThemeConfig } = useTheme();
+    const { theme, setThemeMode, backgroundConfig: themeConfig, setBackgroundConfig: setThemeConfig } = useTheme();
     const sidebarRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -182,6 +182,22 @@ export default function ThemeCustomizer() {
                         /* Appearance Section */
                         <section className="space-y-4">
                             <h3 className="text-[13px] font-medium text-slate-700 dark:text-white/90 px-1 pt-4">Appearance</h3>
+
+                            {/* Theme Mode Toggle (Light/Dark) */}
+                            <div className="bg-slate-50 dark:bg-[#0f172a] p-1.5 rounded-xl border border-slate-200 dark:border-slate-700/50 flex">
+                                <button
+                                    onClick={() => setThemeMode('light')}
+                                    className={`flex-1 py-2 text-[13px] font-medium rounded-lg transition-all ${theme === 'light' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white'}`}
+                                >
+                                    Light
+                                </button>
+                                <button
+                                    onClick={() => setThemeMode('dark')}
+                                    className={`flex-1 py-2 text-[13px] font-medium rounded-lg transition-all ${theme === 'dark' ? 'bg-slate-800 text-white shadow-sm ring-1 ring-white/10' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white'}`}
+                                >
+                                    Dark
+                                </button>
+                            </div>
 
                             {/* Theme Image Card */}
                             <div className="bg-slate-50 dark:bg-[#0f172a] rounded-[20px] p-2 border border-slate-200 dark:border-slate-700/50 mb-2">

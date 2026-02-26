@@ -531,7 +531,7 @@ export default function Dashboard() {
                   <tr>
                     <td colSpan={4}>
                       <div className="text-center py-20 m-6 border-dashed border-2 border-white/40 dark:border-white/20 rounded-2xl bg-white/10 dark:bg-black/10">
-                        <p className="text-[15px] font-bold text-slate-400 dark:text-slate-500">
+                        <p className="text-[15px] font-bold text-slate-400 dark:text-slate-400">
                           No applications found.
                         </p>
                       </div>
