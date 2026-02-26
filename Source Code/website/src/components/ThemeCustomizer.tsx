@@ -1,4 +1,4 @@
-import { Check, Edit2, Image as ImageIcon, Laptop, RotateCcw, Sun, X } from "lucide-react";
+import { Check, Edit2, Image as ImageIcon, RotateCcw, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTheme } from "../context/ThemeContext";
 
@@ -29,7 +29,7 @@ function useAppTheme() {
 export default function ThemeCustomizer() {
     const [isOpen, setIsOpen] = useState(false);
     const [currentView, setCurrentView] = useState<'appearance' | 'themes'>('appearance');
-    const { theme, setThemeMode } = useTheme();
+    const { theme: _theme, setThemeMode: _setThemeMode } = useTheme(); // dark-only, kept for API compat
     const { themeConfig, setThemeConfig } = useAppTheme();
     const sidebarRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -246,43 +246,6 @@ export default function ThemeCustomizer() {
                                 </button>
                             </div>
 
-                            <div className="h-px w-full bg-slate-200 dark:bg-[#40485a]" />
-
-                            {/* Light/Dark Toggle */}
-                            <div className="flex bg-slate-100 dark:bg-[#0f172a] p-1 rounded-full border border-slate-200 dark:border-[#40485a]">
-                                <button
-                                    onClick={() => setThemeMode('light')}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-[13px] font-medium transition-all ${theme === 'light'
-                                        ? "bg-white dark:bg-[#8ab4f8] text-blue-600 dark:text-[#202124] shadow-sm"
-                                        : "text-slate-500 dark:text-[#e8eaed] hover:bg-black/5 dark:hover:bg-white/5"
-                                        }`}
-                                >
-                                    {theme === 'light' && <Check className="w-[16px] h-[16px] mr-[-4px]" strokeWidth={3} />}
-                                    <Sun className="w-[18px] h-[18px]" />
-                                    Light
-                                </button>
-                                <button
-                                    onClick={() => setThemeMode('dark')}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-[13px] font-medium transition-all ${theme === 'dark'
-                                        ? "bg-white dark:bg-[#8ab4f8] text-blue-600 dark:text-[#202124] shadow-sm"
-                                        : "text-slate-500 dark:text-[#e8eaed] hover:bg-black/5 dark:hover:bg-white/5"
-                                        }`}
-                                >
-                                    {theme === 'dark' && <Check className="w-[16px] h-[16px] mr-[-4px]" strokeWidth={3} />}
-                                    Dark
-                                </button>
-                                <button
-                                    onClick={() => setThemeMode('system')}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-[13px] font-medium transition-all ${theme === 'system'
-                                        ? "bg-white dark:bg-[#8ab4f8] text-blue-600 dark:text-[#202124] shadow-sm"
-                                        : "text-slate-500 dark:text-[#e8eaed] hover:bg-black/5 dark:hover:bg-white/5"
-                                        }`}
-                                >
-                                    {theme === 'system' && <Check className="w-[16px] h-[16px] mr-[-4px]" strokeWidth={3} />}
-                                    <Laptop className="w-[18px] h-[18px]" />
-                                    Device
-                                </button>
-                            </div>
 
                             {/* Colors Grid */}
                             <div className="grid grid-cols-4 gap-[10px]">

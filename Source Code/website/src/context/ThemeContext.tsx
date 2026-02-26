@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 
-type Theme = 'light' | 'dark' | 'system';
+// Dark-only theme — light and system modes are removed
+type Theme = 'dark';
 
 interface ThemeContextType {
   theme: Theme;
@@ -11,57 +12,20 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
-      return savedTheme as Theme;
-    }
-    return 'system';
-  });
-
   useEffect(() => {
+    // Always force dark mode on mount and clear any saved preference
     const root = window.document.documentElement;
+    root.classList.remove('light', 'system');
+    root.classList.add('dark');
+    localStorage.setItem('theme', 'dark');
+  }, []);
 
-    const applyTheme = (currentTheme: Theme) => {
-      root.classList.remove('light', 'dark');
-
-      if (currentTheme === 'system') {
-        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        root.classList.add(systemPrefersDark ? 'dark' : 'light');
-      } else {
-        root.classList.add(currentTheme);
-      }
-    };
-
-    applyTheme(theme);
-    localStorage.setItem('theme', theme);
-
-    // Listen to system changes if in system mode
-    if (theme === 'system') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      const handleChange = () => applyTheme('system');
-
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    }
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme((prev) => {
-      if (prev === 'light') return 'dark';
-      if (prev === 'dark') return 'light';
-      // If currently system, figure out what it mapped to and flip it
-      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      return systemPrefersDark ? 'light' : 'dark';
-    });
-  };
-
-  const setThemeMode = (mode: Theme) => {
-    setTheme(mode);
-  };
+  // No-ops — kept so existing call sites don't break
+  const toggleTheme = () => { };
+  const setThemeMode = (_mode: Theme) => { };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, setThemeMode }}>
+    <ThemeContext.Provider value={{ theme: 'dark', toggleTheme, setThemeMode }}>
       {children}
     </ThemeContext.Provider>
   );
