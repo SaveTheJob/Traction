@@ -38,18 +38,20 @@ interface JobContextType {
 const JobContext = createContext<JobContextType | undefined>(undefined);
 
 export function JobProvider({ children }: { children: ReactNode }) {
-    const { user } = useAuth();
+    const { user, isAdmin, impersonatedUser } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingJobId, setEditingJobId] = useState<string | null>(null);
     const [jobs, setJobs] = useState<Job[]>([]);
 
+    const effectiveUserId = (isAdmin && impersonatedUser) ? impersonatedUser.uid : user?.uid;
+
     useEffect(() => {
-        if (!user) {
+        if (!effectiveUserId) {
             setJobs([]);
             return;
         }
 
-        const q = query(collection(db, 'jobs'), where('userId', '==', user.uid));
+        const q = query(collection(db, 'jobs'), where('userId', '==', effectiveUserId));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const jobsData: Job[] = [];
             snapshot.forEach((document) => {
@@ -64,7 +66,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
         });
 
         return unsubscribe;
-    }, [user]);
+    }, [effectiveUserId]);
 
     const addJob = async (jobData: JobDataPayload) => {
         if (!user) return;
@@ -76,7 +78,7 @@ export function JobProvider({ children }: { children: ReactNode }) {
 
         const newJob = {
             ...jobData,
-            userId: user.uid,
+            userId: effectiveUserId,
             dateApplied: new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date()),
             createdAt: serverTimestamp()
         };

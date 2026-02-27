@@ -133,7 +133,7 @@ export default function Network() {
                       </p>
                     </td>
                     <td className="px-6 py-5 whitespace-nowrap text-right">
-                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
+                      <div className="flex items-center justify-end gap-1 transition-all duration-300">
                         {contact.email && (
                           <button
                             onClick={(e) => handleCopyEmail(e, contact.email!)}

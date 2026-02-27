@@ -2,36 +2,10 @@ import { Check, Edit2, Image as ImageIcon, RotateCcw, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTheme } from "../context/ThemeContext";
 
-// Add a hook to persist the selected background theme
-function useAppTheme() {
-    const [themeConfig, setThemeConfig] = useState<{ value: string; type: 'color' | 'image' }>(() => {
-        try {
-            const stored = localStorage.getItem("app-theme-config");
-            return stored ? JSON.parse(stored) : { value: "/wallpapers/default.jpeg", type: "image" };
-        } catch (e) {
-            return { value: "/wallpapers/default.jpeg", type: "image" };
-        }
-    });
-
-    useEffect(() => {
-        // Apply logic to document root
-        if (themeConfig.type === 'image') {
-            document.documentElement.style.setProperty("--primary-gradient", `url('${themeConfig.value}')`);
-        } else {
-            document.documentElement.style.setProperty("--primary-gradient", themeConfig.value);
-        }
-
-        localStorage.setItem("app-theme-config", JSON.stringify(themeConfig));
-    }, [themeConfig]);
-
-    return { themeConfig, setThemeConfig };
-}
-
 export default function ThemeCustomizer() {
     const [isOpen, setIsOpen] = useState(false);
     const [currentView, setCurrentView] = useState<'appearance' | 'themes'>('appearance');
-    const { theme: _t, setThemeMode: _s } = useTheme();
-    const { themeConfig, setThemeConfig } = useAppTheme();
+    const { theme, setThemeMode, backgroundConfig: themeConfig, setBackgroundConfig: setThemeConfig } = useTheme();
     const sidebarRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -209,6 +183,22 @@ export default function ThemeCustomizer() {
                         <section className="space-y-4">
                             <h3 className="text-[13px] font-medium text-slate-700 dark:text-white/90 px-1 pt-4">Appearance</h3>
 
+                            {/* Theme Mode Toggle (Light/Dark) */}
+                            <div className="bg-slate-50 dark:bg-[#0f172a] p-1.5 rounded-xl border border-slate-200 dark:border-slate-700/50 flex">
+                                <button
+                                    onClick={() => setThemeMode('light')}
+                                    className={`flex-1 py-2 text-[13px] font-medium rounded-lg transition-all ${theme === 'light' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white'}`}
+                                >
+                                    Light
+                                </button>
+                                <button
+                                    onClick={() => setThemeMode('dark')}
+                                    className={`flex-1 py-2 text-[13px] font-medium rounded-lg transition-all ${theme === 'dark' ? 'bg-slate-800 text-white shadow-sm ring-1 ring-white/10' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white'}`}
+                                >
+                                    Dark
+                                </button>
+                            </div>
+
                             {/* Theme Image Card */}
                             <div className="bg-slate-50 dark:bg-[#0f172a] rounded-[20px] p-2 border border-slate-200 dark:border-slate-700/50 mb-2">
                                 <div className="aspect-[16/9] w-full bg-slate-200 dark:bg-[#1e2330] rounded-[16px] overflow-hidden shadow-inner relative group border-2 border-slate-300 dark:border-[#125881]">
@@ -267,14 +257,14 @@ export default function ThemeCustomizer() {
 
                                 {/* Custom Color Button */}
                                 <button
-                                    onClick={() => setThemeConfig({ value: "/wallpapers/default1.jpg", type: "image" })}
-                                    className={`aspect-square rounded-[18px] flex items-center justify-center transition-all relative shadow-inner ${themeConfig.value === "/wallpapers/default1.jpg"
+                                    onClick={() => setThemeConfig({ value: "/wallpapers/default.jpeg", type: "image" })}
+                                    className={`aspect-square rounded-[18px] flex items-center justify-center transition-all relative shadow-inner ${themeConfig.value === "/wallpapers/default.jpeg"
                                         ? "bg-blue-600 dark:bg-[#125881]"
                                         : "bg-slate-50 dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-800"
                                         }`}
                                 >
-                                    <Edit2 className={`w-5 h-5 ${themeConfig.value === "/wallpapers/default1.jpg" ? "text-white" : "text-blue-500 dark:text-[#8ab4f8]"}`} strokeWidth={2.5} />
-                                    {themeConfig.value === "/wallpapers/default1.jpg" && (
+                                    <Edit2 className={`w-5 h-5 ${themeConfig.value === "/wallpapers/default.jpeg" ? "text-white" : "text-blue-500 dark:text-[#8ab4f8]"}`} strokeWidth={2.5} />
+                                    {themeConfig.value === "/wallpapers/default.jpeg" && (
                                         <div className="absolute top-1 right-1 bg-white text-[#125881] rounded-full p-0.5 shadow-md transform translate-x-1.5 -translate-y-1.5">
                                             <Check className="w-[9px] h-[9px]" strokeWidth={4} />
                                         </div>
@@ -286,7 +276,7 @@ export default function ThemeCustomizer() {
 
                             {/* Reset Button */}
                             <button
-                                onClick={() => setThemeConfig({ value: "/wallpapers/default1.jpg", type: "image" })}
+                                onClick={() => setThemeConfig({ value: "/wallpapers/default.jpeg", type: "image" })}
                                 className="w-full flex items-center justify-between py-3 px-1 text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors group"
                             >
                                 <span className="text-[13px] font-medium text-slate-700 dark:text-[#e8eaed]">Reset to default</span>
