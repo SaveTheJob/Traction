@@ -17,8 +17,10 @@ export default function Analytics() {
     {} as Record<string, number>,
   );
 
+  const statusLabelMap: Record<string, string> = { Wishlist: "Saved" };
+
   const statusData = Object.entries(statusCounts)
-    .map(([name, value]) => ({ name, value }))
+    .map(([name, value]) => ({ name: statusLabelMap[name] || name, value }))
     .sort((a, b) => b.value - a.value);
 
   // Helper to get week number
@@ -78,12 +80,12 @@ export default function Analytics() {
   const offers = jobs.filter((j) => j.status === "Offer").length;
 
   return (
-    <div className="p-4 md:p-8 max-w-[1700px] mx-auto space-y-8 h-full overflow-y-auto pb-24">
+    <div className="p-3 sm:p-4 md:p-5 lg:p-8 max-w-[1700px] mx-auto space-y-6 sm:space-y-8 h-full overflow-y-auto pb-24">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
           Analytics Overview
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1.5 text-sm font-medium">
+        <p className="text-slate-400 mt-1 sm:mt-1.5 text-xs sm:text-sm font-medium">
           Visualize your job search momentum and conversion rates.
         </p>
       </div>
@@ -95,13 +97,14 @@ export default function Analytics() {
         setTimeFilter={setTimeFilter}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
         {/* Status Distribution Pie Chart */}
         <PipelineDistributionChart data={statusData} />
 
         {/* Status Bar Chart (Alternative View) */}
         <ConversionFunnel
           totalJobs={totalJobs}
+          saved={jobs.filter((j) => j.status === "Wishlist").length}
           interviewing={interviewing}
           offers={offers}
         />

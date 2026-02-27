@@ -1,11 +1,10 @@
 import { Menu } from "lucide-react";
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
+import ImpersonationBanner from "./ImpersonationBanner";
 import Logo from "./Logo";
 import Sidebar from "./Sidebar";
 import ThemeCustomizer from "./ThemeCustomizer";
-import ImpersonationBanner from "./ImpersonationBanner";
-import NotificationDropdown from "./NotificationDropdown";
 
 export default function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -26,15 +25,13 @@ export default function Layout() {
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <ImpersonationBanner />
         <div className="flex-1 overflow-hidden bg-transparent flex flex-col relative">
-
           {/* Mobile Header (Hidden on Desktop) */}
-          <div className="md:hidden flex items-center justify-between p-4 premium-glass border-b-0 shrink-0 sticky top-0 z-10 m-2 rounded-2xl gap-3">
-            <Logo className="h-8" />
+          <div className="md:hidden flex items-center justify-between p-3 sm:p-4 premium-glass border-b-0 shrink-0 sticky top-0 z-10 m-2 rounded-xl sm:rounded-2xl gap-3">
+            <Logo className="h-9" />
             <div className="flex items-center gap-2">
-              <NotificationDropdown />
               <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                className="p-2 text-slate-400 hover:bg-slate-800 rounded-full transition-colors"
               >
                 <Menu className="w-6 h-6" />
               </button>

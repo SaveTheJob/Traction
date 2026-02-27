@@ -1,7 +1,9 @@
 import type { DropResult } from "@hello-pangea/dnd";
 import { DragDropContext, Droppable } from "@hello-pangea/dnd";
 import { Filter, Plus, Search } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import ConfirmDialog from "../components/ConfirmDialog";
+import CustomSelect from "../components/CustomSelect";
 import PipelineCard from "../components/PipelineCard";
 import type { Priority, Status } from "../context/JobContext";
 import { useJobs } from "../context/JobContext";
@@ -9,28 +11,28 @@ import { useJobs } from "../context/JobContext";
 const COLUMNS: { id: Status; label: string; color: string }[] = [
   {
     id: "Wishlist",
-    label: "Wishlist",
-    color: "premium-glass-heavy text-slate-700 dark:text-slate-300",
+    label: "Saved",
+    color: "premium-glass-heavy text-slate-300",
   },
   {
     id: "Applied",
     label: "Applied",
-    color: "premium-glass-heavy text-blue-700 dark:text-blue-300",
+    color: "premium-glass-heavy text-blue-300",
   },
   {
     id: "Interviewing",
     label: "Interviewing",
-    color: "premium-glass-heavy text-purple-700 dark:text-purple-300",
+    color: "premium-glass-heavy text-purple-300",
   },
   {
     id: "Offer",
     label: "Offer",
-    color: "premium-glass-heavy text-emerald-700 dark:text-emerald-300",
+    color: "premium-glass-heavy text-emerald-300",
   },
   {
     id: "Rejected",
     label: "Rejected",
-    color: "premium-glass-heavy text-red-700 dark:text-red-300",
+    color: "premium-glass-heavy text-red-300",
   },
 ];
 
@@ -38,80 +40,87 @@ export default function Pipeline() {
   const { jobs, updateJobStatus, openModal, deleteJob } = useJobs();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterPriority, setFilterPriority] = useState<Priority | "All">("All");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const handleDragEnd = (result: DropResult) => {
-    const { destination, source, draggableId } = result;
-    if (!destination) return;
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    )
-      return;
-
-    updateJobStatus(draggableId, destination.droppableId as Status);
-  };
-
-  const handleDelete = (id: string) => {
-    if (
-      window.confirm(
-        "Are you sure you want to permanently delete this application? This cannot be undone.",
+  const handleDragEnd = useCallback(
+    (result: DropResult) => {
+      const { destination, source, draggableId } = result;
+      if (!destination) return;
+      if (
+        destination.droppableId === source.droppableId &&
+        destination.index === source.index
       )
-    ) {
-      deleteJob(id);
-    }
-  };
+        return;
 
-  const filteredJobs = jobs.filter((job) => {
-    const matchesSearch =
-      job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesPriority =
-      filterPriority === "All" || job.priority === filterPriority;
-    return matchesSearch && matchesPriority;
-  });
+      updateJobStatus(draggableId, destination.droppableId as Status);
+    },
+    [updateJobStatus],
+  );
+
+  const handleDelete = useCallback((id: string) => {
+    setConfirmDeleteId(id);
+  }, []);
+
+  const confirmDelete = useCallback(() => {
+    if (confirmDeleteId) {
+      deleteJob(confirmDeleteId);
+      setConfirmDeleteId(null);
+    }
+  }, [confirmDeleteId, deleteJob]);
+
+  const filteredJobs = useMemo(
+    () =>
+      jobs.filter((job) => {
+        const matchesSearch =
+          job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          job.title.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesPriority =
+          filterPriority === "All" || job.priority === filterPriority;
+        return matchesSearch && matchesPriority;
+      }),
+    [jobs, searchQuery, filterPriority],
+  );
 
   return (
-    <div className="p-4 md:p-8 h-full flex flex-col max-w-[1700px] mx-auto overflow-hidden">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 flex-shrink-0 gap-6">
+    <div className="p-3 sm:p-4 md:p-5 lg:p-8 h-full flex flex-col max-w-[1700px] mx-auto overflow-hidden">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-4 sm:mb-6 lg:mb-8 flex-shrink-0 gap-4 sm:gap-6">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
             Pipeline Overview
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1.5 text-sm font-medium">
+          <p className="text-slate-400 mt-1 sm:mt-1.5 text-xs sm:text-sm font-medium">
             Manage and track your active opportunities.
           </p>
         </div>
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="relative flex-1 md:w-72">
-            <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 z-10" />
+        <div className="flex items-center gap-2 sm:gap-3 w-full lg:w-auto">
+          <div className="relative flex-1 lg:w-72">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 z-10" />
             <input
               type="text"
-              placeholder="Search company or role..."
+              placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-2.5 text-sm border border-slate-200 dark:border-slate-700/50 rounded-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all shadow-sm"
+              className="w-full pl-9 sm:pl-11 pr-3 sm:pr-4 py-2 sm:py-2.5 text-sm border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all bg-black/20 backdrop-blur-sm text-white placeholder-slate-400 font-medium shadow-inner"
             />
           </div>
-          <div className="relative">
-            <Filter className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
-            <select
-              value={filterPriority}
-              onChange={(e) =>
-                setFilterPriority(e.target.value as Priority | "All")
-              }
-              className="pl-11 pr-10 py-2.5 text-sm border border-slate-200 dark:border-slate-700/50 rounded-full appearance-none bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 cursor-pointer shadow-sm font-medium transition-all"
-            >
-              <option value="All">All Priorities</option>
-              <option value="High">High Priority</option>
-              <option value="Medium">Medium Priority</option>
-              <option value="Low">Low Priority</option>
-            </select>
-          </div>
+          <CustomSelect
+            value={filterPriority}
+            onChange={(val) => setFilterPriority(val as Priority | "All")}
+            icon={<Filter className="w-4 h-4" />}
+            variant="glass"
+            options={[
+              { value: "All", label: "All Priorities" },
+              { value: "High", label: "High Priority" },
+              { value: "Medium", label: "Medium Priority" },
+              { value: "Low", label: "Low Priority" },
+            ]}
+            className="w-40 sm:w-44 text-sm font-medium"
+          />
           <button
             onClick={() => openModal()}
-            className="premium-glass-heavy hover:bg-white/80 dark:hover:bg-white/20 text-slate-900 dark:text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-2 shrink-0 group"
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-2xl font-bold text-sm shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 shrink-0 backdrop-blur-sm"
           >
-            <Plus className="w-4 h-4 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform" />{" "}
+            <Plus className="w-4 h-4" />{" "}
             <span className="hidden sm:inline">New Application</span>
           </button>
         </div>
@@ -119,14 +128,14 @@ export default function Pipeline() {
 
       {/* Kanban Board */}
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex-1 flex gap-6 overflow-x-auto pb-6 items-start h-full px-1">
+        <div className="flex-1 flex gap-4 sm:gap-6 overflow-x-auto pb-4 sm:pb-6 items-start h-full px-1 scrollbar-theme">
           {COLUMNS.map((col) => (
             <div
               key={col.id}
-              className="flex-shrink-0 w-80 premium-glass rounded-[2rem] flex flex-col h-full max-h-[calc(100vh-12rem)] shadow-xl overflow-hidden"
+              className="flex-shrink-0 w-[16.5rem] sm:w-72 lg:w-80 rounded-3xl flex flex-col h-full max-h-[calc(100vh-14rem)] sm:max-h-[calc(100vh-12rem)] shadow-xl border border-white/10 bg-slate-900/45 backdrop-blur-xl"
             >
-              <div className="px-6 py-5 flex items-center justify-between">
-                <h3 className="font-bold text-slate-800 dark:text-slate-100 text-[15px] flex items-center gap-2 tracking-wide">
+              <div className="px-4 sm:px-6 py-3 sm:py-5 flex items-center justify-between rounded-t-3xl">
+                <h3 className="font-bold text-slate-100 text-[15px] flex items-center gap-2 tracking-wide">
                   {col.label}
                 </h3>
                 <span
@@ -141,7 +150,11 @@ export default function Pipeline() {
                   <div
                     {...provided.droppableProps}
                     ref={provided.innerRef}
-                    className={`p-4 pt-1 flex-1 overflow-y-auto space-y-4 transition-colors scrollbar-hide ${snapshot.isDraggingOver ? "bg-white/30 dark:bg-black/20 rounded-b-[2rem]" : ""}`}
+                    className={`p-4 pt-1 pr-2 pb-2 flex-1 overflow-y-auto space-y-3 transition-all duration-200 ease-out scrollbar-theme rounded-b-3xl ${
+                      snapshot.isDraggingOver
+                        ? "bg-blue-400/5 ring-2 ring-inset ring-blue-400/15"
+                        : ""
+                    }`}
                   >
                     {filteredJobs
                       .filter((j) => j.status === col.id)
@@ -162,6 +175,16 @@ export default function Pipeline() {
           ))}
         </div>
       </DragDropContext>
+
+      <ConfirmDialog
+        isOpen={!!confirmDeleteId}
+        title="Delete Application"
+        message="Are you sure you want to permanently delete this application? This cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </div>
   );
 }

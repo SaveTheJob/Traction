@@ -66,22 +66,24 @@ export default function Signup() {
       <div className="absolute top-0 -right-4 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
       <div className="absolute bottom-0 -left-4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-700" />
 
-      <div className="w-full max-w-md space-y-8 premium-glass-heavy p-8 sm:p-10 rounded-3xl shadow-2xl relative z-10 border-t border-white/20 dark:border-white/5">
+      <div className="w-full max-w-md space-y-6 sm:space-y-8 premium-glass-heavy p-5 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl shadow-2xl relative z-10 border-t border-white/5">
         <div className="text-center">
-          <Logo className="h-14 justify-center mb-6" iconOnly />
-          <h2 className="text-4xl font-black tracking-tight text-slate-900 dark:text-white leading-tight">
+          <Logo className="h-12 sm:h-16 justify-center mb-4 sm:mb-6" />
+          <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-white leading-tight">
             Get Started
           </h2>
-          <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
-            Create your <span className="text-blue-600 dark:text-blue-400 font-bold">Traction</span> account today
+          <p className="mt-2 text-sm font-medium text-slate-400">
+            Create your{" "}
+            <span className="text-blue-400 font-bold">Traction</span> account
+            today
           </p>
         </div>
 
-        <div className="mt-8 space-y-6">
+        <div className="mt-6 sm:mt-8 space-y-5 sm:space-y-6">
           <button
             onClick={signInWithGoogle}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-4 px-4 py-3 border border-white/20 dark:border-white/10 rounded-2xl shadow-lg bg-white/50 dark:bg-black/20 text-[15px] font-black text-slate-700 dark:text-slate-200 hover:bg-white/80 dark:hover:bg-black/40 focus:outline-none transition-all duration-300 disabled:opacity-50 active:scale-[0.98] group"
+            className="w-full flex items-center justify-center gap-4 px-4 py-3 border border-white/10 rounded-2xl shadow-lg bg-black/20 text-[15px] font-black text-slate-200 hover:bg-black/40 focus:outline-none transition-all duration-300 disabled:opacity-50 active:scale-[0.98] group"
           >
             <div className="bg-white p-1 rounded-lg shadow-sm">
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -103,12 +105,14 @@ export default function Signup() {
                 />
               </svg>
             </div>
-            <span className="group-hover:translate-x-0.5 transition-transform">Sign up with Google</span>
+            <span className="group-hover:translate-x-0.5 transition-transform">
+              Sign up with Google
+            </span>
           </button>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-300 dark:border-slate-700" />
+              <div className="w-full border-t border-slate-700" />
             </div>
             <div className="relative flex justify-center text-xs">
               <span className="premium-glass px-4 py-1.5 rounded-full text-slate-500 font-black uppercase tracking-widest text-[10px]">
@@ -126,7 +130,7 @@ export default function Signup() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 px-1">
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
                   Email address
                 </label>
                 <div className="relative group">
@@ -138,14 +142,14 @@ export default function Signup() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="block w-full pl-11 pr-4 py-3.5 bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500/50 outline-none text-[15px] font-medium transition-all shadow-inner"
+                    className="block w-full pl-11 pr-4 py-3.5 bg-black/20 border border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500/50 outline-none text-[15px] font-medium transition-all shadow-inner"
                     placeholder="Email Address"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 px-1">
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
                   Password
                 </label>
                 <div className="relative group">
@@ -157,14 +161,14 @@ export default function Signup() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full pl-11 pr-4 py-3.5 bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500/50 outline-none text-[15px] font-medium transition-all shadow-inner"
+                    className="block w-full pl-11 pr-4 py-3.5 bg-black/20 border border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500/50 outline-none text-[15px] font-medium transition-all shadow-inner"
                     placeholder="••••••••"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 px-1">
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
                   Confirm Password
                 </label>
                 <div className="relative group">
@@ -176,7 +180,7 @@ export default function Signup() {
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="block w-full pl-11 pr-4 py-3.5 bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500/50 outline-none text-[15px] font-medium transition-all shadow-inner"
+                    className="block w-full pl-11 pr-4 py-3.5 bg-black/20 border border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500/50 outline-none text-[15px] font-medium transition-all shadow-inner"
                     placeholder="••••••••"
                   />
                 </div>
@@ -186,7 +190,7 @@ export default function Signup() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center py-4 px-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl shadow-xl shadow-blue-500/10 text-xs font-black uppercase tracking-widest hover:translate-y-[-1px] active:translate-y-[0px] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer mt-6"
+              className="w-full flex justify-center py-4 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 text-sm font-bold transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer mt-6"
             >
               {loading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -196,7 +200,7 @@ export default function Signup() {
             </button>
           </form>
 
-          <p className="mt-8 text-center text-xs font-bold text-slate-500 dark:text-slate-400">
+          <p className="mt-8 text-center text-xs font-bold text-slate-400">
             Already have an account?{" "}
             <Link
               to="/login"
