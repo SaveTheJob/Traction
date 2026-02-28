@@ -5,10 +5,8 @@
 
 body {
   font-family: "Inter", system-ui, sans-serif;
-  background: var(
-    --primary-gradient,
-    linear-gradient(-45deg, #020617, #0f172a, #020617, #020617)
-  );
+  background: var(--primary-gradient,
+      linear-gradient(-45deg, #020617, #0f172a, #020617, #020617));
   background-size: cover;
   background-attachment: fixed;
   background-position: center;
@@ -30,7 +28,7 @@ body::before {
   z-index: 0;
 }
 
-body > * {
+body>* {
   position: relative;
   z-index: 1;
 }
@@ -110,23 +108,50 @@ h6 {
 }
 
 .premium-glass:hover {
-  background: rgba(15, 23, 42, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 12px 40px 0 rgba(0, 0, 0, 0.5);
+  background: rgba(255, 255, 255, 0.50);
+  box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.1);
 }
 
 /* Heavy version for deeper contrast */
 .premium-glass-heavy {
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(48px) saturate(180%);
-  -webkit-backdrop-filter: blur(48px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.03),
-    0 8px 48px 0 rgba(0, 0, 0, 0.8);
+  background: rgba(255, 255, 255, 0.60);
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 
+ * FORCE EXPLICIT DARK MODE GLASS SPECIFICITY
+ * Bypassing Tailwind v4 `@custom-variant` bugs by strictly asserting html.dark cascade
+ */
+html.dark .premium-glass,
+body.dark .premium-glass,
+.dark .premium-glass {
+  background: rgba(15, 23, 42, 0.15) !important;
+  backdrop-filter: blur(40px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 8px 32px 0 rgba(0, 0, 0, 0.4) !important;
+}
+
+html.dark .premium-glass:hover,
+body.dark .premium-glass:hover,
+.dark .premium-glass:hover {
+  background: rgba(15, 23, 42, 0.25) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 12px 40px 0 rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark .premium-glass-heavy,
+body.dark .premium-glass-heavy,
+.dark .premium-glass-heavy {
+  background: rgba(15, 23, 42, 0.35) !important;
+  backdrop-filter: blur(48px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(48px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 8px 48px 0 rgba(0, 0, 0, 0.5) !important;
 }
 
 /* 3D Engraved Effect - Deeper and more realistic */
