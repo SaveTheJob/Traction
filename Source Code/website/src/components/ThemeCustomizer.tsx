@@ -291,20 +291,17 @@ export default function ThemeCustomizer() {
 
       {/* Overlay */}
       <div
-        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity duration-300 ${
-          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
+        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
       />
 
       {/* Sidebar Panel */}
       <div
         ref={sidebarRef}
-        className={`fixed inset-y-0 right-0 z-50 w-[calc(100%-2rem)] max-w-[360px] bg-[#1e293b] text-slate-100 shadow-2xl transition-transform duration-300 ease-out transform flex flex-col m-4 rounded-[24px] border border-white/5 ${
-          isOpen ? "translate-x-0" : "translate-x-[120%]"
-        }`}
+        className={`fixed inset-y-0 right-0 z-50 w-[calc(100%-2rem)] max-w-[360px] bg-[#1e293b] text-slate-100 shadow-2xl transition-transform duration-300 ease-out transform flex flex-col m-4 rounded-[24px] border border-white/5 ${isOpen ? "translate-x-0" : "translate-x-[120%]"
+          }`}
         style={{
-          height:
-            "calc(100vh - 32px)" /* Account for 16px top/bottom margins */,
+          maxHeight: "calc(100vh - 32px)", /* Account for 16px top/bottom margins, allow scrolling if needed */
           boxShadow:
             "-10px 10px 40px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.05)",
         }}
@@ -337,17 +334,17 @@ export default function ThemeCustomizer() {
           </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="p-1 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+            className="p-1 rounded-full hover:bg-white/10 text-slate-300 hover:text-white transition-colors"
           >
             <X className="w-[18px] h-[18px]" />
           </button>
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto px-5 pb-5 scrollbar-theme">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 pb-5">
           {currentView === "appearance" ? (
             /* Appearance Section */
-            <section className="space-y-4">
+            <section className="space-y-4 pb-8">
               <h3 className="text-[14px] font-medium text-white/90 px-1 pt-4">
                 Appearance
               </h3>
@@ -371,7 +368,7 @@ export default function ThemeCustomizer() {
 
                   {/* Display current theme or default image */}
                   {themeConfig.type === "image" &&
-                  themeConfig.value !== "default" ? (
+                    themeConfig.value !== "default" ? (
                     <img
                       src={themeConfig.value}
                       alt="Current theme"
@@ -412,11 +409,10 @@ export default function ThemeCustomizer() {
                     onClick={() =>
                       setThemeConfig({ value: color.gradient, type: "color" })
                     }
-                    className={`aspect-square rounded-[18px] bg-[#0f172a] hover:bg-slate-800 flex items-center justify-center transition-all p-[10px] relative ${
-                      themeConfig.value === color.gradient
-                        ? "border-0 shadow-inner"
-                        : "shadow-sm border border-slate-700/50"
-                    }`}
+                    className={`aspect-square rounded-[18px] bg-[#0f172a] hover:bg-slate-800 flex items-center justify-center transition-all p-[10px] relative ${themeConfig.value === color.gradient
+                      ? "border-0 shadow-inner"
+                      : "shadow-sm border border-slate-700/50"
+                      }`}
                   >
                     <div
                       className={`w-full h-full rounded-full overflow-hidden shadow-sm shadow-black/40 ${themeConfig.type === "color" && themeConfig.value === color.gradient ? "ring-2 ring-white ring-offset-2 ring-offset-[#293041]" : ""}`}
@@ -441,11 +437,10 @@ export default function ThemeCustomizer() {
                       type: "image",
                     })
                   }
-                  className={`aspect-square rounded-[18px] flex items-center justify-center transition-all relative shadow-inner ${
-                    themeConfig.value === "/wallpapers/default.jpeg"
-                      ? "bg-[#125881]"
-                      : "bg-[#0f172a] border border-slate-700/50 hover:bg-slate-800"
-                  }`}
+                  className={`aspect-square rounded-[18px] flex items-center justify-center transition-all relative shadow-inner ${themeConfig.value === "/wallpapers/default.jpeg"
+                    ? "bg-[#125881]"
+                    : "bg-[#0f172a] border border-slate-700/50 hover:bg-slate-800"
+                    }`}
                 >
                   <Edit2
                     className={`w-5 h-5 ${themeConfig.value === "/wallpapers/default.jpeg" ? "text-white" : "text-[#8ab4f8]"}`}
@@ -459,7 +454,7 @@ export default function ThemeCustomizer() {
                 </button>
               </div>
 
-              <div className="h-px w-full bg-[#40485a] mt-6 mb-2" />
+
 
               {/* Reset Button */}
               <button
@@ -467,6 +462,8 @@ export default function ThemeCustomizer() {
                   setThemeConfig({
                     value: "/wallpapers/default.jpeg",
                     type: "image",
+                    overlayOpacity: 14,
+                    glassOpacity: 32
                   })
                 }
                 className="w-full flex items-center justify-between py-3 px-1 text-white hover:bg-white/5 rounded-lg transition-colors group"
@@ -505,15 +502,13 @@ export default function ThemeCustomizer() {
                   }}
                 >
                   <div
-                    className={`aspect-square rounded-2xl overflow-hidden relative shadow-sm transition-all duration-300 ${
-                      cat.isUpload
-                        ? "bg-[#1e293b] border border-white/5 group-hover:bg-slate-800 flex items-center justify-center"
-                        : ""
-                    } ${
-                      !cat.isUpload && !cat.img
+                    className={`aspect-square rounded-2xl overflow-hidden relative shadow-sm transition-all duration-300 ${cat.isUpload
+                      ? "bg-[#1e293b] border border-white/5 group-hover:bg-slate-800 flex items-center justify-center"
+                      : ""
+                      } ${!cat.isUpload && !cat.img
                         ? "border border-white/10 group-hover:border-white/30"
                         : ""
-                    }`}
+                      }`}
                   >
                     {cat.img && (
                       <>

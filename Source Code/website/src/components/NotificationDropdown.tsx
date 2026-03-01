@@ -121,7 +121,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
               <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
                 Notifications
               </h3>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
+              <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mt-0.5">
                 {isSelectionMode
                   ? `${selectedIds.length} SELECTED`
                   : `${unreadCount} UNREAD Notifications`}
@@ -144,7 +144,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                     setIsSelectionMode(!isSelectionMode);
                     setSelectedIds([]);
                   }}
-                  className={`px-3 py-1.5 text-[10px] font-black rounded-lg transition-all border ${isSelectionMode ? "bg-blue-600 text-white border-blue-500" : "text-slate-500 border-white/10 hover:bg-white/10"}`}
+                  className={`px-3 py-1.5 text-[10px] font-black rounded-lg transition-all border ${isSelectionMode ? "bg-blue-600 text-white border-blue-500" : "text-slate-300 border-white/10 hover:bg-white/10"}`}
                 >
                   {isSelectionMode ? "CANCEL" : "SELECT"}
                 </button>
@@ -152,7 +152,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
 
               <button
                 onClick={markAllAsRead}
-                className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-all"
+                className="p-2 text-slate-300 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-all"
                 title="Mark all as read"
               >
                 <Check className="w-4 h-4" />
@@ -167,7 +167,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                 <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center">
                   <Bell className="w-6 h-6 text-slate-700" />
                 </div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                   No new notifications
                 </p>
               </div>
@@ -200,7 +200,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start gap-2">
                       <p
-                        className={`text-[13px] leading-relaxed transition-colors ${!n.isRead ? "text-white font-bold" : "text-slate-400 font-medium"}`}
+                        className={`text-[13px] leading-relaxed transition-colors ${!n.isRead ? "text-white font-bold" : "text-slate-300 font-medium"}`}
                       >
                         {n.message}
                       </p>
@@ -209,7 +209,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                       )}
                     </div>
                     <div className="flex items-center gap-3 mt-2">
-                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                      <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-1">
                         <Clock className="w-2.5 h-2.5" />
                         {getTimeAgo(n.createdAt)}
                       </span>

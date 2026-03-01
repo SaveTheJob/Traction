@@ -1,39 +1,47 @@
+/* ==========================================================================
+   Traction – Global Stylesheet
+   Import order: Fonts → Tailwind → Global styles → Utilities
+   ========================================================================== */
+
+/* 1. Fonts */
 @import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+
+/* 2. Tailwind CSS v4 */
 @import "tailwindcss";
 
+/* 3. Dark-mode variant (Tailwind v4 API) */
 @custom-variant dark (&:is(.dark *));
+
+/* ==========================================================================
+   Base – Reset & Defaults
+   ========================================================================== */
 
 body {
   font-family: "Inter", system-ui, sans-serif;
-  background: var(--primary-gradient,
-      linear-gradient(-45deg, #020617, #0f172a, #020617, #020617));
-  background-size: cover;
-  background-attachment: fixed;
-  background-position: center;
-  background-repeat: no-repeat;
+  background-color: #0f172a;
+  /* Fallback before AppBackground mounts */
   color: #f8fafc;
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  position: relative;
 }
 
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0);
-  backdrop-filter: blur(3px);
-  pointer-events: none;
-  z-index: 0;
+/* Headings */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: #f8fafc;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
-body>* {
-  position: relative;
-  z-index: 1;
-}
+/* ==========================================================================
+   Scrollbars – cross-browser styling
+   ========================================================================== */
 
-/* Themed scrollbars */
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(148, 163, 184, 0.5) rgba(15, 23, 42, 0.45);
@@ -61,6 +69,7 @@ body>* {
   background-clip: content-box;
 }
 
+/* Named variant for tighter scrollbars inside panels */
 .scrollbar-theme {
   scrollbar-width: thin;
   scrollbar-gutter: stable;
@@ -83,80 +92,45 @@ body>* {
   background-clip: content-box;
 }
 
-/* Base heading styles for high contrast */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  color: #f8fafc;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
+/* ==========================================================================
+   Glassmorphism Utilities
+   --app-glass-opacity / --app-glass-heavy are set at runtime by ThemeContext
+   via document.documentElement.style.setProperty().
+   CSS fallback values are embedded directly so Tailwind's `:root` pass
+   cannot shadow them.
+   ========================================================================== */
 
-/* Premium Glass Utilities */
+/* Standard glass — used on cards, modals, tables */
 .premium-glass {
-  background: rgba(15, 23, 42, 0.45);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, var(--app-glass-opacity, 0.32));
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: none;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.02),
-    0 8px 32px 0 rgba(0, 0, 0, 0.4);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 8px 32px 0 rgba(0, 0, 0, 0.2);
+  transition: background 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .premium-glass:hover {
-  background: rgba(255, 255, 255, 0.50);
-  box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.1);
+  background: rgba(15, 23, 42, calc(var(--app-glass-opacity, 0.32) + 0.08));
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.3);
 }
 
-/* Heavy version for deeper contrast */
+/* Heavy glass — used on sidebar, pipeline columns, overlays */
 .premium-glass-heavy {
-  background: rgba(255, 255, 255, 0.60);
-  backdrop-filter: blur(32px) saturate(200%);
-  -webkit-backdrop-filter: blur(32px) saturate(200%);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  background: rgba(15, 23, 42, var(--app-glass-heavy, 0.70));
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border: none;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  transition: background 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* 
- * FORCE EXPLICIT DARK MODE GLASS SPECIFICITY
- * Bypassing Tailwind v4 `@custom-variant` bugs by strictly asserting html.dark cascade
- */
-html.dark .premium-glass,
-body.dark .premium-glass,
-.dark .premium-glass {
-  background: rgba(15, 23, 42, 0.15) !important;
-  backdrop-filter: blur(40px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.06) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 8px 32px 0 rgba(0, 0, 0, 0.4) !important;
-}
-
-html.dark .premium-glass:hover,
-body.dark .premium-glass:hover,
-.dark .premium-glass:hover {
-  background: rgba(15, 23, 42, 0.25) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 12px 40px 0 rgba(0, 0, 0, 0.5) !important;
-}
-
-html.dark .premium-glass-heavy,
-body.dark .premium-glass-heavy,
-.dark .premium-glass-heavy {
-  background: rgba(15, 23, 42, 0.35) !important;
-  backdrop-filter: blur(48px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(48px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 8px 48px 0 rgba(0, 0, 0, 0.5) !important;
-}
-
-/* 3D Engraved Effect - Deeper and more realistic */
+/* Engraved / inset effect — used on pill badges */
 .premium-engraved {
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.35);
   box-shadow:
     inset 0 4px 12px rgba(0, 0, 0, 0.5),
     inset 0 -1px 0 rgba(255, 255, 255, 0.05),

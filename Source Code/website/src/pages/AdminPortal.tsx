@@ -67,7 +67,7 @@ const AdminPortal: React.FC = () => {
                         <ShieldCheck className="w-8 h-8 text-blue-600 animate-pulse" />
                         Support Mission Control
                     </h1>
-                    <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px] mt-1 opacity-70">
+                    <p className="text-slate-300 font-bold uppercase tracking-[0.2em] text-[10px] mt-1 opacity-70">
                         Administrative Authority • Access Level: OVERSIGHT
                     </p>
                 </div>
@@ -182,8 +182,8 @@ const UserCommand: React.FC = () => {
                             Search User
                         </h2>
                         <div className="flex bg-black/20 p-1 rounded-xl border border-white/5">
-                            <button onClick={() => setSearchMode('email')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${searchMode === 'email' ? 'bg-slate-800 shadow-sm text-blue-600' : 'text-slate-400'}`}>Email</button>
-                            <button onClick={() => setSearchMode('name')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${searchMode === 'name' ? 'bg-slate-800 shadow-sm text-blue-600' : 'text-slate-400'}`}>Name</button>
+                            <button onClick={() => setSearchMode('email')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${searchMode === 'email' ? 'bg-slate-800 shadow-sm text-blue-600' : 'text-slate-300'}`}>Email</button>
+                            <button onClick={() => setSearchMode('name')} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${searchMode === 'name' ? 'bg-slate-800 shadow-sm text-blue-600' : 'text-slate-300'}`}>Name</button>
                         </div>
                     </div>
 
@@ -198,23 +198,23 @@ const UserCommand: React.FC = () => {
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                                    className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-2xl text-sm font-medium text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-500"
+                                    className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-2xl text-sm font-medium text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-300"
                                 />
                             </div>
                         ) : (
                             <div className="space-y-3">
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-400 mb-1.5">First Name</label>
-                                        <input type="text" placeholder="John" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-sm font-medium text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-400" />
+                                        <label className="block text-xs font-bold text-slate-300 mb-1.5">First Name</label>
+                                        <input type="text" placeholder="John" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-sm font-medium text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-300" />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-400 mb-1.5">Last Name</label>
-                                        <input type="text" placeholder="Doe" value={searchLastName} onChange={(e) => setSearchLastName(e.target.value)} className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-sm font-medium text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-400" />
+                                        <label className="block text-xs font-bold text-slate-300 mb-1.5">Last Name</label>
+                                        <input type="text" placeholder="Doe" value={searchLastName} onChange={(e) => setSearchLastName(e.target.value)} className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-sm font-medium text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-300" />
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-400 mb-1.5">Date of Birth</label>
+                                    <label className="block text-xs font-bold text-slate-300 mb-1.5">Date of Birth</label>
                                     <input type="date" value={searchDOB} onChange={(e) => setSearchDOB(e.target.value)} className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-sm font-medium text-white outline-none focus:ring-2 focus:ring-blue-500/30 transition-all" />
                                 </div>
                             </div>
@@ -240,7 +240,7 @@ const UserCommand: React.FC = () => {
                                 </div>
                                 <div>
                                     <h3 className="text-2xl font-black text-white uppercase tracking-tighter">{targetUser.firstName} {targetUser.lastName}</h3>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{targetUser.email}</p>
+                                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{targetUser.email}</p>
                                 </div>
                             </div>
                             <div className="flex gap-2">
@@ -264,7 +264,7 @@ const UserCommand: React.FC = () => {
                         <div className="p-10 grid grid-cols-2 gap-10">
                             <div className="space-y-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Plan Authorization</label>
+                                    <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Plan Authorization</label>
                                     <div className="premium-glass p-5 rounded-2xl border border-white/5 flex items-center justify-between">
                                         <span className="text-xs font-black uppercase tracking-widest text-white">{targetUser.plan}</span>
                                         {isEditing && (
@@ -276,7 +276,7 @@ const UserCommand: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Access Status</label>
+                                    <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Access Status</label>
                                     <div className="premium-glass p-5 rounded-2xl border border-white/5 flex items-center justify-between">
                                         <span className={`text-xs font-black uppercase tracking-widest ${targetUser.status === 'Suspended' ? 'text-rose-500' : 'text-emerald-500'}`}>{targetUser.status}</span>
                                         {isEditing && (
@@ -291,10 +291,10 @@ const UserCommand: React.FC = () => {
                             </div>
                             <div className="space-y-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Subject Metadata</label>
+                                    <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Subject Metadata</label>
                                     <div className="premium-glass p-6 rounded-2xl border border-white/5 space-y-4">
-                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">UID: <span className="text-xs font-mono font-bold text-white ml-2 opacity-80">{targetUser.uid}</span></p>
-                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">SYNCED: <span className="text-xs font-bold text-white ml-2 uppercase opacity-80">{targetUser.createdAt ? new Date(targetUser.createdAt.seconds * 1000).toLocaleDateString() : 'LEGACY'}</span></p>
+                                        <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">UID: <span className="text-xs font-mono font-bold text-white ml-2 opacity-80">{targetUser.uid}</span></p>
+                                        <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">SYNCED: <span className="text-xs font-bold text-white ml-2 uppercase opacity-80">{targetUser.createdAt ? new Date(targetUser.createdAt.seconds * 1000).toLocaleDateString() : 'LEGACY'}</span></p>
                                     </div>
                                 </div>
                             </div>
@@ -305,8 +305,8 @@ const UserCommand: React.FC = () => {
                         <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6">
                             <Search className="w-8 h-8 text-slate-700" />
                         </div>
-                        <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Monitor Standby</h3>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-2 max-w-xs leading-relaxed">Probe for a subject profile to initiate administrative sync.</p>
+                        <h3 className="text-sm font-black text-slate-300 uppercase tracking-widest">Monitor Standby</h3>
+                        <p className="text-[10px] text-slate-300 font-bold uppercase tracking-widest mt-2 max-w-xs leading-relaxed">Probe for a subject profile to initiate administrative sync.</p>
                     </div>
                 )}
             </div>
@@ -374,7 +374,7 @@ const SystemVitals: React.FC = () => {
                     <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity`}>
                         <v.icon className={`w-12 h-12 text-${v.color}-500`} />
                     </div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{v.label}</p>
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">{v.label}</p>
                     <p className={`text-2xl font-black text-white uppercase tracking-tighter`}>{v.val}</p>
                     <div className={`mt-4 w-full h-1 bg-white/5 rounded-full overflow-hidden`}>
                         <div className={`h-full bg-${v.color}-500 transition-all duration-1000 ${stats.loading ? 'w-0' : 'w-[80%]'} ${v.label === 'Engine Health' ? 'animate-pulse' : ''}`} />
@@ -390,7 +390,7 @@ const SystemVitals: React.FC = () => {
                         <div key={i} className="flex-1 bg-gradient-to-t from-blue-600/20 to-blue-500/60 rounded-t-lg transition-all hover:to-blue-400" style={{ height: `${h}%` }} />
                     ))}
                 </div>
-                <div className="mt-4 flex justify-between text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
+                <div className="mt-4 flex justify-between text-[9px] font-black text-slate-300 uppercase tracking-widest px-1">
                     <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:59</span>
                 </div>
             </div>
@@ -439,7 +439,7 @@ const SecurityPulse: React.FC = () => {
             <div className="divide-y divide-white/5 max-h-[600px] overflow-y-auto">
                 {logs.length === 0 && !loading ? (
                     <div className="p-10 text-center">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No administrative logs detected in this cluster.</p>
+                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">No administrative logs detected in this cluster.</p>
                     </div>
                 ) : (
                     logs.map((log, i) => (
@@ -450,11 +450,11 @@ const SecurityPulse: React.FC = () => {
                                 </div>
                                 <div>
                                     <p className="text-xs font-black text-white tracking-widest uppercase">{log.action.replace(/_/g, ' ')}</p>
-                                    <p className="text-[9px] font-bold text-slate-400 tracking-widest uppercase mt-0.5">EXERCISED BY: {log.user} • ON: {log.target}</p>
+                                    <p className="text-[9px] font-bold text-slate-300 tracking-widest uppercase mt-0.5">EXERCISED BY: {log.user} • ON: {log.target}</p>
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{getTimeAgo(log.createdAt)}</p>
+                                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">{getTimeAgo(log.createdAt)}</p>
                                 <span className={`text-[8px] font-black px-2 py-0.5 rounded-full border ${log.status === 'SUCCESS' ? 'border-emerald-500/20 text-emerald-500' : 'border-rose-500/20 text-rose-500'} uppercase tracking-widest mt-1 inline-block`}>
                                     {log.status}
                                 </span>
@@ -519,7 +519,7 @@ const BroadcastControl: React.FC = () => {
                                 </div>
                                 Broadcast Message
                             </h3>
-                            <p className="text-xs text-slate-400 mt-1 ml-[42px] font-medium">
+                            <p className="text-xs text-slate-300 mt-1 ml-[42px] font-medium">
                                 Send notifications to all users or a specific account
                             </p>
                         </div>
@@ -542,7 +542,7 @@ const BroadcastControl: React.FC = () => {
                             placeholder="Type your broadcast message here..."
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
-                            className="w-full px-4 py-3.5 bg-black/20 border border-white/10 rounded-2xl text-sm font-medium text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/30 transition-all h-32 resize-none placeholder:text-slate-500"
+                            className="w-full px-4 py-3.5 bg-black/20 border border-white/10 rounded-2xl text-sm font-medium text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/30 transition-all h-32 resize-none placeholder:text-slate-300"
                         />
                     </div>
 
@@ -557,7 +557,7 @@ const BroadcastControl: React.FC = () => {
                                 placeholder="All users (leave empty for global)"
                                 value={targetUid}
                                 onChange={(e) => setTargetUid(e.target.value)}
-                                className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-2xl text-sm font-medium text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/30 transition-all placeholder:text-slate-500"
+                                className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-2xl text-sm font-medium text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/30 transition-all placeholder:text-slate-300"
                             />
                         </div>
                         <div>
@@ -575,7 +575,7 @@ const BroadcastControl: React.FC = () => {
                                         onClick={() => setType(p.key as any)}
                                         className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all ${type === p.key
                                             ? `${p.activeBg} ${p.color} shadow-sm border`
-                                            : 'text-slate-500 hover:text-slate-300 border border-transparent'
+                                            : 'text-slate-300 hover:text-slate-300 border border-transparent'
                                             }`}
                                     >
                                         {p.label}
@@ -607,19 +607,19 @@ const BroadcastControl: React.FC = () => {
                     <div className="space-y-3">
                         <div className="flex items-start gap-2.5">
                             <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />
-                            <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                            <p className="text-xs text-slate-300 font-medium leading-relaxed">
                                 Global broadcasts are delivered to <strong className="text-slate-200">all active users</strong> immediately.
                             </p>
                         </div>
                         <div className="flex items-start gap-2.5">
                             <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
-                            <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                            <p className="text-xs text-slate-300 font-medium leading-relaxed">
                                 To target a specific user, enter their <strong className="text-slate-200">email address or UID</strong> in the Target field.
                             </p>
                         </div>
                         <div className="flex items-start gap-2.5">
                             <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 shrink-0" />
-                            <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                            <p className="text-xs text-slate-300 font-medium leading-relaxed">
                                 Use <strong className="text-slate-200">Critical</strong> priority sparingly — it triggers prominent alerts on the user's screen.
                             </p>
                         </div>

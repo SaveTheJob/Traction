@@ -76,7 +76,7 @@ export default function NewApplicationModal() {
           </h2>
           <button
             onClick={closeModal}
-            className="p-1 text-slate-500 hover:text-slate-300 rounded-xl hover:bg-slate-700 transition-colors cursor-pointer"
+            className="p-1 text-slate-300 hover:text-slate-300 rounded-xl hover:bg-slate-700 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>

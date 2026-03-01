@@ -88,19 +88,19 @@ export default function Pipeline() {
           <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
             Pipeline Overview
           </h1>
-          <p className="text-slate-400 mt-1 sm:mt-1.5 text-xs sm:text-sm font-medium">
+          <p className="text-white mt-1 sm:mt-1.5 text-xs sm:text-sm font-medium">
             Manage and track your active opportunities.
           </p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3 w-full lg:w-auto">
           <div className="relative flex-1 lg:w-72">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 z-10" />
+            <Search className="w-4 h-4 text-slate-300 absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 z-10" />
             <input
               type="text"
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 sm:pl-11 pr-3 sm:pr-4 py-2 sm:py-2.5 text-sm border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all bg-black/20 backdrop-blur-sm text-white placeholder-slate-400 font-medium shadow-inner"
+              className="w-full pl-9 sm:pl-11 pr-3 sm:pr-4 py-2 sm:py-2.5 text-sm border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all bg-white/10 backdrop-blur-sm text-white placeholder-slate-200 font-medium shadow-inner"
             />
           </div>
           <CustomSelect
@@ -132,7 +132,7 @@ export default function Pipeline() {
           {COLUMNS.map((col) => (
             <div
               key={col.id}
-              className="flex-shrink-0 w-[16.5rem] sm:w-72 lg:w-80 rounded-3xl flex flex-col h-full max-h-[calc(100vh-14rem)] sm:max-h-[calc(100vh-12rem)] shadow-xl border border-white/10 bg-slate-900/45 backdrop-blur-xl"
+              className="flex-shrink-0 w-[16.5rem] sm:w-72 lg:w-80 rounded-3xl flex flex-col h-full max-h-[calc(100vh-14rem)] sm:max-h-[calc(100vh-12rem)] shadow-xl premium-glass-heavy"
             >
               <div className="px-4 sm:px-6 py-3 sm:py-5 flex items-center justify-between rounded-t-3xl">
                 <h3 className="font-bold text-slate-100 text-[15px] flex items-center gap-2 tracking-wide">
@@ -150,11 +150,10 @@ export default function Pipeline() {
                   <div
                     {...provided.droppableProps}
                     ref={provided.innerRef}
-                    className={`p-4 pt-1 pr-2 pb-2 flex-1 overflow-y-auto space-y-3 transition-all duration-200 ease-out scrollbar-theme rounded-b-3xl ${
-                      snapshot.isDraggingOver
-                        ? "bg-blue-400/5 ring-2 ring-inset ring-blue-400/15"
-                        : ""
-                    }`}
+                    className={`p-4 pt-1 pr-2 pb-2 flex-1 overflow-y-auto space-y-3 transition-all duration-200 ease-out scrollbar-theme rounded-b-3xl ${snapshot.isDraggingOver
+                      ? "bg-blue-400/5 ring-2 ring-inset ring-blue-400/15"
+                      : ""
+                      }`}
                   >
                     {filteredJobs
                       .filter((j) => j.status === col.id)

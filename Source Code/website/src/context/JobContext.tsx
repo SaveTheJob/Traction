@@ -22,6 +22,14 @@ export type Status =
   | "Offer"
   | "Rejected";
 
+export interface JobDocument {
+  id: string;
+  name: string;
+  url: string;
+  path: string;
+  uploadedAt: string;
+}
+
 export interface Job {
   id: string;
   company: string;
@@ -32,8 +40,9 @@ export interface Job {
   priority: Priority;
   status: Status;
   notes?: string;
+  documents?: JobDocument[];
   userId?: string;
-  createdAt?: any;
+  createdAt?: import("firebase/firestore").Timestamp | null;
 }
 
 export type JobDataPayload = Omit<
@@ -51,6 +60,10 @@ interface JobContextType {
   editingJobId: string | null;
   openModal: (jobId?: string) => void;
   closeModal: () => void;
+  isVaultOpen: boolean;
+  vaultJobId: string | null;
+  openVault: (jobId: string) => void;
+  closeVault: () => void;
   limitError: string;
   clearLimitError: () => void;
 }
@@ -61,6 +74,8 @@ export function JobProvider({ children }: { children: ReactNode }) {
   const { user, isAdmin, impersonatedUser } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
+  const [isVaultOpen, setIsVaultOpen] = useState(false);
+  const [vaultJobId, setVaultJobId] = useState<string | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [limitError, setLimitError] = useState("");
 
@@ -164,6 +179,16 @@ export function JobProvider({ children }: { children: ReactNode }) {
     setTimeout(() => setEditingJobId(null), 200); // clear after animation
   };
 
+  const openVault = (jobId: string) => {
+    setVaultJobId(jobId);
+    setIsVaultOpen(true);
+  };
+
+  const closeVault = () => {
+    setIsVaultOpen(false);
+    setTimeout(() => setVaultJobId(null), 200);
+  };
+
   return (
     <JobContext.Provider
       value={{
@@ -176,6 +201,10 @@ export function JobProvider({ children }: { children: ReactNode }) {
         editingJobId,
         openModal,
         closeModal,
+        isVaultOpen,
+        vaultJobId,
+        openVault,
+        closeVault,
         limitError,
         clearLimitError,
       }}

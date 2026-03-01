@@ -125,7 +125,7 @@ export default function Account() {
         <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
           Profile Details &amp; Settings
         </h1>
-        <p className="text-slate-400 mt-1 sm:mt-1.5 text-xs sm:text-sm font-medium">
+        <p className="text-slate-300 mt-1 sm:mt-1.5 text-xs sm:text-sm font-medium">
           Manage your profile, security, and plan preferences.
         </p>
       </div>
@@ -164,13 +164,13 @@ export default function Account() {
               )}
 
               <div>
-                <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                   Email
                 </label>
                 <input
                   type="text"
                   disabled
-                  className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-black/20 border border-white/5 rounded-2xl text-sm font-medium text-slate-400 cursor-not-allowed"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-black/20 border border-white/5 rounded-2xl text-sm font-medium text-slate-300 cursor-not-allowed"
                   value={user?.email || "No email attached"}
                 />
               </div>
@@ -178,27 +178,27 @@ export default function Account() {
               <form onSubmit={handleUpdateProfile} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                    <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                       First Name
                     </label>
                     <input
                       type="text"
                       placeholder="First name"
                       disabled={!isEditingProfile}
-                      className={`w-full px-4 py-2.5 border rounded-2xl text-sm font-medium transition-all ${isEditingProfile ? "bg-black/20 border-white/5 text-white focus:ring-2 focus:ring-blue-500/30 outline-none" : "bg-black/20 border-white/5 text-slate-400 cursor-not-allowed"}`}
+                      className={`w-full px-4 py-2.5 border rounded-2xl text-sm font-medium transition-all ${isEditingProfile ? "bg-black/20 border-white/5 text-white focus:ring-2 focus:ring-blue-500/30 outline-none" : "bg-black/20 border-white/5 text-slate-300 cursor-not-allowed"}`}
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                    <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                       Last Name
                     </label>
                     <input
                       type="text"
                       placeholder="Last name"
                       disabled={!isEditingProfile}
-                      className={`w-full px-4 py-2.5 border rounded-2xl text-sm font-medium transition-all ${isEditingProfile ? "bg-black/20 border-white/5 text-white focus:ring-2 focus:ring-blue-500/30 outline-none" : "bg-black/20 border-white/5 text-slate-400 cursor-not-allowed"}`}
+                      className={`w-full px-4 py-2.5 border rounded-2xl text-sm font-medium transition-all ${isEditingProfile ? "bg-black/20 border-white/5 text-white focus:ring-2 focus:ring-blue-500/30 outline-none" : "bg-black/20 border-white/5 text-slate-300 cursor-not-allowed"}`}
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                     />
@@ -206,13 +206,13 @@ export default function Account() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider flex items-center gap-1.5">
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5" /> Date of Birth
                   </label>
                   <input
                     type="date"
                     disabled={!isEditingProfile}
-                    className={`w-full px-4 py-2.5 border rounded-2xl text-sm font-medium transition-all ${isEditingProfile ? "bg-black/20 border-white/5 text-white focus:ring-2 focus:ring-blue-500/30 outline-none" : "bg-black/20 border-white/5 text-slate-400 cursor-not-allowed"}`}
+                    className={`w-full px-4 py-2.5 border rounded-2xl text-sm font-medium transition-all ${isEditingProfile ? "bg-black/20 border-white/5 text-white focus:ring-2 focus:ring-blue-500/30 outline-none" : "bg-black/20 border-white/5 text-slate-300 cursor-not-allowed"}`}
                     value={dob}
                     onChange={(e) => setDob(e.target.value)}
                   />
@@ -235,7 +235,7 @@ export default function Account() {
                         setLastName(userProfile?.lastName || "");
                         setDob(userProfile?.dob || "");
                       }}
-                      className="px-5 bg-white/5 border border-white/10 text-slate-400 font-bold py-2.5 rounded-2xl hover:bg-white/20 transition-all text-xs tracking-wide active:scale-[0.98] flex items-center gap-1.5"
+                      className="px-5 bg-white/5 border border-white/10 text-slate-300 font-bold py-2.5 rounded-2xl hover:bg-white/20 transition-all text-xs tracking-wide active:scale-[0.98] flex items-center gap-1.5"
                     >
                       <X className="w-3.5 h-3.5" /> Cancel
                     </button>
@@ -264,7 +264,7 @@ export default function Account() {
                   </div>
                 )}
                 <div>
-                  <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                     New Password
                   </label>
                   <input
@@ -278,7 +278,7 @@ export default function Account() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5 uppercase tracking-wider">
                     Confirm Password
                   </label>
                   <input
@@ -308,7 +308,7 @@ export default function Account() {
                 <FileText className="w-4 h-4 text-blue-400" />
                 <h3 className="text-xs font-bold text-white">Legal</h3>
               </div>
-              <p className="text-[11px] text-slate-400 mb-3 leading-relaxed">
+              <p className="text-[11px] text-slate-300 mb-3 leading-relaxed">
                 Privacy policy and terms of service.
               </p>
               <Link
@@ -324,7 +324,7 @@ export default function Account() {
                 <LogOut className="w-4 h-4 text-red-400" />
                 <h3 className="text-xs font-bold text-white">Sign Out</h3>
               </div>
-              <p className="text-[11px] text-slate-400 mb-3 leading-relaxed">
+              <p className="text-[11px] text-slate-300 mb-3 leading-relaxed">
                 End your current session securely.
               </p>
               <button
@@ -365,7 +365,7 @@ export default function Account() {
                     Usage
                   </span>
                   <span
-                    className={`text-[11px] font-black ${isOverLimit ? "text-red-500" : "text-slate-400"}`}
+                    className={`text-[11px] font-black ${isOverLimit ? "text-red-500" : "text-slate-300"}`}
                   >
                     {jobs.length}/50
                   </span>
@@ -404,7 +404,7 @@ export default function Account() {
                     </h3>
                     <p className="text-xl font-black text-white">
                       $0
-                      <span className="text-[10px] font-bold text-slate-400">
+                      <span className="text-[10px] font-bold text-slate-300">
                         /mo
                       </span>
                     </p>
@@ -428,7 +428,7 @@ export default function Account() {
                         className="w-3 h-3 text-emerald-400 shrink-0"
                         strokeWidth={3}
                       />
-                      <span className="text-[11px] font-medium text-slate-400">
+                      <span className="text-[11px] font-medium text-slate-300">
                         {f}
                       </span>
                     </div>
@@ -458,7 +458,7 @@ export default function Account() {
                     </h3>
                     <p className="text-xl font-black text-white">
                       $5
-                      <span className="text-[10px] font-bold text-slate-400">
+                      <span className="text-[10px] font-bold text-slate-300">
                         /mo
                       </span>
                     </p>
@@ -483,7 +483,7 @@ export default function Account() {
                         className="w-3 h-3 text-purple-300 shrink-0"
                         strokeWidth={3}
                       />
-                      <span className="text-[11px] font-medium text-slate-400">
+                      <span className="text-[11px] font-medium text-slate-300">
                         {f}
                       </span>
                     </div>

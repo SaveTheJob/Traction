@@ -92,20 +92,20 @@ export default function Network() {
           <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
             Professional Network
           </h1>
-          <p className="text-slate-400 mt-1 text-xs sm:text-sm font-medium">
+          <p className="text-white mt-1 text-xs sm:text-sm font-medium">
             Manage your referrals, recruiters, and coffee chats.
           </p>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-72">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 z-10" />
+            <Search className="w-4 h-4 text-slate-300 absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 z-10" />
             <input
               type="text"
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 sm:pl-11 pr-3 sm:pr-4 py-2 sm:py-2.5 text-sm border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all bg-black/20 backdrop-blur-sm text-white placeholder-slate-400 font-medium shadow-inner"
+              className="w-full pl-9 sm:pl-11 pr-3 sm:pr-4 py-2 sm:py-2.5 text-sm border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all bg-white/10 backdrop-blur-sm text-white placeholder-slate-200 font-medium shadow-inner"
             />
           </div>
           <button
@@ -126,7 +126,7 @@ export default function Network() {
               <tr className="border-b border-white/5 bg-black/40">
                 <th
                   onClick={() => toggleSort("name")}
-                  className="px-4 sm:px-6 py-3 sm:py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-transparent cursor-pointer select-none hover:text-slate-200 transition-colors"
+                  className="px-4 sm:px-6 py-3 sm:py-5 text-[10px] font-black text-slate-300 uppercase tracking-widest bg-transparent cursor-pointer select-none hover:text-slate-200 transition-colors"
                 >
                   <span className="inline-flex items-center gap-1">
                     Contact
@@ -143,7 +143,7 @@ export default function Network() {
                 </th>
                 <th
                   onClick={() => toggleSort("company")}
-                  className="px-4 sm:px-6 py-3 sm:py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-transparent hidden sm:table-cell cursor-pointer select-none hover:text-slate-200 transition-colors"
+                  className="px-4 sm:px-6 py-3 sm:py-5 text-[10px] font-black text-slate-300 uppercase tracking-widest bg-transparent hidden sm:table-cell cursor-pointer select-none hover:text-slate-200 transition-colors"
                 >
                   <span className="inline-flex items-center gap-1">
                     Company & Role
@@ -160,7 +160,7 @@ export default function Network() {
                 </th>
                 <th
                   onClick={() => toggleSort("status")}
-                  className="px-4 sm:px-6 py-3 sm:py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-transparent cursor-pointer select-none hover:text-slate-200 transition-colors"
+                  className="px-4 sm:px-6 py-3 sm:py-5 text-[10px] font-black text-slate-300 uppercase tracking-widest bg-transparent cursor-pointer select-none hover:text-slate-200 transition-colors"
                 >
                   <span className="inline-flex items-center gap-1">
                     Status
@@ -177,7 +177,7 @@ export default function Network() {
                 </th>
                 <th
                   onClick={() => toggleSort("lastContacted")}
-                  className="px-4 sm:px-6 py-3 sm:py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-transparent hidden lg:table-cell cursor-pointer select-none hover:text-slate-200 transition-colors"
+                  className="px-4 sm:px-6 py-3 sm:py-5 text-[10px] font-black text-slate-300 uppercase tracking-widest bg-transparent hidden lg:table-cell cursor-pointer select-none hover:text-slate-200 transition-colors"
                 >
                   <span className="inline-flex items-center gap-1">
                     Last Contact
@@ -192,7 +192,7 @@ export default function Network() {
                     )}
                   </span>
                 </th>
-                <th className="px-4 sm:px-6 py-3 sm:py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right bg-transparent">
+                <th className="px-4 sm:px-6 py-3 sm:py-5 text-[10px] font-black text-slate-300 uppercase tracking-widest text-right bg-transparent">
                   Actions
                 </th>
               </tr>
@@ -214,7 +214,7 @@ export default function Network() {
                             {contact.name}
                           </div>
                           {/* Show company inline on mobile since column is hidden */}
-                          <div className="text-[11px] text-slate-400 mt-0.5 truncate sm:hidden">
+                          <div className="text-[11px] text-slate-300 mt-0.5 truncate sm:hidden">
                             {contact.company} • {contact.role}
                           </div>
                           {contact.email && (
@@ -230,7 +230,7 @@ export default function Network() {
                             </button>
                           )}
                           {contact.notes && (
-                            <div className="text-[10px] text-slate-400 mt-1.5 italic line-clamp-1 border-l-2 border-blue-400/30 pl-2 opacity-80 group-hover:opacity-100 transition-opacity font-medium">
+                            <div className="text-[10px] text-slate-300 mt-1.5 italic line-clamp-1 border-l-2 border-blue-400/30 pl-2 opacity-80 group-hover:opacity-100 transition-opacity font-medium">
                               {contact.notes}
                             </div>
                           )}
@@ -242,7 +242,7 @@ export default function Network() {
                         <span className="text-sm font-bold text-slate-100 mb-0.5 truncate max-w-[160px]">
                           {contact.company}
                         </span>
-                        <span className="text-xs font-medium text-slate-400 bg-slate-800/50 px-2 py-0.5 rounded-full w-fit border border-slate-700/50 truncate max-w-[140px]">
+                        <span className="text-xs font-medium text-slate-300 bg-slate-800/50 px-2 py-0.5 rounded-full w-fit border border-slate-700/50 truncate max-w-[140px]">
                           {contact.role}
                         </span>
                       </div>
@@ -262,7 +262,7 @@ export default function Network() {
                         {contact.email && (
                           <button
                             onClick={(e) => handleCopyEmail(e, contact.email!)}
-                            className="p-2 text-slate-400 hover:text-green-400 hover:bg-green-500/10 rounded-full transition-all inline-flex bg-transparent cursor-pointer border-none"
+                            className="p-2 text-slate-300 hover:text-green-400 hover:bg-green-500/10 rounded-full transition-all inline-flex bg-transparent cursor-pointer border-none"
                             title="Copy email to clipboard"
                           >
                             <Copy className="w-4 h-4" />
@@ -270,7 +270,7 @@ export default function Network() {
                         )}
                         <button
                           onClick={() => openNetworkModal(contact.id)}
-                          className="p-2 text-slate-400 hover:text-blue-400 hover:bg-blue-900/30 rounded-full transition-all inline-flex hover:shadow-sm"
+                          className="p-2 text-slate-300 hover:text-blue-400 hover:bg-blue-900/30 rounded-full transition-all inline-flex hover:shadow-sm"
                           title="Edit"
                         >
                           <Edit2 className="w-4 h-4" />
@@ -279,7 +279,7 @@ export default function Network() {
                           onClick={() => {
                             setConfirmDeleteId(contact.id);
                           }}
-                          className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-900/30 rounded-full transition-all inline-flex hover:shadow-sm"
+                          className="p-2 text-slate-300 hover:text-red-400 hover:bg-red-900/30 rounded-full transition-all inline-flex hover:shadow-sm"
                           title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -295,7 +295,7 @@ export default function Network() {
                       <div className="w-16 h-16 mb-4 rounded-full bg-white/5 flex items-center justify-center">
                         <Search className="w-8 h-8 text-slate-300" />
                       </div>
-                      <p className="text-slate-400 font-medium">
+                      <p className="text-slate-300 font-medium">
                         No contacts found. Add someone to your network!
                       </p>
                     </div>

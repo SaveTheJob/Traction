@@ -6,6 +6,7 @@ import {
   FileSpreadsheet,
   FileText,
   Filter,
+  Folder,
   Plus,
   Search,
   Trash2,
@@ -19,7 +20,7 @@ import ConfirmDialog from "../components/ConfirmDialog";
 import CustomSelect from "../components/CustomSelect";
 import StatusBadge from "../components/StatusBadge";
 export default function Dashboard() {
-  const { jobs, openModal, deleteJob } = useJobs();
+  const { jobs, openModal, deleteJob, openVault } = useJobs();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("All");
@@ -551,7 +552,7 @@ export default function Dashboard() {
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight leading-none mb-1">
             Welcome back, {firstName}!
           </h1>
-          <p className="text-slate-400 mt-1 sm:mt-1.5 text-xs sm:text-sm font-medium">
+          <p className="text-white mt-1 sm:mt-1.5 text-xs sm:text-sm font-medium">
             Applications Overview & Active Control Hub
           </p>
         </div>
@@ -579,7 +580,7 @@ export default function Dashboard() {
                     </div>
                     <div className="text-left">
                       <p className="font-semibold">Convert to PDF</p>
-                      <p className="text-[11px] text-slate-400 font-normal">
+                      <p className="text-[11px] text-slate-300 font-normal">
                         Full formatted report
                       </p>
                     </div>
@@ -593,7 +594,7 @@ export default function Dashboard() {
                     </div>
                     <div className="text-left">
                       <p className="font-semibold">Export to Excel</p>
-                      <p className="text-[11px] text-slate-400 font-normal">
+                      <p className="text-[11px] text-slate-300 font-normal">
                         Formatted spreadsheet
                       </p>
                     </div>
@@ -620,7 +621,7 @@ export default function Dashboard() {
         {metrics.map((metric, idx) => (
           <div
             key={idx}
-            className="premium-glass rounded-2xl sm:rounded-3xl p-5 sm:p-6 lg:p-10 relative group overflow-hidden shadow-xl flex flex-col justify-center"
+            className="premium-glass rounded-2xl sm:rounded-3xl p-5 sm:p-6 lg:p-10 relative group overflow-hidden shadow-xl flex flex-col justify-between h-full"
           >
             <div className="absolute right-0 top-0 h-40 w-40 bg-gradient-to-br from-blue-400/10 to-purple-500/10 rounded-full blur-3xl transform translate-x-10 -translate-y-10 group-hover:scale-150 transition-transform duration-700 ease-in-out" />
             <div className="flex items-center justify-between relative z-10">
@@ -645,23 +646,20 @@ export default function Dashboard() {
         ))}
 
         {/* Active Leads split into Applied / Saved / Offers */}
-        <div className="premium-glass rounded-2xl sm:rounded-3xl p-5 sm:p-6 lg:p-10 relative group overflow-hidden shadow-xl">
+        <div className="premium-glass rounded-2xl sm:rounded-3xl p-5 sm:p-6 lg:p-10 relative group overflow-hidden shadow-xl flex flex-col justify-between h-full">
           <div className="absolute right-0 top-0 h-40 w-40 bg-gradient-to-br from-blue-400/10 to-purple-500/10 rounded-full blur-3xl transform translate-x-10 -translate-y-10 group-hover:scale-150 transition-transform duration-700 ease-in-out" />
 
           <p className="text-xs sm:text-sm font-semibold text-slate-300 uppercase tracking-wide mb-4 relative z-10">
             Statistics
           </p>
 
-          <div className="grid grid-cols-3 gap-3 relative z-10">
+          <div className="grid grid-cols-3 relative z-10 divide-x divide-white/20">
             {activeBreakdown.map((item) => (
-              <div key={item.label} className="text-center">
+              <div key={item.label} className="text-center px-2">
                 <p className="text-xl sm:text-2xl lg:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white via-slate-200 to-slate-500 tracking-tight">
                   {item.value}
                 </p>
-                <div
-                  className={`h-0.5 w-full rounded-full bg-gradient-to-r ${item.color} mt-1.5 mb-1`}
-                />
-                <p className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                <p className="text-[10px] sm:text-[11px] font-semibold text-slate-300 uppercase tracking-wider mt-1.5">
                   {item.label}
                 </p>
               </div>
@@ -688,13 +686,13 @@ export default function Dashboard() {
             </h2>
             <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
               <div className="relative flex-1 sm:w-44 lg:w-56">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 sm:left-4 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-slate-300 absolute left-3 sm:left-4 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   placeholder="Search..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 sm:pl-11 pr-3 sm:pr-4 py-2 sm:py-2.5 text-sm border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all bg-black/20 backdrop-blur-sm text-white placeholder-slate-400 font-medium shadow-inner"
+                  className="w-full pl-9 sm:pl-11 pr-3 sm:pr-4 py-2 sm:py-2.5 text-sm border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all bg-white/10 backdrop-blur-sm text-white placeholder-slate-200 font-medium shadow-inner"
                 />
               </div>
               <CustomSelect
@@ -720,7 +718,7 @@ export default function Dashboard() {
                 <tr className="border-b border-white/10 bg-black/20 backdrop-blur-md">
                   <th
                     onClick={() => toggleSort("company")}
-                    className="px-4 sm:px-8 py-3 sm:py-4 text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest cursor-pointer select-none hover:text-slate-200 transition-colors"
+                    className="px-4 sm:px-8 py-3 sm:py-4 text-[10px] sm:text-[11px] font-bold text-slate-300 uppercase tracking-widest cursor-pointer select-none hover:text-slate-200 transition-colors"
                   >
                     <span className="inline-flex items-center gap-1">
                       Company &amp; Role
@@ -737,7 +735,7 @@ export default function Dashboard() {
                   </th>
                   <th
                     onClick={() => toggleSort("status")}
-                    className="px-3 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest cursor-pointer select-none hover:text-slate-200 transition-colors"
+                    className="px-3 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-[11px] font-bold text-slate-300 uppercase tracking-widest cursor-pointer select-none hover:text-slate-200 transition-colors"
                   >
                     <span className="inline-flex items-center gap-1">
                       Status
@@ -754,7 +752,7 @@ export default function Dashboard() {
                   </th>
                   <th
                     onClick={() => toggleSort("dateApplied")}
-                    className="px-3 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest hidden sm:table-cell cursor-pointer select-none hover:text-slate-200 transition-colors"
+                    className="px-3 sm:px-6 py-3 sm:py-4 text-[10px] sm:text-[11px] font-bold text-slate-300 uppercase tracking-widest hidden sm:table-cell cursor-pointer select-none hover:text-slate-200 transition-colors"
                   >
                     <span className="inline-flex items-center gap-1">
                       Added
@@ -769,7 +767,7 @@ export default function Dashboard() {
                       )}
                     </span>
                   </th>
-                  <th className="px-4 sm:px-8 py-3 sm:py-4 text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right">
+                  <th className="px-4 sm:px-8 py-3 sm:py-4 text-[10px] sm:text-[11px] font-bold text-slate-300 uppercase tracking-widest text-right">
                     Actions
                   </th>
                 </tr>
@@ -823,15 +821,22 @@ export default function Dashboard() {
                       <td className="px-4 sm:px-8 py-3 sm:py-5 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end gap-2 transition-opacity">
                           <button
+                            onClick={() => openVault(activity.id)}
+                            className="p-2 text-slate-300 hover:text-amber-400 hover:bg-amber-400/10 rounded-full transition-colors"
+                            title="Documents Vault"
+                          >
+                            <Folder className="w-4 h-4" />
+                          </button>
+                          <button
                             onClick={() => openModal(activity.id)}
-                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-900/30 rounded-full transition-colors"
+                            className="p-2 text-slate-300 hover:text-blue-600 hover:bg-blue-900/30 rounded-full transition-colors"
                             title="Edit"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(activity.id)}
-                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-900/30 rounded-full transition-colors"
+                            className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-900/30 rounded-full transition-colors"
                             title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -844,7 +849,7 @@ export default function Dashboard() {
                   <tr>
                     <td colSpan={4}>
                       <div className="text-center py-20 m-6 border-dashed border-2 border-white/20 rounded-2xl bg-black/10">
-                        <p className="text-[15px] font-bold text-slate-400">
+                        <p className="text-[15px] font-bold text-slate-300">
                           No applications found.
                         </p>
                       </div>

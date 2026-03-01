@@ -85,7 +85,7 @@ export default function Analytics() {
         <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
           Analytics Overview
         </h1>
-        <p className="text-slate-400 mt-1 sm:mt-1.5 text-xs sm:text-sm font-medium">
+        <p className="text-white mt-1 sm:mt-1.5 text-xs sm:text-sm font-medium">
           Visualize your job search momentum and conversion rates.
         </p>
       </div>

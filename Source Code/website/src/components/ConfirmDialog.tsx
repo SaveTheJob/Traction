@@ -46,13 +46,13 @@ export default function ConfirmDialog({
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-sm font-bold text-white">{title}</h3>
-              <p className="text-[13px] text-slate-400 mt-1 leading-relaxed">
+              <p className="text-[13px] text-slate-300 mt-1 leading-relaxed">
                 {message}
               </p>
             </div>
             <button
               onClick={onCancel}
-              className="p-1 text-slate-400 hover:text-slate-300 rounded-lg hover:bg-white/20 transition-colors shrink-0"
+              className="p-1 text-slate-300 hover:text-slate-300 rounded-lg hover:bg-white/20 transition-colors shrink-0"
             >
               <X className="w-4 h-4" />
             </button>

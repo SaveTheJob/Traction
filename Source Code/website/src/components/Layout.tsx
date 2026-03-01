@@ -31,7 +31,7 @@ export default function Layout() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="p-2 text-slate-400 hover:bg-slate-800 rounded-full transition-colors"
+                className="p-2 text-slate-300 hover:bg-slate-800 rounded-full transition-colors"
               >
                 <Menu className="w-6 h-6" />
               </button>

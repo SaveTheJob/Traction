@@ -104,7 +104,7 @@ export default function Login() {
           <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-white leading-tight">
             Welcome Back
           </h2>
-          <p className="mt-2 text-sm font-medium text-slate-400">
+          <p className="mt-2 text-sm font-medium text-slate-300">
             Track your job applications with{" "}
             <span className="text-blue-400 font-bold">Traction</span>
           </p>
@@ -146,7 +146,7 @@ export default function Login() {
               <div className="w-full border-t border-slate-700" />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="premium-glass px-4 py-1.5 rounded-full text-slate-500 font-black uppercase tracking-widest text-[10px]">
+              <span className="premium-glass px-4 py-1.5 rounded-full text-slate-300 font-black uppercase tracking-widest text-[10px]">
                 Or email
               </span>
             </div>
@@ -166,12 +166,12 @@ export default function Login() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
+                <label className="block text-xs font-black text-slate-300 uppercase tracking-widest mb-2 px-1">
                   Email address
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
-                    <Mail className="h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                    <Mail className="h-4 w-4 text-slate-300 group-focus-within:text-blue-500 transition-colors" />
                   </div>
                   <input
                     type="email"
@@ -185,12 +185,12 @@ export default function Login() {
               </div>
 
               <div>
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
+                <label className="block text-xs font-black text-slate-300 uppercase tracking-widest mb-2 px-1">
                   Password
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
-                    <Lock className="h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                    <Lock className="h-4 w-4 text-slate-300 group-focus-within:text-blue-500 transition-colors" />
                   </div>
                   <input
                     type="password"
@@ -214,7 +214,7 @@ export default function Login() {
                 />
                 <label
                   htmlFor="remember-me"
-                  className="ml-2 block text-xs font-bold text-slate-400 cursor-pointer"
+                  className="ml-2 block text-xs font-bold text-slate-300 cursor-pointer"
                 >
                   Remember me
                 </label>
@@ -244,7 +244,7 @@ export default function Login() {
             </button>
           </form>
 
-          <p className="mt-8 text-center text-xs font-bold text-slate-400">
+          <p className="mt-8 text-center text-xs font-bold text-slate-300">
             Don't have an account?{" "}
             <Link
               to="/signup"
@@ -260,7 +260,7 @@ export default function Login() {
       <div className="absolute bottom-6 right-6 z-20">
         <button
           onClick={() => setShowAdminLogin(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-500 transition-all active:scale-95 group"
+          className="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-blue-500 transition-all active:scale-95 group"
         >
           <ShieldCheck className="w-3.5 h-3.5 group-hover:animate-pulse" />
           Admin Panel
@@ -278,7 +278,7 @@ export default function Login() {
                 setAdminUid("");
                 setAdminPassword("");
               }}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-all"
+              className="absolute top-4 right-4 p-2 text-slate-300 hover:text-white hover:bg-white/10 rounded-xl transition-all"
             >
               <X className="w-4 h-4" />
             </button>
@@ -290,7 +290,7 @@ export default function Login() {
               <h3 className="text-xl font-black text-white uppercase tracking-tighter">
                 System Access
               </h3>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
+              <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest mt-1">
                 Administrative Verification Required
               </p>
             </div>
@@ -304,34 +304,34 @@ export default function Login() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">
+                  <label className="block text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1.5 px-1">
                     Admin ID
                   </label>
                   <div className="relative group">
-                    <Fingerprint className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                    <Fingerprint className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-300 group-focus-within:text-blue-500 transition-colors" />
                     <input
                       type="text"
                       required
                       value={adminUid}
                       onChange={(e) => setAdminUid(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 bg-black/20 border border-white/5 rounded-2xl text-xs font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-400"
+                      className="w-full pl-10 pr-4 py-3 bg-black/20 border border-white/5 rounded-2xl text-xs font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-300"
                       placeholder="ENTER ID..."
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-1">
+                  <label className="block text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1.5 px-1">
                     Passkey
                   </label>
                   <div className="relative group">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-300 group-focus-within:text-blue-500 transition-colors" />
                     <input
                       type="password"
                       required
                       value={adminPassword}
                       onChange={(e) => setAdminPassword(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 bg-black/20 border border-white/5 rounded-2xl text-xs font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-400"
+                      className="w-full pl-10 pr-4 py-3 bg-black/20 border border-white/5 rounded-2xl text-xs font-bold uppercase tracking-widest outline-none focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-300"
                       placeholder="ENTER PASSCODE..."
                     />
                   </div>

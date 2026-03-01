@@ -10,7 +10,7 @@ export default function PrivacyPolicy() {
       <div className="p-4 border-b border-white/10 flex items-center flex-shrink-0">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+          className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
           <span>Back</span>
@@ -20,7 +20,7 @@ export default function PrivacyPolicy() {
       {/* Content */}
       <article className="max-w-[800px] mx-auto w-full px-5 py-8 text-slate-300 text-[15px] leading-relaxed [&_h1]:text-slate-100 [&_h1]:text-[26px] [&_h1]:font-bold [&_h1]:mb-1 [&_h2]:text-slate-100 [&_h2]:text-[19px] [&_h2]:font-bold [&_h2]:mt-10 [&_h2]:pb-2 [&_h2]:border-b [&_h2]:border-white/10 [&_h3]:text-slate-100 [&_h3]:text-[17px] [&_h3]:font-bold [&_h3]:mt-6 [&_a]:text-blue-400 hover:[&_a]:underline [&_ul]:pl-5 [&_ol]:pl-5 [&_p]:mb-4 [&_li]:mb-1">
         <h1>PRIVACY POLICY</h1>
-        <p className="text-slate-400 text-[15px] mt-0 mb-8">
+        <p className="text-slate-300 text-[15px] mt-0 mb-8">
           <strong>Last updated February 24, 2026</strong>
         </p>
 

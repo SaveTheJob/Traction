@@ -15,7 +15,7 @@ export default function PipelineDistributionChart({
         <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
           Distribution
         </h2>
-        <p className="text-xs sm:text-sm text-slate-400 mt-1 font-medium">
+        <p className="text-xs sm:text-sm text-slate-300 mt-1 font-medium">
           Current breakdown of all active and past applications
         </p>
       </div>
@@ -60,7 +60,7 @@ export default function PipelineDistributionChart({
           </ResponsiveContainer>
         </div>
       ) : (
-        <div className="h-56 sm:h-72 lg:h-80 flex items-center justify-center text-slate-500 border-2 border-dashed border-white/20 rounded-2xl bg-white/5 text-sm px-4 text-center">
+        <div className="h-56 sm:h-72 lg:h-80 flex items-center justify-center text-slate-300 border-2 border-dashed border-white/20 rounded-2xl bg-white/5 text-sm px-4 text-center">
           Not enough data to calculate distribution
         </div>
       )}

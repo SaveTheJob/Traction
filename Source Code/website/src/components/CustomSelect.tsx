@@ -65,7 +65,7 @@ export default function CustomSelect({
         className={`flex items-center gap-2 w-full border rounded-2xl px-3 py-2 sm:py-2.5 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer select-none ${baseClasses}`}
       >
         {icon && (
-          <span className="text-slate-400 shrink-0 flex items-center">
+          <span className="text-slate-300 shrink-0 flex items-center">
             {icon}
           </span>
         )}
@@ -73,7 +73,7 @@ export default function CustomSelect({
           {selected?.label ?? value}
         </span>
         <ChevronDown
-          className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          className={`w-4 h-4 text-slate-300 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
 

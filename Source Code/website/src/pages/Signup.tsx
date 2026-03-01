@@ -72,7 +72,7 @@ export default function Signup() {
           <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-white leading-tight">
             Get Started
           </h2>
-          <p className="mt-2 text-sm font-medium text-slate-400">
+          <p className="mt-2 text-sm font-medium text-slate-300">
             Create your{" "}
             <span className="text-blue-400 font-bold">Traction</span> account
             today
@@ -115,7 +115,7 @@ export default function Signup() {
               <div className="w-full border-t border-slate-700" />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="premium-glass px-4 py-1.5 rounded-full text-slate-500 font-black uppercase tracking-widest text-[10px]">
+              <span className="premium-glass px-4 py-1.5 rounded-full text-slate-300 font-black uppercase tracking-widest text-[10px]">
                 Or email
               </span>
             </div>
@@ -130,12 +130,12 @@ export default function Signup() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
+                <label className="block text-xs font-black text-slate-300 uppercase tracking-widest mb-2 px-1">
                   Email address
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
-                    <Mail className="h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                    <Mail className="h-4 w-4 text-slate-300 group-focus-within:text-blue-500 transition-colors" />
                   </div>
                   <input
                     type="email"
@@ -149,12 +149,12 @@ export default function Signup() {
               </div>
 
               <div>
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
+                <label className="block text-xs font-black text-slate-300 uppercase tracking-widest mb-2 px-1">
                   Password
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
-                    <Lock className="h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                    <Lock className="h-4 w-4 text-slate-300 group-focus-within:text-blue-500 transition-colors" />
                   </div>
                   <input
                     type="password"
@@ -168,12 +168,12 @@ export default function Signup() {
               </div>
 
               <div>
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
+                <label className="block text-xs font-black text-slate-300 uppercase tracking-widest mb-2 px-1">
                   Confirm Password
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
-                    <Lock className="h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                    <Lock className="h-4 w-4 text-slate-300 group-focus-within:text-blue-500 transition-colors" />
                   </div>
                   <input
                     type="password"
@@ -200,7 +200,7 @@ export default function Signup() {
             </button>
           </form>
 
-          <p className="mt-8 text-center text-xs font-bold text-slate-400">
+          <p className="mt-8 text-center text-xs font-bold text-slate-300">
             Already have an account?{" "}
             <Link
               to="/login"

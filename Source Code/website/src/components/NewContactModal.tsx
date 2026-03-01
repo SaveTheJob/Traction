@@ -84,7 +84,7 @@ export default function NewContactModal() {
           </h2>
           <button
             onClick={closeNetworkModal}
-            className="p-1.5 text-slate-500 hover:text-slate-300 hover:bg-slate-700 rounded-xl transition-colors"
+            className="p-1.5 text-slate-300 hover:text-slate-300 hover:bg-slate-700 rounded-xl transition-colors"
           >
             <X className="w-5 h-5" />
           </button>

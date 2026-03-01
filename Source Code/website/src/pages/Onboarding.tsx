@@ -63,7 +63,7 @@ export default function Onboarding() {
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tighter leading-none mb-1">
             Welcome to Traction
           </h1>
-          <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.25em] opacity-80">
+          <p className="text-slate-300 text-[10px] font-bold uppercase tracking-[0.25em] opacity-80">
             Account Activation: Profile Setup
           </p>
         </div>
@@ -77,11 +77,11 @@ export default function Onboarding() {
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1 opacity-70">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-300 px-1 opacity-70">
                 First Name
               </label>
               <div className="relative group">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-blue-500 transition-colors" />
                 <input
                   type="text"
                   required
@@ -94,11 +94,11 @@ export default function Onboarding() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1 opacity-70">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-300 px-1 opacity-70">
                 Last Name
               </label>
               <div className="relative group">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-blue-500 transition-colors" />
                 <input
                   type="text"
                   required
@@ -112,11 +112,11 @@ export default function Onboarding() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1 opacity-70">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-300 px-1 opacity-70">
               Date of Birth
             </label>
             <div className="relative group">
-              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors z-10" />
+              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-blue-500 transition-colors z-10" />
               <input
                 type="date"
                 required
@@ -148,7 +148,7 @@ export default function Onboarding() {
         {/* Footer Disclaimer - Subtle like Dashboard secondary text */}
         <div className="mt-8 flex items-center justify-center gap-2 opacity-40 grayscale hover:grayscale-0 transition-all">
           <span className="text-[10px]">🔒</span>
-          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+          <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">
             Your data is encrypted and securely stored.
           </p>
         </div>

@@ -26,7 +26,7 @@ export default function ApplicationVelocityChart({
           <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
             Applications
           </h2>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1 font-medium">
+          <p className="text-xs sm:text-sm text-slate-300 mt-1 font-medium">
             Number of applications submitted over time
           </p>
         </div>
@@ -110,7 +110,7 @@ export default function ApplicationVelocityChart({
           </ResponsiveContainer>
         </div>
       ) : (
-        <div className="h-[250px] sm:h-[320px] md:h-[400px] flex items-center justify-center text-slate-500 border-2 border-dashed border-white/20 rounded-2xl bg-white/5 text-sm px-4 text-center">
+        <div className="h-[250px] sm:h-[320px] md:h-[400px] flex items-center justify-center text-slate-300 border-2 border-dashed border-white/20 rounded-2xl bg-white/5 text-sm px-4 text-center">
           Not enough data. Start adding applications!
         </div>
       )}

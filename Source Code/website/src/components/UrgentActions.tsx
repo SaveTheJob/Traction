@@ -37,7 +37,7 @@ export default function UrgentActions({ actions }: UrgentActionsProps) {
                   <span className="bg-red-900/40 text-red-300 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest shadow-sm">
                     {action.priority}
                   </span>
-                  <span className="text-xs font-bold text-slate-400 font-mono tracking-tight">
+                  <span className="text-xs font-bold text-slate-300 font-mono tracking-tight">
                     {action.time}
                   </span>
                 </div>
@@ -52,7 +52,7 @@ export default function UrgentActions({ actions }: UrgentActionsProps) {
           </div>
         ) : (
           <div className="py-12">
-            <p className="text-slate-400 font-medium">
+            <p className="text-slate-300 font-medium">
               No urgent actions.
             </p>
           </div>

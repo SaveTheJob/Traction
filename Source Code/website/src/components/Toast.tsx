@@ -60,7 +60,7 @@ function ToastItem({
           setIsVisible(false);
           setTimeout(() => onDismiss(toast.id), 300);
         }}
-        className="p-1 text-slate-400 hover:text-slate-300 rounded-lg hover:bg-white/20 transition-colors shrink-0"
+        className="p-1 text-slate-300 hover:text-slate-300 rounded-lg hover:bg-white/20 transition-colors shrink-0"
       >
         <X className="w-3.5 h-3.5" />
       </button>
