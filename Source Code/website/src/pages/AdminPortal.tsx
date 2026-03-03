@@ -14,20 +14,22 @@ import {
 import {
     Activity,
     AlertTriangle,
-    Cpu, Database,
+    Cpu,
+    Database,
     Edit2,
     Fingerprint,
     Globe,
     History,
-    LayoutDashboard,
+    LogIn,
     Lock,
     Radio,
     Save,
     Search,
     Send,
     ShieldAlert,
-    ShieldCheck, User,
-    X
+    ShieldCheck,
+    User,
+    X,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -220,8 +222,8 @@ const UserCommand: React.FC = () => {
                             </div>
                         )}
 
-                        <button onClick={handleSearch} disabled={loading} className="w-full py-3.5 bg-white text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 group disabled:opacity-40">
-                            {loading ? 'Searching...' : <><Search className="w-4 h-4" /> Search</>}
+                        <button onClick={handleSearch} disabled={loading} className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 group disabled:opacity-40">
+                            {loading ? <div className="w-4 h-4 border-2 border-white/40 border-t-transparent rounded-full animate-spin" /> : <><Search className="w-4 h-4 group-hover:scale-110 transition-transform" /> Search Users</>}
                         </button>
 
                         {error && <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-xs font-bold text-red-400">{error}</div>}
@@ -251,8 +253,8 @@ const UserCommand: React.FC = () => {
                                     </>
                                 ) : (
                                     <>
-                                        <button onClick={() => { impersonateUser(targetUser); navigate('/'); }} className="p-3 bg-white text-slate-900 rounded-xl shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 px-6 font-black text-xs uppercase tracking-widest">
-                                            <LayoutDashboard className="w-4 h-4" /> GOD MODE
+                                        <button onClick={() => { impersonateUser(targetUser); navigate('/'); }} className="p-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 px-6 font-black text-xs uppercase tracking-widest">
+                                            <LogIn className="w-4 h-4" /> Impersonate
                                         </button>
                                         <button onClick={() => { setEditData(targetUser); setIsEditing(true); }} className="p-3 bg-blue-600 text-white rounded-xl shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 px-6 font-black text-xs uppercase tracking-widest">
                                             <Edit2 className="w-4 h-4" /> EDIT
@@ -589,9 +591,9 @@ const BroadcastControl: React.FC = () => {
                     <button
                         onClick={handleBroadcast}
                         disabled={loading || !message.trim()}
-                        className="w-full py-3.5 bg-white text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2.5 group disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2.5 group disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                        <Send className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                        {loading ? <div className="w-4 h-4 border-2 border-white/40 border-t-transparent rounded-full animate-spin" /> : <Send className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />}
                         {loading ? 'Sending...' : 'Send Broadcast'}
                     </button>
                 </div>

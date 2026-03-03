@@ -26,16 +26,17 @@ import NewApplicationModal from "./components/NewApplicationModal";
 import NewContactModal from "./components/NewContactModal";
 import DocumentVaultModal from "./components/DocumentVaultModal";
 
-import Account from "./pages/Account";
-import Analytics from "./pages/Analytics";
-import Dashboard from "./pages/Dashboard";
-import AdminPortal from "./pages/AdminPortal";
-import Login from "./pages/Login";
-import Network from "./pages/Network";
-import Pipeline from "./pages/Pipeline";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import Signup from "./pages/Signup";
-import Onboarding from "./pages/Onboarding";
+const Account = React.lazy(() => import("./pages/Account"));
+const Analytics = React.lazy(() => import("./pages/Analytics"));
+const Dashboard = React.lazy(() => import("./pages/Dashboard"));
+const AdminPortal = React.lazy(() => import("./pages/AdminPortal"));
+const Login = React.lazy(() => import("./pages/Login"));
+const Network = React.lazy(() => import("./pages/Network"));
+const Pipeline = React.lazy(() => import("./pages/Pipeline"));
+const PrivacyPolicy = React.lazy(() => import("./pages/PrivacyPolicy"));
+const Signup = React.lazy(() => import("./pages/Signup"));
+const Onboarding = React.lazy(() => import("./pages/Onboarding"));
+const ResumeBuilder = React.lazy(() => import("./pages/ResumeBuilder"));
 
 // ---------------------------------------------------------------------------
 // AppBackground
@@ -44,27 +45,95 @@ import Onboarding from "./pages/Onboarding";
 // production Chromium/WebKit builds — a real DOM node is required.
 // ---------------------------------------------------------------------------
 
+function BackgroundAura() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40 z-[-1]">
+      <div className="aura-blob aura-blob-1" />
+      <div className="aura-blob aura-blob-2" />
+      <div className="aura-blob aura-blob-3" />
+    </div>
+  );
+}
+
+function BackgroundNoise() {
+  return (
+    <div className="fixed inset-0 pointer-events-none opacity-[0.025] z-[1] mix-blend-overlay"
+      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}
+    />
+  );
+}
+
+function BackgroundGeometric() {
+  return (
+    <div className="fixed inset-0 pointer-events-none opacity-[0.04] z-0"
+      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg stroke='%23ffffff' stroke-width='1' stroke-opacity='0.2'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 30V20h2v10h10v2H8v10H6V32H-4v-2h10zM30 0h-2v10h-10v2h10v10h2V12h10v-2H30V0zM0 60h2V50h10v-2H2v-10H0v12h-10v2h10z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}
+    />
+  );
+}
+
 function AppBackground() {
   const { backgroundConfig } = useTheme();
+  const [currentBg, setCurrentBg] = React.useState(backgroundConfig);
+  const [pendingBg, setPendingBg] = React.useState<typeof backgroundConfig | null>(null);
+  const [isTransitioning, setIsTransitioning] = React.useState(false);
 
-  const bgStyle: React.CSSProperties =
-    backgroundConfig.type === "image"
-      ? { backgroundImage: `url('${backgroundConfig.value}')` }
-      : { background: backgroundConfig.value };
+  React.useEffect(() => {
+    if (backgroundConfig.value !== currentBg.value || backgroundConfig.type !== currentBg.type) {
+      setPendingBg(backgroundConfig);
+      setIsTransitioning(true);
+
+      const timer = setTimeout(() => {
+        setCurrentBg(backgroundConfig);
+        setPendingBg(null);
+        setIsTransitioning(false);
+      }, 400);
+
+      return () => clearTimeout(timer);
+    }
+  }, [backgroundConfig, currentBg.value, currentBg.type]);
+
+  const getStyle = (config: typeof backgroundConfig): React.CSSProperties => {
+    if (config.type === "image") return { backgroundImage: `url('${config.value}')` };
+    if (config.type === "mesh") return { background: "transparent" }; // Handled by class
+    return { background: config.value };
+  };
+
+  const getClassName = (config: typeof backgroundConfig) => {
+    let base = "app-background-v2";
+    if (config.type === "mesh") base += " bg-mesh-premium";
+    return base;
+  };
 
   return (
-    <div
-      aria-hidden="true"
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 0,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        ...bgStyle,
-      }}
-    />
+    <>
+      {/* Dark Base */}
+      <div className="fixed inset-0 bg-[#020617] z-[-2]" />
+
+      {/* Current Layer */}
+      <div
+        className={getClassName(currentBg)}
+        style={{ ...getStyle(currentBg), opacity: 1 }}
+      />
+
+      {/* Pending Layer */}
+      {pendingBg && (
+        <div
+          className={getClassName(pendingBg)}
+          style={{ ...getStyle(pendingBg), opacity: isTransitioning ? 1 : 0 }}
+        />
+      )}
+
+      {/* Persistent Effects Layers */}
+      {backgroundConfig.type === "aura" && <BackgroundAura />}
+      {backgroundConfig.showNoise && <BackgroundNoise />}
+      {backgroundConfig.showGeometric && <BackgroundGeometric />}
+
+      {/* Dim Overlay */}
+      <div
+        className="fixed inset-0 pointer-events-none z-[1]"
+        style={{ background: `rgba(0,0,0,${(backgroundConfig.overlayOpacity ?? 14) / 100})` }}
+      />
+    </>
   );
 }
 
@@ -101,31 +170,38 @@ function AppRoutes() {
 
   return (
     <div style={{ position: "relative", zIndex: 1 }}>
-      <Routes>
-        {/* ── Public auth routes ── */}
-        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-        <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+      <React.Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full border-4 border-white/30 border-t-white animate-spin" />
+        </div>
+      }>
+        <Routes>
+          {/* ── Public auth routes ── */}
+          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
 
-        {/* ── Protected app routes ── */}
-        <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-          <Route
-            index
-            element={
-              isLocalAdmin && !impersonatedUser
-                ? <Navigate to="/admin" replace />
-                : <Dashboard />
-            }
-          />
-          <Route path="pipeline" element={<Pipeline />} />
-          <Route path="account" element={<Account />} />
-          <Route path="network" element={<Network />} />
-          <Route path="analytics" element={<Analytics />} />
-          <Route path="admin/*" element={<AdminPortal />} />
-          <Route path="*" element={<div className="p-8 text-white">Page not found</div>} />
-        </Route>
-      </Routes>
+          {/* ── Protected app routes ── */}
+          <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+            <Route
+              index
+              element={
+                isLocalAdmin && !impersonatedUser
+                  ? <Navigate to="/admin" replace />
+                  : <Dashboard />
+              }
+            />
+            <Route path="pipeline" element={<Pipeline />} />
+            <Route path="account" element={<Account />} />
+            <Route path="network" element={<Network />} />
+            <Route path="analytics" element={<Analytics />} />
+            <Route path="resume" element={<ResumeBuilder />} />
+            <Route path="admin/*" element={<AdminPortal />} />
+            <Route path="*" element={<div className="p-8 text-white">Page not found</div>} />
+          </Route>
+        </Routes>
+      </React.Suspense>
 
       {/* Global modals — rendered outside Layout but inside auth providers */}
       <NewApplicationModal />

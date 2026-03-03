@@ -24,9 +24,6 @@ export default function MetricsGrid({ metrics }: MetricsGridProps) {
             perspective: "1000px",
           }}
         >
-          {/* Background Decorative Element */}
-          <div className="absolute right-0 top-0 h-40 w-40 bg-gradient-to-br from-blue-400/10 to-purple-500/10 rounded-full blur-3xl transform translate-x-10 -translate-y-10 group-hover:scale-150 transition-transform duration-700 ease-in-out" />
-
           <div className="flex items-center justify-between relative z-10">
             <div>
               <p className="text-xs sm:text-sm font-semibold text-slate-300 uppercase tracking-wide">
@@ -47,11 +44,10 @@ export default function MetricsGrid({ metrics }: MetricsGridProps) {
             <div
               className={`
               text-xs font-bold px-3 py-1 rounded-full shadow-inner flex items-center gap-1
-              ${
-                metric.trend === "up"
+              ${metric.trend === "up"
                   ? "bg-green-500/20 text-green-400 border border-green-500/30 backdrop-blur-sm"
                   : "premium-glass-heavy text-slate-300"
-              }
+                }
             `}
             >
               {metric.trend === "up" && (

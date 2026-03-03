@@ -192,7 +192,7 @@ export default function Network() {
                     )}
                   </span>
                 </th>
-                <th className="px-4 sm:px-6 py-3 sm:py-5 text-[10px] font-black text-slate-300 uppercase tracking-widest text-right bg-transparent">
+                <th className="px-4 pr-6 sm:pr-8 py-3 sm:py-5 text-[10px] font-black text-slate-300 uppercase tracking-widest text-right bg-transparent w-[1%] whitespace-nowrap">
                   Actions
                 </th>
               </tr>
@@ -257,12 +257,12 @@ export default function Network() {
                         {contact.lastContacted}
                       </p>
                     </td>
-                    <td className="px-4 sm:px-6 py-3 sm:py-5 whitespace-nowrap text-right">
-                      <div className="flex items-center justify-end gap-1 transition-all duration-300">
+                    <td className="px-4 pr-6 sm:pr-8 py-3 sm:py-5 whitespace-nowrap text-right w-[1%] align-middle">
+                      <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity duration-150">
                         {contact.email && (
                           <button
                             onClick={(e) => handleCopyEmail(e, contact.email!)}
-                            className="p-2 text-slate-300 hover:text-green-400 hover:bg-green-500/10 rounded-full transition-all inline-flex bg-transparent cursor-pointer border-none"
+                            className="p-1.5 text-slate-300 hover:text-green-400 hover:bg-green-500/10 rounded-full transition-colors inline-flex bg-transparent cursor-pointer border-none"
                             title="Copy email to clipboard"
                           >
                             <Copy className="w-4 h-4" />
@@ -270,7 +270,7 @@ export default function Network() {
                         )}
                         <button
                           onClick={() => openNetworkModal(contact.id)}
-                          className="p-2 text-slate-300 hover:text-blue-400 hover:bg-blue-900/30 rounded-full transition-all inline-flex hover:shadow-sm"
+                          className="p-1.5 text-slate-300 hover:text-blue-400 hover:bg-blue-900/30 rounded-full transition-colors inline-flex"
                           title="Edit"
                         >
                           <Edit2 className="w-4 h-4" />
@@ -279,7 +279,7 @@ export default function Network() {
                           onClick={() => {
                             setConfirmDeleteId(contact.id);
                           }}
-                          className="p-2 text-slate-300 hover:text-red-400 hover:bg-red-900/30 rounded-full transition-all inline-flex hover:shadow-sm"
+                          className="p-1.5 text-slate-300 hover:text-red-400 hover:bg-red-900/30 rounded-full transition-colors inline-flex"
                           title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />

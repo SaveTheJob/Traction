@@ -7,6 +7,7 @@ import CustomSelect from "../components/CustomSelect";
 import PipelineCard from "../components/PipelineCard";
 import type { Priority, Status } from "../context/JobContext";
 import { useJobs } from "../context/JobContext";
+import { useTheme } from "../context/ThemeContext";
 
 const COLUMNS: { id: Status; label: string; color: string }[] = [
   {
@@ -38,6 +39,8 @@ const COLUMNS: { id: Status; label: string; color: string }[] = [
 
 export default function Pipeline() {
   const { jobs, updateJobStatus, openModal, deleteJob } = useJobs();
+  const { backgroundConfig } = useTheme();
+  const isDark = backgroundConfig.value === "#0B0F19";
   const [searchQuery, setSearchQuery] = useState("");
   const [filterPriority, setFilterPriority] = useState<Priority | "All">("All");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -118,7 +121,7 @@ export default function Pipeline() {
           />
           <button
             onClick={() => openModal()}
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-2xl font-bold text-sm shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 shrink-0 backdrop-blur-sm"
+            className={`${isDark ? "bg-white/30 border border-white/40 text-white hover:bg-white/40 shadow-lg shadow-white/10" : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40"} px-4 sm:px-6 py-2 sm:py-2.5 rounded-2xl font-bold text-sm hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 shrink-0 backdrop-blur-sm`}
           >
             <Plus className="w-4 h-4" />{" "}
             <span className="hidden sm:inline">New Application</span>

@@ -6,13 +6,16 @@ import {
   LayoutDashboard,
   Palette,
   Radio,
+  Sparkles,
   Users,
   X,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import Logo from "./Logo";
 import NotificationDropdown from "./NotificationDropdown";
+import ThemeToggle from "./ThemeToggle";
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -22,6 +25,8 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const { user, isLocalAdmin, impersonatedUser } = useAuth();
+  const { backgroundConfig } = useTheme();
+  const isDark = backgroundConfig.value === "#0B0F19";
 
   // Show user nav items when impersonating (God Mode)
   const showAdminNav = isLocalAdmin && !impersonatedUser;
@@ -38,6 +43,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       { label: "Pipeline", path: "/pipeline", icon: KanbanSquare },
       { label: "Network", path: "/network", icon: Users },
       { label: "Analytics", path: "/analytics", icon: BarChart3 },
+      { label: "AI Resume", path: "/resume", icon: Sparkles },
     ];
 
   return (
@@ -71,7 +77,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   }`}
               >
                 {isActive && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/80 to-indigo-500/80 rounded-2xl -z-10 transition-all duration-300 backdrop-blur-md" />
+                  <div className={`absolute inset-0 rounded-2xl -z-10 transition-all duration-300 backdrop-blur-md ${isDark
+                    ? "bg-white/30 border border-white/40"
+                    : "bg-gradient-to-r from-blue-500/80 to-indigo-500/80"
+                    }`} />
                 )}
                 <div
                   className={`flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 ${isActive
@@ -111,6 +120,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </Link>
           <div className="flex items-center border-t border-white/5 px-4 py-3 gap-2 bg-black/10 rounded-br-2xl">
             <NotificationDropdown position="above" />
+            <ThemeToggle />
             <button
               onClick={() =>
                 window.dispatchEvent(new Event("open-theme-customizer"))

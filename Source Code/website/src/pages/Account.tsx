@@ -1,3 +1,4 @@
+
 import {
   AlertTriangle,
   Calendar,
@@ -45,6 +46,17 @@ export default function Account() {
     }
   }, [userProfile]);
 
+  const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value.replace(/\D/g, "");
+    if (val.length >= 2) {
+      val = val.slice(0, 2) + "/" + val.slice(2);
+    }
+    if (val.length >= 5) {
+      val = val.slice(0, 5) + "/" + val.slice(5, 9);
+    }
+    setDob(val);
+  };
+
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setPasswordMessage({ type: "", text: "" });
@@ -88,9 +100,36 @@ export default function Account() {
     }
   };
 
+  const isValidDob = (dobStr: string) => {
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dobStr)) return false;
+    const [mm, dd, yyyy] = dobStr.split("/");
+    const month = parseInt(mm, 10);
+    const day = parseInt(dd, 10);
+    const year = parseInt(yyyy, 10);
+
+    if (month < 1 || month > 12) return false;
+    if (day < 1 || day > 31) return false;
+
+    const currentYear = new Date().getFullYear();
+    if (year < 1900 || year > currentYear) return false;
+
+    const daysInMonth = new Date(year, month, 0).getDate();
+    if (day > daysInMonth) return false;
+
+    return true;
+  };
+
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+
+    if (!isValidDob(dob)) {
+      setProfileMessage({
+        type: "error",
+        text: "Please enter a valid Date of Birth (MM/DD/YYYY).",
+      });
+      return;
+    }
 
     setIsUpdating(true);
     try {
@@ -115,6 +154,11 @@ export default function Account() {
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  const handleCheckout = () => {
+    // Redirect to Stripe billing portal to subscribe
+    window.open('https://billing.stripe.com/p/login/test_bJe6oI4EU5KXfGY2z963K00', '_blank');
   };
 
   const isOverLimit = jobs.length >= 50;
@@ -210,11 +254,13 @@ export default function Account() {
                     <Calendar className="w-3.5 h-3.5" /> Date of Birth
                   </label>
                   <input
-                    type="date"
+                    type="text"
+                    placeholder="MM/DD/YYYY"
+                    maxLength={10}
                     disabled={!isEditingProfile}
                     className={`w-full px-4 py-2.5 border rounded-2xl text-sm font-medium transition-all ${isEditingProfile ? "bg-black/20 border-white/5 text-white focus:ring-2 focus:ring-blue-500/30 outline-none" : "bg-black/20 border-white/5 text-slate-300 cursor-not-allowed"}`}
                     value={dob}
-                    onChange={(e) => setDob(e.target.value)}
+                    onChange={handleDobChange}
                   />
                 </div>
 
@@ -348,11 +394,10 @@ export default function Account() {
                 </h2>
               </div>
               <span
-                className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border ${
-                  userProfile?.plan === "Pro"
-                    ? "text-purple-400 bg-purple-500/10 border-purple-500/20"
-                    : "text-blue-400 bg-blue-500/10 border-blue-500/20"
-                }`}
+                className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border ${userProfile?.plan === "Pro"
+                  ? "text-purple-400 bg-purple-500/10 border-purple-500/20"
+                  : "text-blue-400 bg-blue-500/10 border-blue-500/20"
+                  }`}
               >
                 {userProfile?.plan === "Pro" ? "👑 Pro Plan" : "Free Plan"}
               </span>
@@ -391,11 +436,10 @@ export default function Account() {
 
               {/* Free Plan */}
               <div
-                className={`rounded-2xl p-4 border transition-all ${
-                  userProfile?.plan !== "Pro"
-                    ? "border-blue-500/30 bg-blue-500/5"
-                    : "border-white/5 bg-white/5"
-                }`}
+                className={`rounded-2xl p-4 border transition-all ${userProfile?.plan !== "Pro"
+                  ? "border-blue-500/30 bg-blue-500/5"
+                  : "border-white/5 bg-white/5"
+                  }`}
               >
                 <div className="flex items-center justify-between mb-3">
                   <div>
@@ -438,11 +482,10 @@ export default function Account() {
 
               {/* Pro Plan */}
               <div
-                className={`rounded-2xl p-4 border transition-all relative overflow-hidden ${
-                  userProfile?.plan === "Pro"
-                    ? "border-purple-500/30 bg-purple-500/5"
-                    : "border-purple-500/20 bg-gradient-to-br from-indigo-500/5 to-purple-500/5"
-                }`}
+                className={`rounded-2xl p-4 border transition-all relative overflow-hidden ${userProfile?.plan === "Pro"
+                  ? "border-purple-500/30 bg-purple-500/5"
+                  : "border-purple-500/20 bg-gradient-to-br from-indigo-500/5 to-purple-500/5"
+                  }`}
               >
                 {userProfile?.plan !== "Pro" && (
                   <div className="absolute top-3 right-3">
@@ -490,12 +533,22 @@ export default function Account() {
                   ))}
                 </div>
                 {userProfile?.plan === "Pro" ? (
-                  <div className="w-full py-2 text-center rounded-lg text-[11px] font-bold text-purple-400 bg-purple-500/10 border border-purple-500/20">
-                    Active Plan
-                  </div>
+                  <a
+                    href="https://billing.stripe.com/p/login/test_bJe6oI4EU5KXfGY2z963K00"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2.5 bg-gradient-to-r from-slate-600 to-slate-700 text-white rounded-2xl font-bold text-[11px] tracking-wide transition-all shadow-lg hover:brightness-110 active:scale-[0.98] flex items-center justify-center gap-2 whitespace-nowrap"
+                  >
+                    Manage Subscription
+                  </a>
                 ) : (
-                  <button className="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold text-[11px] tracking-wide transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:brightness-110 active:scale-[0.98] flex items-center justify-center gap-2 whitespace-nowrap">
-                    <Zap className="w-3.5 h-3.5 shrink-0" /> Upgrade to Pro
+                  <button
+                    onClick={handleCheckout}
+                    disabled={isUpdating}
+                    className="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold text-[11px] tracking-wide transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:brightness-110 active:scale-[0.98] flex items-center justify-center gap-2 whitespace-nowrap disabled:opacity-50"
+                  >
+                    {isUpdating ? <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Zap className="w-3.5 h-3.5 shrink-0" />}
+                    {isUpdating ? "Redirecting..." : "Buy Subscription"}
                   </button>
                 )}
               </div>

@@ -1,6 +1,7 @@
-import { Check, Edit2, Image as ImageIcon, RotateCcw, X } from "lucide-react";
+import { Image as ImageIcon, RotateCcw, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTheme } from "../context/ThemeContext";
+import ThemeToggle from "./ThemeToggle";
 import type { ToastMessage } from "./Toast";
 import ToastContainer from "./Toast";
 
@@ -116,165 +117,93 @@ export default function ThemeCustomizer() {
     };
   }, [isOpen]);
 
-  const colorThemes = [
-    {
-      id: "blue",
-      top: "#0A58CA",
-      bottom: "#87B2E3",
-      gradient: "linear-gradient(135deg, #0A58CA, #87B2E3)",
-    }, // Blue
-    {
-      id: "grey",
-      top: "#C5C7CA",
-      bottom: "#E0E2E5",
-      gradient: "linear-gradient(135deg, #C5C7CA, #E0E2E5)",
-    }, // Light Grey
-    {
-      id: "slate_blue",
-      top: "#4A72B2",
-      bottom: "#AEC2DF",
-      gradient: "linear-gradient(135deg, #4A72B2, #AEC2DF)",
-    }, // Slate Blue
-    {
-      id: "slate",
-      top: "#555A67",
-      bottom: "#B8BCC6",
-      gradient: "linear-gradient(135deg, #555A67, #B8BCC6)",
-    }, // Slate
-    {
-      id: "olive",
-      top: "#626E69",
-      bottom: "#C4C9C6",
-      gradient: "linear-gradient(135deg, #626E69, #C4C9C6)",
-    }, // Olive
-    {
-      id: "teal",
-      top: "#137466",
-      bottom: "#86CDC5",
-      gradient: "linear-gradient(135deg, #137466, #86CDC5)",
-    }, // Teal
-    {
-      id: "green",
-      top: "#4B812B",
-      bottom: "#B6D69D",
-      gradient: "linear-gradient(135deg, #4B812B, #B6D69D)",
-    }, // Green
-    {
-      id: "khaki",
-      top: "#727756",
-      bottom: "#CFD2BC",
-      gradient: "linear-gradient(135deg, #727756, #CFD2BC)",
-    }, // Khaki
-    {
-      id: "gold",
-      top: "#A9851F",
-      bottom: "#E3CAA2",
-      gradient: "linear-gradient(135deg, #A9851F, #E3CAA2)",
-    }, // Gold
-    {
-      id: "orange",
-      top: "#BD6F20",
-      bottom: "#F1C598",
-      gradient: "linear-gradient(135deg, #BD6F20, #F1C598)",
-    }, // Orange
-    {
-      id: "brown",
-      top: "#906155",
-      bottom: "#D5BEB8",
-      gradient: "linear-gradient(135deg, #906155, #D5BEB8)",
-    }, // Brown
-    {
-      id: "rose",
-      top: "#AB4C5A",
-      bottom: "#F3A9B3",
-      gradient: "linear-gradient(135deg, #AB4C5A, #F3A9B3)",
-    }, // Rose
-    {
-      id: "dusty",
-      top: "#8A6965",
-      bottom: "#E0CDC9",
-      gradient: "linear-gradient(135deg, #8A6965, #E0CDC9)",
-    }, // Dusty Rose
-    {
-      id: "pink",
-      top: "#9C4291",
-      bottom: "#EBA3E0",
-      gradient: "linear-gradient(135deg, #9C4291, #EBA3E0)",
-    }, // Pink
-    {
-      id: "purple",
-      top: "#65499C",
-      bottom: "#C2A7F1",
-      gradient: "linear-gradient(135deg, #65499C, #C2A7F1)",
-    }, // Purple
-  ];
 
   const themeCategories = [
     {
+      id: "sky",
+      title: "Sky",
+      img: "/wallpapers/sky.png",
+    },
+    {
+      id: "puzzg",
+      title: "Puzzle Green",
+      img: "/wallpapers/puzzg.png",
+    },
+    {
+      id: "puzzo",
+      title: "Puzzle Orange",
+      img: "/wallpapers/puzzo.png",
+    },
+    {
       id: "default",
-      title: "Default",
-      img: "/wallpapers/default.jpeg",
-      isUpload: false,
-    },
-    {
-      id: "upload",
-      title: "Upload an image",
-      icon: <ImageIcon className="w-8 h-8 opacity-70" />,
-      isUpload: true,
-    },
-    {
-      id: "birdingo",
-      title: "Birdingo",
-      img: "/wallpapers/Birdingo.jpg",
-      isUpload: false,
-    },
-    {
-      id: "droplets",
-      title: "Droplets",
-      img: "/wallpapers/Droplets.jpg",
-      isUpload: false,
+      title: "Abstract",
+      img: "/wallpapers/default.png",
     },
     {
       id: "flowers",
       title: "Flowers",
       img: "/wallpapers/Flowers.jpg",
-      isUpload: false,
     },
     {
-      id: "greenaven",
-      title: "Greenaven",
-      img: "/wallpapers/Greenaven.jpg",
-      isUpload: false,
-    },
-    {
-      id: "liana",
-      title: "Liana",
-      img: "/wallpapers/Liana.jpg",
-      isUpload: false,
-    },
-    {
-      id: "procks",
-      title: "Procks",
-      img: "/wallpapers/Procks.jpg",
-      isUpload: false,
-    },
-    {
-      id: "sflar",
-      title: "Sflar",
-      img: "/wallpapers/Sflar.jpg",
-      isUpload: false,
-    },
-    {
-      id: "slade",
-      title: "Slade",
-      img: "/wallpapers/Slade.jpg",
-      isUpload: false,
+      id: "aurora",
+      title: "Aurora",
+      img: "/wallpapers/aurora.jpg",
     },
     {
       id: "stars",
       title: "Stars",
       img: "/wallpapers/Stars.jpg",
-      isUpload: false,
+    },
+    {
+      id: "droplets",
+      title: "Droplets",
+      img: "/wallpapers/Droplets.jpg",
+    },
+    {
+      id: "procks",
+      title: "Procks",
+      img: "/wallpapers/Procks.jpg",
+    },
+    {
+      id: "greenaven",
+      title: "Green Avenue",
+      img: "/wallpapers/Greenaven.jpg",
+    },
+    {
+      id: "birdingo",
+      title: "Birdingo",
+      img: "/wallpapers/Birdingo.jpg",
+    },
+    {
+      id: "sflar",
+      title: "Solar Flare",
+      img: "/wallpapers/Sflar.jpg",
+    },
+    {
+      id: "liana",
+      title: "Liana",
+      img: "/wallpapers/Liana.jpg",
+    },
+    {
+      id: "slade",
+      title: "Slade",
+      img: "/wallpapers/Slade.jpg",
+    },
+    {
+      id: "baven",
+      title: "Baven",
+      img: "/wallpapers/baven.jpg",
+    },
+    {
+      id: "particles",
+      title: "Particles",
+      img: "/wallpapers/particles.jpg",
+    },
+    {
+      id: "upload",
+      title: "Upload",
+      isUpload: true,
+      icon: <ImageIcon className="w-8 h-8 opacity-70" />,
     },
   ];
 
@@ -298,7 +227,7 @@ export default function ThemeCustomizer() {
       {/* Sidebar Panel */}
       <div
         ref={sidebarRef}
-        className={`fixed inset-y-0 right-0 z-50 w-[calc(100%-2rem)] max-w-[360px] bg-[#1e293b] text-slate-100 shadow-2xl transition-transform duration-300 ease-out transform flex flex-col m-4 rounded-[24px] border border-white/5 ${isOpen ? "translate-x-0" : "translate-x-[120%]"
+        className={`fixed inset-y-0 right-0 z-50 w-[calc(100%-2rem)] max-w-[360px] bg-[#1e293b] text-slate-100 shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] transform flex flex-col m-4 rounded-[24px] border border-white/5 ${isOpen ? "translate-x-0" : "translate-x-[120%]"
           }`}
         style={{
           maxHeight: "calc(100vh - 32px)", /* Account for 16px top/bottom margins, allow scrolling if needed */
@@ -345,9 +274,12 @@ export default function ThemeCustomizer() {
           {currentView === "appearance" ? (
             /* Appearance Section */
             <section className="space-y-4 pb-8">
-              <h3 className="text-[14px] font-medium text-white/90 px-1 pt-4">
-                Appearance
-              </h3>
+              <div className="flex items-center justify-between px-1 pt-4">
+                <h3 className="text-[14px] font-medium text-white/90">
+                  Appearance Mode
+                </h3>
+                <ThemeToggle />
+              </div>
 
               {/* Theme Image Card */}
               <div className="bg-[#0f172a] rounded-[20px] p-2 border border-slate-700/50 mb-2">
@@ -366,25 +298,16 @@ export default function ThemeCustomizer() {
                     <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
                   </div>
 
-                  {/* Display current theme or default image */}
-                  {themeConfig.type === "image" &&
-                    themeConfig.value !== "default" ? (
+                  {themeConfig.type === "image" ? (
                     <img
                       src={themeConfig.value}
                       alt="Current theme"
                       className="absolute inset-0 w-full h-full object-cover"
                     />
-                  ) : themeConfig.type === "color" &&
-                    themeConfig.value !== "default" ? (
+                  ) : (
                     <div
                       className="absolute inset-0 w-full h-full"
                       style={{ background: themeConfig.value }}
-                    />
-                  ) : (
-                    <img
-                      src="/wallpapers/default.jpeg"
-                      alt="Default theme"
-                      className="absolute inset-0 w-full h-full object-cover"
                     />
                   )}
                 </div>
@@ -398,72 +321,14 @@ export default function ThemeCustomizer() {
                 </button>
               </div>
 
-              {/* Colors Grid */}
-              <h3 className="text-[14px] font-medium text-white/90 px-1 pt-4">
-                Colors
-              </h3>
-              <div className="grid grid-cols-4 gap-[10px]">
-                {colorThemes.map((color, i) => (
-                  <button
-                    key={i}
-                    onClick={() =>
-                      setThemeConfig({ value: color.gradient, type: "color" })
-                    }
-                    className={`aspect-square rounded-[18px] bg-[#0f172a] hover:bg-slate-800 flex items-center justify-center transition-all p-[10px] relative ${themeConfig.value === color.gradient
-                      ? "border-0 shadow-inner"
-                      : "shadow-sm border border-slate-700/50"
-                      }`}
-                  >
-                    <div
-                      className={`w-full h-full rounded-full overflow-hidden shadow-sm shadow-black/40 ${themeConfig.type === "color" && themeConfig.value === color.gradient ? "ring-2 ring-white ring-offset-2 ring-offset-[#293041]" : ""}`}
-                    >
-                      <div
-                        className="h-1/2 w-full"
-                        style={{ backgroundColor: color.top }}
-                      />
-                      <div
-                        className="h-1/2 w-full"
-                        style={{ backgroundColor: color.bottom }}
-                      />
-                    </div>
-                  </button>
-                ))}
-
-                {/* Custom Color Button */}
-                <button
-                  onClick={() =>
-                    setThemeConfig({
-                      value: "/wallpapers/default.jpeg",
-                      type: "image",
-                    })
-                  }
-                  className={`aspect-square rounded-[18px] flex items-center justify-center transition-all relative shadow-inner ${themeConfig.value === "/wallpapers/default.jpeg"
-                    ? "bg-[#125881]"
-                    : "bg-[#0f172a] border border-slate-700/50 hover:bg-slate-800"
-                    }`}
-                >
-                  <Edit2
-                    className={`w-5 h-5 ${themeConfig.value === "/wallpapers/default.jpeg" ? "text-white" : "text-[#8ab4f8]"}`}
-                    strokeWidth={2.5}
-                  />
-                  {themeConfig.value === "/wallpapers/default.jpeg" && (
-                    <div className="absolute top-1 right-1 bg-white text-[#125881] rounded-full p-0.5 shadow-md transform translate-x-1.5 -translate-y-1.5">
-                      <Check className="w-[9px] h-[9px]" strokeWidth={4} />
-                    </div>
-                  )}
-                </button>
-              </div>
-
-
-
               {/* Reset Button */}
               <button
                 onClick={() =>
                   setThemeConfig({
-                    value: "/wallpapers/default.jpeg",
+                    value: "/wallpapers/sky.png",
                     type: "image",
-                    overlayOpacity: 14,
-                    glassOpacity: 32
+                    overlayOpacity: 8,
+                    glassOpacity: 28
                   })
                 }
                 className="w-full flex items-center justify-between py-3 px-1 text-white hover:bg-white/5 rounded-lg transition-colors group"
@@ -487,17 +352,30 @@ export default function ThemeCustomizer() {
                   key={cat.id}
                   className="flex flex-col gap-2 group cursor-pointer"
                   onClick={() => {
-                    if (cat.id === "default") {
+                    if (cat.id === "sky") {
                       setThemeConfig({
-                        value: "/wallpapers/default.jpeg",
+                        value: "/wallpapers/sky.png",
                         type: "image",
+                        showNoise: false,
+                        showGeometric: false
+                      });
+                    } else if (cat.id === "default") {
+                      setThemeConfig({
+                        value: "#0B0F19",
+                        type: "color",
+                        overlayOpacity: 0,
+                        glassOpacity: 15
                       });
                     } else if (cat.isUpload) {
                       fileInputRef.current?.click();
-                    } else if (cat.id === "solid") {
-                      setCurrentView("appearance");
-                    } else if (cat.img) {
-                      setThemeConfig({ value: cat.img, type: "image" });
+                    } else if ((cat as any).config) {
+                      setThemeConfig({
+                        ...(cat as any).config,
+                        overlayOpacity: themeConfig.overlayOpacity,
+                        glassOpacity: themeConfig.glassOpacity
+                      });
+                    } else if ((cat as any).img) {
+                      setThemeConfig({ value: (cat as any).img, type: "image" });
                     }
                   }}
                 >
@@ -505,24 +383,23 @@ export default function ThemeCustomizer() {
                     className={`aspect-square rounded-2xl overflow-hidden relative shadow-sm transition-all duration-300 ${cat.isUpload
                       ? "bg-[#1e293b] border border-white/5 group-hover:bg-slate-800 flex items-center justify-center"
                       : ""
-                      } ${!cat.isUpload && !cat.img
+                      } ${!cat.isUpload && !(cat as any).img
                         ? "border border-white/10 group-hover:border-white/30"
                         : ""
                       }`}
                   >
-                    {cat.img && (
-                      <>
-                        <img
-                          src={cat.img}
-                          alt={cat.title}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                      </>
-                    )}
-                    {cat.icon && (
+                    {(cat as any).img ? (
+                      <img
+                        src={(cat as any).img}
+                        alt={cat.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (cat as any).config?.type === "mesh" || (cat as any).config?.type === "color" ? (
+                      <div className="w-full h-full" style={{ background: (cat as any).config.value }} />
+                    ) : null}
+
+                    {(cat.isUpload || (cat as any).icon) && (
                       <div className="text-white group-hover:scale-110 transition-transform duration-300">
-                        {/* Upload icon uses custom SVG to match Chrome exactly */}
                         {cat.isUpload ? (
                           <svg
                             width="24"
@@ -539,7 +416,7 @@ export default function ThemeCustomizer() {
                             <line x1="12" y1="3" x2="12" y2="15" />
                           </svg>
                         ) : (
-                          cat.icon
+                          (cat as any).icon
                         )}
                       </div>
                     )}

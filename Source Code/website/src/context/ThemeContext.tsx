@@ -2,9 +2,11 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 
 interface BackgroundConfig {
   value: string;
-  type: "color" | "image";
+  type: "color" | "image" | "mesh" | "aura";
   overlayOpacity?: number; // 0-100
   glassOpacity?: number;   // 0-100
+  showNoise?: boolean;
+  showGeometric?: boolean;
 }
 
 interface ThemeContextType {
@@ -12,8 +14,8 @@ interface ThemeContextType {
   setBackgroundConfig: (config: BackgroundConfig | ((prev: BackgroundConfig) => BackgroundConfig)) => void;
 }
 
-const DEFAULT_WALLPAPER = "/wallpapers/default.jpeg";
-const THEME_VERSION = "v3"; // bump to reset all users to new default
+const DEFAULT_WALLPAPER = "#0B0F19";
+const THEME_VERSION = "v13"; // bump to load Obsidian Dark defaults
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
@@ -30,11 +32,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         const stored = localStorage.getItem("app-theme-config");
         if (stored) {
           const parsed = JSON.parse(stored);
-          return { overlayOpacity: 14, glassOpacity: 32, ...parsed };
+          return { overlayOpacity: 0, glassOpacity: 15, ...parsed };
         }
-        return { value: DEFAULT_WALLPAPER, type: "image", overlayOpacity: 14, glassOpacity: 32 };
+        return { value: DEFAULT_WALLPAPER, type: "color", overlayOpacity: 0, glassOpacity: 15 };
       } catch (e) {
-        return { value: DEFAULT_WALLPAPER, type: "image", overlayOpacity: 14, glassOpacity: 32 };
+        return { value: DEFAULT_WALLPAPER, type: "color", overlayOpacity: 0, glassOpacity: 15 };
       }
     },
   );
@@ -50,9 +52,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         : backgroundConfig.value;
     document.documentElement.style.setProperty("--primary-gradient", prop);
 
-    // Apply the opacity CSS rules dynamically (converting 0-100 to 0.0-1.0)
-    const overlay = backgroundConfig.overlayOpacity ?? 14;
-    const glass = backgroundConfig.glassOpacity ?? 32;
+    const overlay = backgroundConfig.overlayOpacity ?? 8;
+    const glass = backgroundConfig.glassOpacity ?? 28;
 
     document.documentElement.style.setProperty("--app-bg-overlay", (overlay / 100).toString());
     document.documentElement.style.setProperty("--app-glass-opacity", (glass / 100).toString());

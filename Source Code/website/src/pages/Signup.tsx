@@ -3,7 +3,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
-import { Loader2, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
@@ -14,6 +14,8 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -66,7 +68,7 @@ export default function Signup() {
       <div className="absolute top-0 -right-4 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
       <div className="absolute bottom-0 -left-4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-700" />
 
-      <div className="w-full max-w-md space-y-6 sm:space-y-8 premium-glass-heavy p-5 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl shadow-2xl relative z-10 border-t border-white/5">
+      <div className="w-full max-w-md space-y-6 sm:space-y-8 premium-glass p-5 sm:p-6 lg:p-10 rounded-2xl sm:rounded-3xl shadow-xl relative overflow-hidden flex flex-col justify-between h-full z-10">
         <div className="text-center">
           <Logo className="h-12 sm:h-16 justify-center mb-4 sm:mb-6" />
           <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-white leading-tight">
@@ -157,13 +159,24 @@ export default function Signup() {
                     <Lock className="h-4 w-4 text-slate-300 group-focus-within:text-blue-500 transition-colors" />
                   </div>
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full pl-11 pr-4 py-3.5 bg-black/20 border border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500/50 outline-none text-[15px] font-medium transition-all shadow-inner"
+                    className="block w-full pl-11 pr-12 py-3.5 bg-black/20 border border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500/50 outline-none text-[15px] font-medium transition-all shadow-inner"
                     placeholder="••••••••"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center z-10 text-slate-400 hover:text-white transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -176,13 +189,24 @@ export default function Signup() {
                     <Lock className="h-4 w-4 text-slate-300 group-focus-within:text-blue-500 transition-colors" />
                   </div>
                   <input
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="block w-full pl-11 pr-4 py-3.5 bg-black/20 border border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500/50 outline-none text-[15px] font-medium transition-all shadow-inner"
+                    className="block w-full pl-11 pr-12 py-3.5 bg-black/20 border border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500/50 outline-none text-[15px] font-medium transition-all shadow-inner"
                     placeholder="••••••••"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center z-10 text-slate-400 hover:text-white transition-colors"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
@@ -204,7 +228,7 @@ export default function Signup() {
             Already have an account?{" "}
             <Link
               to="/login"
-              className="font-black text-blue-600 hover:text-blue-500 transition-colors"
+              className="font-black text-blue-300 hover:text-white underline underline-offset-2 decoration-blue-500/50 hover:decoration-white transition-all ml-1"
             >
               Log in instead
             </Link>

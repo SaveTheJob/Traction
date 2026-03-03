@@ -4,10 +4,11 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
 } from "firebase/auth";
-import { Fingerprint, Loader2, Lock, Mail, ShieldCheck, X } from "lucide-react";
+import { Eye, EyeOff, Fingerprint, Loader2, Lock, Mail, ShieldCheck, X } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
+import ThemeToggle from "../components/ThemeToggle";
 import { useAuth } from "../context/AuthContext";
 import { auth } from "../lib/firebase";
 export default function Login() {
@@ -16,6 +17,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [adminUid, setAdminUid] = useState("");
@@ -95,10 +97,15 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden">
       {/* Decorative Blur Backgrounds */}
-      <div className="absolute top-0 -left-4 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-0 -right-4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse delay-700" />
+      <div className="absolute top-0 -left-4 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 -right-4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl" />
 
-      <div className="w-full max-w-md space-y-6 sm:space-y-8 premium-glass-heavy p-5 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl shadow-2xl relative z-10 border-t border-white/5">
+      {/* Global Light/Dark Theme Toggle */}
+      <div className="absolute top-6 right-6 z-50">
+        <ThemeToggle />
+      </div>
+
+      <div className="w-full max-w-md space-y-6 sm:space-y-8 premium-glass rounded-2xl sm:rounded-3xl p-5 sm:p-6 lg:p-10 relative overflow-hidden shadow-xl flex flex-col justify-between h-full z-10">
         <div className="text-center">
           <Logo className="h-12 sm:h-16 justify-center mb-4 sm:mb-6" />
           <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-white leading-tight">
@@ -159,7 +166,7 @@ export default function Login() {
               </div>
             )}
             {resetSent && (
-              <div className="p-4 text-xs font-bold text-green-600 bg-green-500/10 rounded-2xl border border-green-500/20 flex items-start gap-2 animate-in fade-in zoom-in">
+              <div className="p-4 text-xs font-bold text-white bg-green-500/20 rounded-2xl border border-green-500/30 flex items-start gap-2 animate-in fade-in zoom-in shadow-lg">
                 <span>Password reset email sent! Check your inbox.</span>
               </div>
             )}
@@ -193,13 +200,24 @@ export default function Login() {
                     <Lock className="h-4 w-4 text-slate-300 group-focus-within:text-blue-500 transition-colors" />
                   </div>
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="block w-full pl-11 pr-4 py-3.5 bg-black/20 border border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500/50 outline-none text-[15px] font-medium transition-all shadow-inner"
+                    className="block w-full pl-11 pr-12 py-3.5 bg-black/20 border border-white/10 rounded-2xl focus:ring-2 focus:ring-blue-500/50 outline-none text-[15px] font-medium transition-all shadow-inner"
                     placeholder="Enter Password"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center z-10 text-slate-400 hover:text-white transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
@@ -224,7 +242,7 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={handlePasswordReset}
-                  className="font-black text-blue-600 hover:text-blue-500 cursor-pointer outline-none hover:underline"
+                  className="font-black text-blue-300 hover:text-white underline underline-offset-2 decoration-blue-500/50 hover:decoration-white cursor-pointer outline-none transition-all"
                 >
                   Forgot password?
                 </button>
@@ -248,7 +266,7 @@ export default function Login() {
             Don't have an account?{" "}
             <Link
               to="/signup"
-              className="font-black text-blue-600 hover:text-blue-500 transition-colors"
+              className="font-black text-blue-300 hover:text-white underline underline-offset-2 decoration-blue-500/50 hover:decoration-white transition-all ml-1"
             >
               Sign up for free
             </Link>
