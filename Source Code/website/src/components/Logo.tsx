@@ -4,7 +4,7 @@ interface LogoProps {
 }
 
 export default function Logo({
-  className = "h-9",
+  className = "h-11",
   iconOnly = false,
 }: LogoProps) {
   return (
@@ -54,7 +54,7 @@ export default function Logo({
         {!iconOnly && (
           <text
             x="95"
-            y="67"
+            y="72"
             fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
             fontSize="44"
             fontWeight="800"
@@ -62,7 +62,7 @@ export default function Logo({
             letterSpacing="-1"
           >
             SaveThe
-            <tspan fill="url(#themeGrad)">Jobs</tspan>
+            <tspan fill="url(#themeGrad)">Job</tspan>
           </text>
         )}
       </svg>

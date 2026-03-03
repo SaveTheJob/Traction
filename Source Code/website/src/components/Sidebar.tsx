@@ -52,7 +52,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         }`}
     >
       <div className="px-4 lg:px-6 pt-8 pb-4 lg:pt-10 lg:pb-6 flex items-center justify-between md:justify-center shrink-0 relative">
-        <Logo className="h-9 lg:h-10" />
+        <Logo className="h-10 lg:h-11" />
         <button
           onClick={onClose}
           className="md:hidden p-2 text-slate-300 hover:text-white transition-colors premium-glass rounded-full shadow-sm"

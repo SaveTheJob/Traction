@@ -258,7 +258,7 @@ export default function ThemeCustomizer() {
               </button>
             )}
             <h2 className="text-[18px] font-medium text-white tracking-wide">
-              {currentView === "appearance" ? "Customise Traction" : "Themes"}
+              {currentView === "appearance" ? "Customise SaveTheJob" : "Themes"}
             </h2>
           </div>
           <button

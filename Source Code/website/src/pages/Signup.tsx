@@ -76,7 +76,7 @@ export default function Signup() {
           </h2>
           <p className="mt-2 text-sm font-medium text-slate-300">
             Create your{" "}
-            <span className="text-blue-400 font-bold">Traction</span> account
+            <span className="text-blue-400 font-bold">SaveTheJob</span> account
             today
           </p>
         </div>

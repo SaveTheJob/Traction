@@ -25,7 +25,7 @@ export default function PrivacyPolicy() {
         </p>
 
         <p>
-          This Privacy Notice for Traction ("<strong>we</strong>," "
+          This Privacy Notice for SaveTheJob ("<strong>we</strong>," "
           <strong>us</strong>," or "<strong>our</strong>"), describes how and
           why we might access, collect, store, use, and/or share ("
           <strong>process</strong>") your personal information when you use our
@@ -44,8 +44,8 @@ export default function PrivacyPolicy() {
             or any website of ours that links to this Privacy Notice
           </li>
           <li>
-            Use Traction. Traction is a comprehensive job application tracking
-            tool designed to streamline your job search process.
+            Use SaveTheJob. SaveTheJob is a comprehensive job application
+            tracking tool designed to streamline your job search process.
           </li>
           <li>
             Engage with us in other related ways, including any marketing or
@@ -1111,7 +1111,7 @@ export default function PrivacyPolicy() {
           contact us by post at:
         </p>
         <p>
-          Traction
+          SaveTheJob
           <br />
           University Dr
           <br />

@@ -98,7 +98,7 @@ export default function Onboarding() {
               Profile Setup
             </h1>
             <p className="text-slate-300 mt-1 text-xs font-medium">
-              Welcome to Traction. Let's get your account activated.
+              Welcome to SaveTheJob. Let's get your account activated.
             </p>
           </div>
         </div>

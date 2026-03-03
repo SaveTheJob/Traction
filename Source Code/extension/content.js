@@ -56,7 +56,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     sendResponse({ isJobPage: isLikelyJobPage });
   } else if (request.action === "showSaveButton") {
-    if (!document.getElementById("traction-save-button")) {
+    if (!document.getElementById("save-button")) {
       createSaveButton();
     }
   }
@@ -70,28 +70,28 @@ function createSaveButton() {
   if (!jobData.title) return; // Don't show if we failed to get a title
 
   const btn = document.createElement("button");
-  btn.id = "traction-save-button";
-  btn.className = "traction-overlay-button";
+  btn.id = "save-button";
+  btn.className = "overlay-button";
   btn.innerHTML = `
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
       </svg>
-      <span>Save to Traction</span>
+      <span>Save to SaveTheJob</span>
     `;
 
   btn.onclick = (e) => {
     e.stopPropagation();
 
     if (popupIframe) {
-      if (popupIframe.classList.contains('show')) {
-        popupIframe.classList.remove('show');
+      if (popupIframe.classList.contains("show")) {
+        popupIframe.classList.remove("show");
       } else {
-        popupIframe.classList.add('show');
+        popupIframe.classList.add("show");
       }
     } else {
       popupIframe = document.createElement("iframe");
-      popupIframe.id = "traction-popup-iframe";
-      popupIframe.className = "traction-popup-iframe";
+      popupIframe.id = "popup-iframe";
+      popupIframe.className = "popup-iframe";
       popupIframe.src = chrome.runtime.getURL("popup.html?isIframe=true");
       // Allow it to have camera access or whatever is needed later
       popupIframe.setAttribute("allow", "clipboard-write");
@@ -100,7 +100,7 @@ function createSaveButton() {
 
       // Trigger animation next frame
       requestAnimationFrame(() => {
-        popupIframe.classList.add('show');
+        popupIframe.classList.add("show");
       });
     }
   };
@@ -108,15 +108,19 @@ function createSaveButton() {
   // Close popup if clicking outside
   document.addEventListener("click", (e) => {
     // Only close if the click is outside both the button and the iframe
-    if (popupIframe && popupIframe.classList.contains('show') && !btn.contains(e.target)) {
-      popupIframe.classList.remove('show');
+    if (
+      popupIframe &&
+      popupIframe.classList.contains("show") &&
+      !btn.contains(e.target)
+    ) {
+      popupIframe.classList.remove("show");
     }
   });
 
   // Listen for close message from iframe
   window.addEventListener("message", (event) => {
-    if (event.data === "closeTractionPopup" && popupIframe) {
-      popupIframe.classList.remove('show');
+    if (event.data === "closeSaveTheJobPopup" && popupIframe) {
+      popupIframe.classList.remove("show");
     }
   });
 
@@ -163,7 +167,7 @@ function extractJobMetadata() {
           if (jobData.title && jobData.company) return jobData;
         }
       }
-    } catch (e) { }
+    } catch (e) {}
   }
 
   // 2. Meta Tag Fallback

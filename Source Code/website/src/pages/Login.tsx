@@ -113,7 +113,7 @@ export default function Login() {
           </h2>
           <p className="mt-2 text-sm font-medium text-slate-300">
             Track your job applications with{" "}
-            <span className="text-blue-400 font-bold">Traction</span>
+            <span className="text-blue-400 font-bold">SaveTheJob</span>
           </p>
         </div>
 

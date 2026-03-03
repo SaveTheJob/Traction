@@ -277,7 +277,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const user = auth.currentUser;
-    const activeUserId = manualUid || (user && !user.isAnonymous ? user.uid : null);
+    const activeUserId =
+      manualUid || (user && !user.isAnonymous ? user.uid : null);
 
     if (!activeUserId) {
       showError("You must be logged in to save jobs.");
@@ -333,7 +334,7 @@ document.addEventListener("DOMContentLoaded", () => {
   closeBtn.addEventListener("click", () => {
     if (window.parent !== window) {
       // We are inside an iframe on the page
-      window.parent.postMessage("closeTractionPopup", "*");
+      window.parent.postMessage("closeSaveTheJobPopup", "*");
     } else {
       // We are in a normal Chrome popup window
       window.close();

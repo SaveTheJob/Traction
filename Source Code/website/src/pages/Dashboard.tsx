@@ -208,7 +208,7 @@ export default function Dashboard() {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
-    doc.text("Traction — Application Report", 14, 12);
+    doc.text("SaveTheJob — Application Report", 14, 12);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.text(`Generated for ${user?.displayName ?? "User"} · ${today}`, 14, 19);
@@ -294,14 +294,14 @@ export default function Dashboard() {
       doc.setFontSize(7.5);
       doc.setTextColor(148, 163, 184);
       doc.text(
-        `Traction · Page ${i} of ${pageCount}`,
+        `SaveTheJob · Page ${i} of ${pageCount}`,
         pageWidth / 2,
         doc.internal.pageSize.getHeight() - 5,
         { align: "center" },
       );
     }
 
-    doc.save(`Traction_Applications_${today.replace(/ /g, "_")}.pdf`);
+    doc.save(`SaveTheJob_Applications_${today.replace(/ /g, "_")}.pdf`);
   };
 
   // ─── Excel Export — single sheet mirroring the PDF layout ────────────────────
@@ -310,7 +310,7 @@ export default function Dashboard() {
 
     const ExcelJS = await import("exceljs");
     const wb = new ExcelJS.Workbook();
-    wb.creator = "Traction";
+    wb.creator = "SaveTheJob";
     wb.created = new Date();
 
     const today = new Date().toLocaleDateString("en-US", {
@@ -370,7 +370,7 @@ export default function Dashboard() {
     // Row 1: Blue banner
     ws.mergeCells("A1:G1");
     const r1 = ws.getCell("A1");
-    r1.value = "Traction — Application Report";
+    r1.value = "SaveTheJob — Application Report";
     r1.fill = { type: "pattern", pattern: "solid", fgColor: { argb: BLUE } };
     r1.font = { bold: true, size: 18, color: { argb: WHITE }, name: "Calibri" };
     r1.alignment = { vertical: "middle", horizontal: "left", indent: 1 };
@@ -575,7 +575,7 @@ export default function Dashboard() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `Traction_Applications_${todayFile}.xlsx`;
+    a.download = `SaveTheJob_Applications_${todayFile}.xlsx`;
     a.click();
     URL.revokeObjectURL(url);
   };

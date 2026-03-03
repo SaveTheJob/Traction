@@ -1,5 +1,5 @@
 /**
- * Standardized design tokens for the Traction app (dark-only theme).
+ * Standardized design tokens for the Traction.
  *
  * Import these constants instead of scattering raw Tailwind classes
  * throughout components. When you need to tweak a colour, border

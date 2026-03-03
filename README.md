@@ -1,13 +1,13 @@
-# Traction
+# SaveTheJob
 
-Traction is a comprehensive job application tracking tool designed to streamline your job search process. It consists of two main components: a Chrome Extension for easily scraping job postings directly from popular job boards, and a React-based web dashboard for managing your application pipeline, network, and analytics.
+SaveTheJob is a comprehensive job application tracking tool designed to streamline your job search process. It consists of two main components: a Chrome Extension for easily scraping job postings directly from popular job boards, and a React-based web dashboard for managing your application pipeline, network, and analytics.
 
 ## Features
 
 ### Chrome Extension
 - **One-Click Job Scraping**: Automatically extract job titles, company names, and locations from job postings.
 - **Supported Platforms**: Currently supports scraping from LinkedIn, Indeed, and Handshake.
-- **Seamless Integration**: Saves scraped job details directly to your Traction account via Firebase.
+- **Seamless Integration**: Saves scraped job details directly to your SaveTheJob account via Firebase.
 - **Google Authentication**: Easy sign-in using your Google account.
 
 ### Web Dashboard
@@ -37,7 +37,7 @@ Traction is a comprehensive job application tracking tool designed to streamline
 The project is organized as a monorepo with two main directories:
 
 ```
-Traction/
+SaveTheJob/
 ├── Source Code/
 │   ├── extension/      # Chrome Extension source code
 │   └── website/        # React Web Dashboard source code
@@ -70,7 +70,7 @@ Traction/
 1. Open Google Chrome and navigate to `chrome://extensions/`.
 2. Enable **Developer mode** in the top right corner.
 3. Click **Load unpacked** and select the `Source Code/extension` directory.
-4. The Traction extension should now appear in your browser toolbar.
+4. The SaveTheJob extension should now appear in your browser toolbar.
 
 ## Deployment
 
