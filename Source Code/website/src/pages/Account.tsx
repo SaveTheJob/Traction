@@ -1,4 +1,3 @@
-
 import {
   AlertTriangle,
   Calendar,
@@ -18,6 +17,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useJobs } from "../context/JobContext";
+import { formatDobInput, isValidDob } from "../utils/dob";
 
 export default function Account() {
   const { user, userProfile, updatePassword, signOut } = useAuth();
@@ -47,14 +47,7 @@ export default function Account() {
   }, [userProfile]);
 
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value.replace(/\D/g, "");
-    if (val.length >= 2) {
-      val = val.slice(0, 2) + "/" + val.slice(2);
-    }
-    if (val.length >= 5) {
-      val = val.slice(0, 5) + "/" + val.slice(5, 9);
-    }
-    setDob(val);
+    setDob(formatDobInput(e.target.value));
   };
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
@@ -100,25 +93,6 @@ export default function Account() {
     }
   };
 
-  const isValidDob = (dobStr: string) => {
-    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dobStr)) return false;
-    const [mm, dd, yyyy] = dobStr.split("/");
-    const month = parseInt(mm, 10);
-    const day = parseInt(dd, 10);
-    const year = parseInt(yyyy, 10);
-
-    if (month < 1 || month > 12) return false;
-    if (day < 1 || day > 31) return false;
-
-    const currentYear = new Date().getFullYear();
-    if (year < 1900 || year > currentYear) return false;
-
-    const daysInMonth = new Date(year, month, 0).getDate();
-    if (day > daysInMonth) return false;
-
-    return true;
-  };
-
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -158,7 +132,10 @@ export default function Account() {
 
   const handleCheckout = () => {
     // Redirect to Stripe billing portal to subscribe
-    window.open('https://billing.stripe.com/p/login/test_bJe6oI4EU5KXfGY2z963K00', '_blank');
+    window.open(
+      "https://billing.stripe.com/p/login/test_bJe6oI4EU5KXfGY2z963K00",
+      "_blank",
+    );
   };
 
   const isOverLimit = jobs.length >= 50;
@@ -174,9 +151,8 @@ export default function Account() {
         </p>
       </div>
 
-      {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6 lg:items-stretch">
-        {/* Left — Profile & Security */}
+        {/* Profile & Security */}
         <div className="lg:col-span-3 flex flex-col h-full">
           <div className="premium-glass rounded-2xl overflow-hidden shadow-xl border border-white/5 flex-1">
             <div className="p-4 sm:p-5 border-b border-white/5 bg-black/10 flex items-center justify-between">
@@ -290,7 +266,6 @@ export default function Account() {
               </form>
             </div>
 
-            {/* Password */}
             <div className="border-t border-white/5">
               <div className="p-4 sm:p-5 bg-black/10 flex items-center gap-2">
                 <KeyRound className="w-4 h-4 text-blue-500" />
@@ -383,7 +358,7 @@ export default function Account() {
           </div>
         </div>
 
-        {/* Right — Plans & Pricing */}
+        {/* Plans & Pricing */}
         <div className="lg:col-span-2 flex">
           <div className="premium-glass rounded-2xl overflow-hidden shadow-xl border border-white/5 h-full w-full">
             <div className="p-5 border-b border-white/5 bg-black/10 flex items-center justify-between gap-2">
@@ -394,16 +369,17 @@ export default function Account() {
                 </h2>
               </div>
               <span
-                className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border ${userProfile?.plan === "Pro"
-                  ? "text-purple-400 bg-purple-500/10 border-purple-500/20"
-                  : "text-blue-400 bg-blue-500/10 border-blue-500/20"
-                  }`}
+                className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border ${
+                  userProfile?.plan === "Pro"
+                    ? "text-purple-400 bg-purple-500/10 border-purple-500/20"
+                    : "text-blue-400 bg-blue-500/10 border-blue-500/20"
+                }`}
               >
                 {userProfile?.plan === "Pro" ? "👑 Pro Plan" : "Free Plan"}
               </span>
             </div>
             <div className="p-5 space-y-5">
-              {/* Usage */}
+              {/* Usage bar */}
               <div>
                 <div className="flex justify-between items-end mb-2">
                   <span className="text-xs font-bold text-slate-300">
@@ -436,10 +412,11 @@ export default function Account() {
 
               {/* Free Plan */}
               <div
-                className={`rounded-2xl p-4 border transition-all ${userProfile?.plan !== "Pro"
-                  ? "border-blue-500/30 bg-blue-500/5"
-                  : "border-white/5 bg-white/5"
-                  }`}
+                className={`rounded-2xl p-4 border transition-all ${
+                  userProfile?.plan !== "Pro"
+                    ? "border-blue-500/30 bg-blue-500/5"
+                    : "border-white/5 bg-white/5"
+                }`}
               >
                 <div className="flex items-center justify-between mb-3">
                   <div>
@@ -482,10 +459,11 @@ export default function Account() {
 
               {/* Pro Plan */}
               <div
-                className={`rounded-2xl p-4 border transition-all relative overflow-hidden ${userProfile?.plan === "Pro"
-                  ? "border-purple-500/30 bg-purple-500/5"
-                  : "border-purple-500/20 bg-gradient-to-br from-indigo-500/5 to-purple-500/5"
-                  }`}
+                className={`rounded-2xl p-4 border transition-all relative overflow-hidden ${
+                  userProfile?.plan === "Pro"
+                    ? "border-purple-500/30 bg-purple-500/5"
+                    : "border-purple-500/20 bg-gradient-to-br from-indigo-500/5 to-purple-500/5"
+                }`}
               >
                 {userProfile?.plan !== "Pro" && (
                   <div className="absolute top-3 right-3">
@@ -547,7 +525,11 @@ export default function Account() {
                     disabled={isUpdating}
                     className="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold text-[11px] tracking-wide transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:brightness-110 active:scale-[0.98] flex items-center justify-center gap-2 whitespace-nowrap disabled:opacity-50"
                   >
-                    {isUpdating ? <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Zap className="w-3.5 h-3.5 shrink-0" />}
+                    {isUpdating ? (
+                      <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <Zap className="w-3.5 h-3.5 shrink-0" />
+                    )}
                     {isUpdating ? "Redirecting..." : "Buy Subscription"}
                   </button>
                 )}

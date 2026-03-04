@@ -7,7 +7,6 @@ import CustomSelect from "../components/CustomSelect";
 import PipelineCard from "../components/PipelineCard";
 import type { Priority, Status } from "../context/JobContext";
 import { useJobs } from "../context/JobContext";
-import { useTheme } from "../context/ThemeContext";
 
 const COLUMNS: { id: Status; label: string; color: string }[] = [
   {
@@ -39,8 +38,6 @@ const COLUMNS: { id: Status; label: string; color: string }[] = [
 
 export default function Pipeline() {
   const { jobs, updateJobStatus, openModal, deleteJob } = useJobs();
-  const { backgroundConfig } = useTheme();
-  const isDark = backgroundConfig.value === "#0B0F19";
   const [searchQuery, setSearchQuery] = useState("");
   const [filterPriority, setFilterPriority] = useState<Priority | "All">("All");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -103,7 +100,7 @@ export default function Pipeline() {
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 sm:pl-11 pr-3 sm:pr-4 py-2 sm:py-2.5 text-sm border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all bg-white/10 backdrop-blur-sm text-white placeholder-slate-200 font-medium shadow-inner"
+              className="w-full pl-9 sm:pl-11 pr-3 sm:pr-4 py-2.5 text-sm border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all bg-white/10 backdrop-blur-sm text-white placeholder-slate-200 font-medium shadow-inner"
             />
           </div>
           <CustomSelect
@@ -121,7 +118,7 @@ export default function Pipeline() {
           />
           <button
             onClick={() => openModal()}
-            className={`${isDark ? "bg-white/30 border border-white/40 text-white hover:bg-white/40 shadow-lg shadow-white/10" : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40"} px-4 sm:px-6 py-2 sm:py-2.5 rounded-2xl font-bold text-sm hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 shrink-0 backdrop-blur-sm`}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 px-4 sm:px-6 py-2.5 rounded-2xl font-bold text-sm hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 shrink-0 backdrop-blur-sm"
           >
             <Plus className="w-4 h-4" />{" "}
             <span className="hidden sm:inline">New Application</span>
@@ -129,7 +126,6 @@ export default function Pipeline() {
         </div>
       </div>
 
-      {/* Kanban Board */}
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="flex-1 flex gap-4 sm:gap-6 overflow-x-auto pb-4 sm:pb-6 items-start h-full px-1 scrollbar-theme">
           {COLUMNS.map((col) => (
@@ -153,10 +149,11 @@ export default function Pipeline() {
                   <div
                     {...provided.droppableProps}
                     ref={provided.innerRef}
-                    className={`p-4 pt-1 pr-2 pb-2 flex-1 overflow-y-auto space-y-3 transition-all duration-200 ease-out scrollbar-theme rounded-b-3xl ${snapshot.isDraggingOver
-                      ? "bg-blue-400/5 ring-2 ring-inset ring-blue-400/15"
-                      : ""
-                      }`}
+                    className={`p-4 pt-1 pr-2 pb-2 flex-1 overflow-y-auto space-y-3 transition-all duration-200 ease-out scrollbar-theme rounded-b-3xl ${
+                      snapshot.isDraggingOver
+                        ? "bg-blue-400/5 ring-2 ring-inset ring-blue-400/15"
+                        : ""
+                    }`}
                   >
                     {filteredJobs
                       .filter((j) => j.status === col.id)

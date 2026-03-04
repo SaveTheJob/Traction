@@ -1,7 +1,6 @@
 import { Image as ImageIcon, RotateCcw, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTheme } from "../context/ThemeContext";
-import ThemeToggle from "./ThemeToggle";
 import type { ToastMessage } from "./Toast";
 import ToastContainer from "./Toast";
 
@@ -117,7 +116,6 @@ export default function ThemeCustomizer() {
     };
   }, [isOpen]);
 
-
   const themeCategories = [
     {
       id: "sky",
@@ -133,11 +131,6 @@ export default function ThemeCustomizer() {
       id: "puzzo",
       title: "Puzzle Orange",
       img: "/wallpapers/puzzo.png",
-    },
-    {
-      id: "default",
-      title: "Abstract",
-      img: "/wallpapers/default.png",
     },
     {
       id: "flowers",
@@ -220,17 +213,20 @@ export default function ThemeCustomizer() {
 
       {/* Overlay */}
       <div
-        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-          }`}
+        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-50 transition-opacity duration-300 ${
+          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
       />
 
       {/* Sidebar Panel */}
       <div
         ref={sidebarRef}
-        className={`fixed inset-y-0 right-0 z-50 w-[calc(100%-2rem)] max-w-[360px] bg-[#1e293b] text-slate-100 shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] transform flex flex-col m-4 rounded-[24px] border border-white/5 ${isOpen ? "translate-x-0" : "translate-x-[120%]"
-          }`}
+        className={`fixed inset-y-0 right-0 z-50 w-[calc(100%-2rem)] max-w-[360px] bg-[#1e293b] text-slate-100 shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] transform flex flex-col m-4 rounded-[24px] border border-white/5 ${
+          isOpen ? "translate-x-0" : "translate-x-[120%]"
+        }`}
         style={{
-          maxHeight: "calc(100vh - 32px)", /* Account for 16px top/bottom margins, allow scrolling if needed */
+          maxHeight:
+            "calc(100vh - 32px)" /* Account for 16px top/bottom margins, allow scrolling if needed */,
           boxShadow:
             "-10px 10px 40px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.05)",
         }}
@@ -274,13 +270,6 @@ export default function ThemeCustomizer() {
           {currentView === "appearance" ? (
             /* Appearance Section */
             <section className="space-y-4 pb-8">
-              <div className="flex items-center justify-between px-1 pt-4">
-                <h3 className="text-[14px] font-medium text-white/90">
-                  Appearance Mode
-                </h3>
-                <ThemeToggle />
-              </div>
-
               {/* Theme Image Card */}
               <div className="bg-[#0f172a] rounded-[20px] p-2 border border-slate-700/50 mb-2">
                 <div className="aspect-[16/9] w-full bg-[#1e2330] rounded-[16px] overflow-hidden shadow-inner relative group border-2 border-[#125881]">
@@ -327,8 +316,7 @@ export default function ThemeCustomizer() {
                   setThemeConfig({
                     value: "/wallpapers/sky.png",
                     type: "image",
-                    overlayOpacity: 8,
-                    glassOpacity: 28
+                    glassOpacity: 28,
                   })
                 }
                 className="w-full flex items-center justify-between py-3 px-1 text-white hover:bg-white/5 rounded-lg transition-colors group"
@@ -357,36 +345,39 @@ export default function ThemeCustomizer() {
                         value: "/wallpapers/sky.png",
                         type: "image",
                         showNoise: false,
-                        showGeometric: false
+                        showGeometric: false,
                       });
                     } else if (cat.id === "default") {
                       setThemeConfig({
                         value: "#0B0F19",
                         type: "color",
-                        overlayOpacity: 0,
-                        glassOpacity: 15
+                        glassOpacity: 15,
                       });
                     } else if (cat.isUpload) {
                       fileInputRef.current?.click();
                     } else if ((cat as any).config) {
                       setThemeConfig({
                         ...(cat as any).config,
-                        overlayOpacity: themeConfig.overlayOpacity,
-                        glassOpacity: themeConfig.glassOpacity
+                        glassOpacity: themeConfig.glassOpacity,
                       });
                     } else if ((cat as any).img) {
-                      setThemeConfig({ value: (cat as any).img, type: "image" });
+                      setThemeConfig({
+                        value: (cat as any).img,
+                        type: "image",
+                      });
                     }
                   }}
                 >
                   <div
-                    className={`aspect-square rounded-2xl overflow-hidden relative shadow-sm transition-all duration-300 ${cat.isUpload
-                      ? "bg-[#1e293b] border border-white/5 group-hover:bg-slate-800 flex items-center justify-center"
-                      : ""
-                      } ${!cat.isUpload && !(cat as any).img
+                    className={`aspect-square rounded-2xl overflow-hidden relative shadow-sm transition-all duration-300 ${
+                      cat.isUpload
+                        ? "bg-[#1e293b] border border-white/5 group-hover:bg-slate-800 flex items-center justify-center"
+                        : ""
+                    } ${
+                      !cat.isUpload && !(cat as any).img
                         ? "border border-white/10 group-hover:border-white/30"
                         : ""
-                      }`}
+                    }`}
                   >
                     {(cat as any).img ? (
                       <img
@@ -394,8 +385,12 @@ export default function ThemeCustomizer() {
                         alt={cat.title}
                         className="w-full h-full object-cover"
                       />
-                    ) : (cat as any).config?.type === "mesh" || (cat as any).config?.type === "color" ? (
-                      <div className="w-full h-full" style={{ background: (cat as any).config.value }} />
+                    ) : (cat as any).config?.type === "mesh" ||
+                      (cat as any).config?.type === "color" ? (
+                      <div
+                        className="w-full h-full"
+                        style={{ background: (cat as any).config.value }}
+                      />
                     ) : null}
 
                     {(cat.isUpload || (cat as any).icon) && (

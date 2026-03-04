@@ -2,21 +2,7 @@
 <html lang="en">
 
 <head>
-  <script>
-    // Theme Initializer to prevent "flash of wrong theme"
-    try {
-      const theme = localStorage.getItem('theme');
-      if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
-      } else if (!theme) {
-        // Hard default to dark if completely unvisited to guarantee dark aesthetic
-        document.documentElement.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
-      } else if (theme === 'light') {
-        document.documentElement.classList.remove('dark');
-      }
-    } catch (e) { }
-  </script>
+  <script>document.documentElement.classList.add('dark');</script>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/logo.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />

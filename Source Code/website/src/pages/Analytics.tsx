@@ -3,12 +3,13 @@ import ApplicationVelocityChart from "../components/ApplicationVelocityChart";
 import ConversionFunnel from "../components/ConversionFunnel";
 import PipelineDistributionChart from "../components/PipelineDistributionChart";
 import { useJobs } from "../context/JobContext";
+import { getWeekNumber } from "../utils/date";
 
 export default function Analytics() {
   const { jobs } = useJobs();
   const [timeFilter, setTimeFilter] = useState<"monthly" | "weekly">("monthly");
 
-  // 1. Calculate Status Distribution (Funnel)
+  // Funnel data
   const statusCounts = jobs.reduce(
     (acc, job) => {
       acc[job.status] = (acc[job.status] || 0) + 1;
@@ -23,18 +24,7 @@ export default function Analytics() {
     .map(([name, value]) => ({ name: statusLabelMap[name] || name, value }))
     .sort((a, b) => b.value - a.value);
 
-  // Helper to get week number
-  const getWeekNumber = (d: Date) => {
-    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    const weekNo = Math.ceil(
-      ((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7,
-    );
-    return `Week ${weekNo}, ${d.getUTCFullYear()}`;
-  };
-
-  // 2. Calculate Application velocity (Area chart)
+  // Application volume over time
   const timelineData = jobs.reduce(
     (acc, job) => {
       const dStr = job.dateApplied; // "Oct 5, 2023" String
@@ -74,7 +64,7 @@ export default function Analytics() {
       applications,
     }));
 
-  // 3. Simple high-level numbers for the funnel
+  // High-level stats for the funnel header
   const totalJobs = jobs.length;
   const interviewing = jobs.filter((j) => j.status === "Interviewing").length;
   const offers = jobs.filter((j) => j.status === "Offer").length;
@@ -89,19 +79,17 @@ export default function Analytics() {
           Visualize your job search momentum and conversion rates.
         </p>
       </div>
-
-      {/* Massive Area Chart: Application Velocity */}
+      {/* Massive Area Chart: Application Velocity */}{" "}
       <ApplicationVelocityChart
         data={sortedTimeline}
         timeFilter={timeFilter}
         setTimeFilter={setTimeFilter}
       />
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
         {/* Status Distribution Pie Chart */}
         <PipelineDistributionChart data={statusData} />
 
-        {/* Status Bar Chart (Alternative View) */}
+        {/* Conversion Funnel */}
         <ConversionFunnel
           totalJobs={totalJobs}
           saved={jobs.filter((j) => j.status === "Wishlist").length}

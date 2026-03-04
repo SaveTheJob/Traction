@@ -11,6 +11,7 @@ import {
 } from "firebase/firestore";
 import type { ReactNode } from "react";
 import { createContext, useContext, useEffect, useState } from "react";
+import { useEffectiveUserId } from "../hooks/useEffectiveUserId";
 import { db } from "../lib/firebase";
 import { useAuth } from "./AuthContext";
 
@@ -71,7 +72,8 @@ interface JobContextType {
 const JobContext = createContext<JobContextType | undefined>(undefined);
 
 export function JobProvider({ children }: { children: ReactNode }) {
-  const { user, isAdmin, impersonatedUser } = useAuth();
+  const { user } = useAuth();
+  const effectiveUserId = useEffectiveUserId();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
   const [isVaultOpen, setIsVaultOpen] = useState(false);
@@ -80,9 +82,6 @@ export function JobProvider({ children }: { children: ReactNode }) {
   const [limitError, setLimitError] = useState("");
 
   const clearLimitError = () => setLimitError("");
-
-  const effectiveUserId =
-    isAdmin && impersonatedUser ? impersonatedUser.uid : user?.uid;
 
   useEffect(() => {
     if (!effectiveUserId) {

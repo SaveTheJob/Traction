@@ -3,15 +3,16 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 interface BackgroundConfig {
   value: string;
   type: "color" | "image" | "mesh" | "aura";
-  overlayOpacity?: number; // 0-100
-  glassOpacity?: number;   // 0-100
+  glassOpacity?: number; // 0-100
   showNoise?: boolean;
   showGeometric?: boolean;
 }
 
 interface ThemeContextType {
   backgroundConfig: BackgroundConfig;
-  setBackgroundConfig: (config: BackgroundConfig | ((prev: BackgroundConfig) => BackgroundConfig)) => void;
+  setBackgroundConfig: (
+    config: BackgroundConfig | ((prev: BackgroundConfig) => BackgroundConfig),
+  ) => void;
 }
 
 const DEFAULT_WALLPAPER = "#0B0F19";
@@ -32,11 +33,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         const stored = localStorage.getItem("app-theme-config");
         if (stored) {
           const parsed = JSON.parse(stored);
-          return { overlayOpacity: 0, glassOpacity: 15, ...parsed };
+          return { glassOpacity: 15, ...parsed };
         }
-        return { value: DEFAULT_WALLPAPER, type: "color", overlayOpacity: 0, glassOpacity: 15 };
+        return {
+          value: DEFAULT_WALLPAPER,
+          type: "color",
+          glassOpacity: 15,
+        };
       } catch (e) {
-        return { value: DEFAULT_WALLPAPER, type: "color", overlayOpacity: 0, glassOpacity: 15 };
+        return {
+          value: DEFAULT_WALLPAPER,
+          type: "color",
+          glassOpacity: 15,
+        };
       }
     },
   );
@@ -52,11 +61,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         : backgroundConfig.value;
     document.documentElement.style.setProperty("--primary-gradient", prop);
 
-    const overlay = backgroundConfig.overlayOpacity ?? 8;
     const glass = backgroundConfig.glassOpacity ?? 28;
-
-    document.documentElement.style.setProperty("--app-bg-overlay", (overlay / 100).toString());
-    document.documentElement.style.setProperty("--app-glass-opacity", (glass / 100).toString());
+    document.documentElement.style.setProperty(
+      "--app-glass-opacity",
+      (glass / 100).toString(),
+    );
+    document.documentElement.style.setProperty(
+      "--app-glass-heavy",
+      Math.min(glass / 100 + 0.38, 1).toString(),
+    );
 
     localStorage.setItem("app-theme-config", JSON.stringify(backgroundConfig));
   }, [backgroundConfig]);

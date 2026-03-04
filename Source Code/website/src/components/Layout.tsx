@@ -27,7 +27,7 @@ export default function Layout() {
         <div className="flex-1 overflow-hidden bg-transparent flex flex-col relative">
           {/* Mobile Header (Hidden on Desktop) */}
           <div className="md:hidden flex items-center justify-between p-3 sm:p-4 premium-glass border-b-0 shrink-0 sticky top-0 z-10 m-2 rounded-xl sm:rounded-2xl gap-3">
-            <Logo className="h-11" />
+            <Logo className="h-14" />
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsSidebarOpen(true)}

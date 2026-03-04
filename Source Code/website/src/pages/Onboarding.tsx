@@ -2,34 +2,18 @@ import { doc, updateDoc } from "firebase/firestore";
 import { AlertTriangle, ArrowRight, Calendar, User } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import { db } from "../lib/firebase";
+import { formatDobInput, isValidDob } from "../utils/dob";
 
 export default function Onboarding() {
   const { user, userProfile } = useAuth();
+  const { backgroundConfig } = useTheme();
   const [firstName, setFirstName] = useState(userProfile?.firstName || "");
   const [lastName, setLastName] = useState(userProfile?.lastName || "");
   const [dob, setDob] = useState(userProfile?.dob || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
-
-  const isValidDob = (dobStr: string) => {
-    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dobStr)) return false;
-    const [mm, dd, yyyy] = dobStr.split("/");
-    const month = parseInt(mm, 10);
-    const day = parseInt(dd, 10);
-    const year = parseInt(yyyy, 10);
-
-    if (month < 1 || month > 12) return false;
-    if (day < 1 || day > 31) return false;
-
-    const currentYear = new Date().getFullYear();
-    if (year < 1900 || year > currentYear) return false;
-
-    const daysInMonth = new Date(year, month, 0).getDate();
-    if (day > daysInMonth) return false;
-
-    return true;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,32 +49,31 @@ export default function Onboarding() {
   };
 
   const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value.replace(/\D/g, "");
-    if (val.length >= 2) {
-      val = val.slice(0, 2) + "/" + val.slice(2);
-    }
-    if (val.length >= 5) {
-      val = val.slice(0, 5) + "/" + val.slice(5, 9);
-    }
-    setDob(val);
+    setDob(formatDobInput(e.target.value));
   };
 
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden font-sans"
       style={{
-        backgroundImage: "url('/wallpapers/default.jpeg')",
+        backgroundImage:
+          backgroundConfig.type === "image"
+            ? `url('${backgroundConfig.value}')`
+            : undefined,
+        backgroundColor:
+          backgroundConfig.type === "color"
+            ? backgroundConfig.value
+            : undefined,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
         backgroundAttachment: "fixed",
       }}
     >
-      {/* Decorative Blur Backgrounds */}
+      {/* Decorative blurs */}
       <div className="absolute top-0 -left-4 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
       <div className="absolute bottom-0 -right-4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse delay-700" />
 
-      {/* Container - Dashboard Settings Style */}
       <div className="w-full max-w-2xl premium-glass rounded-2xl overflow-hidden shadow-2xl relative z-10 border border-white/5 disabled:opacity-50">
         <div className="p-5 sm:p-6 border-b border-white/5 bg-black/40 flex items-center justify-between">
           <div>
@@ -181,7 +164,6 @@ export default function Onboarding() {
                 )}
               </button>
 
-              {/* Footer Disclaimer */}
               <div className="mt-6 flex items-center justify-center gap-2 opacity-100 transition-all pb-1">
                 <span className="text-[10px]">🔒</span>
                 <p className="text-[9px] font-bold text-white uppercase tracking-widest">

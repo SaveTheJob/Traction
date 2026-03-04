@@ -12,19 +12,25 @@
  */
 
 import React from "react";
-import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
 
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { JobProvider } from "./context/JobContext";
 import { NetworkProvider } from "./context/NetworkContext";
-import { ThemeProvider, useTheme } from "./context/ThemeContext";
 import { NotificationProvider } from "./context/NotificationContext";
+import { ThemeProvider, useTheme } from "./context/ThemeContext";
 
 import { ProtectedRoute, PublicRoute } from "./components/AuthRoutes";
+import DocumentVaultModal from "./components/DocumentVaultModal";
 import Layout from "./components/Layout";
 import NewApplicationModal from "./components/NewApplicationModal";
 import NewContactModal from "./components/NewContactModal";
-import DocumentVaultModal from "./components/DocumentVaultModal";
 
 const Account = React.lazy(() => import("./pages/Account"));
 const Analytics = React.lazy(() => import("./pages/Analytics"));
@@ -38,12 +44,9 @@ const Signup = React.lazy(() => import("./pages/Signup"));
 const Onboarding = React.lazy(() => import("./pages/Onboarding"));
 const ResumeBuilder = React.lazy(() => import("./pages/ResumeBuilder"));
 
-// ---------------------------------------------------------------------------
-// AppBackground
-// Renders the user-selected wallpaper as a real fixed DOM element.
-// Using a CSS variable on <body> is not composited by backdrop-filter in
-// production Chromium/WebKit builds — a real DOM node is required.
-// ---------------------------------------------------------------------------
+// AppBackground — renders the wallpaper as a real fixed DOM node.
+// A CSS variable on <body> won't composite with backdrop-filter in
+// production Chromium/WebKit, so we need an actual element.
 
 function BackgroundAura() {
   return (
@@ -57,16 +60,22 @@ function BackgroundAura() {
 
 function BackgroundNoise() {
   return (
-    <div className="fixed inset-0 pointer-events-none opacity-[0.025] z-[1] mix-blend-overlay"
-      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}
+    <div
+      className="fixed inset-0 pointer-events-none opacity-[0.025] z-[1] mix-blend-overlay"
+      style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+      }}
     />
   );
 }
 
 function BackgroundGeometric() {
   return (
-    <div className="fixed inset-0 pointer-events-none opacity-[0.04] z-0"
-      style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg stroke='%23ffffff' stroke-width='1' stroke-opacity='0.2'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 30V20h2v10h10v2H8v10H6V32H-4v-2h10zM30 0h-2v10h-10v2h10v10h2V12h10v-2H30V0zM0 60h2V50h10v-2H2v-10H0v12h-10v2h10z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}
+    <div
+      className="fixed inset-0 pointer-events-none opacity-[0.04] z-0"
+      style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg stroke='%23ffffff' stroke-width='1' stroke-opacity='0.2'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 30V20h2v10h10v2H8v10H6V32H-4v-2h10zM30 0h-2v10h-10v2h10v10h2V12h10v-2H30V0zM0 60h2V50h10v-2H2v-10H0v12h-10v2h10z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+      }}
     />
   );
 }
@@ -74,11 +83,16 @@ function BackgroundGeometric() {
 function AppBackground() {
   const { backgroundConfig } = useTheme();
   const [currentBg, setCurrentBg] = React.useState(backgroundConfig);
-  const [pendingBg, setPendingBg] = React.useState<typeof backgroundConfig | null>(null);
+  const [pendingBg, setPendingBg] = React.useState<
+    typeof backgroundConfig | null
+  >(null);
   const [isTransitioning, setIsTransitioning] = React.useState(false);
 
   React.useEffect(() => {
-    if (backgroundConfig.value !== currentBg.value || backgroundConfig.type !== currentBg.type) {
+    if (
+      backgroundConfig.value !== currentBg.value ||
+      backgroundConfig.type !== currentBg.type
+    ) {
       setPendingBg(backgroundConfig);
       setIsTransitioning(true);
 
@@ -93,7 +107,8 @@ function AppBackground() {
   }, [backgroundConfig, currentBg.value, currentBg.type]);
 
   const getStyle = (config: typeof backgroundConfig): React.CSSProperties => {
-    if (config.type === "image") return { backgroundImage: `url('${config.value}')` };
+    if (config.type === "image")
+      return { backgroundImage: `url('${config.value}')` };
     if (config.type === "mesh") return { background: "transparent" }; // Handled by class
     return { background: config.value };
   };
@@ -106,16 +121,13 @@ function AppBackground() {
 
   return (
     <>
-      {/* Dark Base */}
       <div className="fixed inset-0 bg-[#020617] z-[-2]" />
 
-      {/* Current Layer */}
       <div
         className={getClassName(currentBg)}
         style={{ ...getStyle(currentBg), opacity: 1 }}
       />
 
-      {/* Pending Layer */}
       {pendingBg && (
         <div
           className={getClassName(pendingBg)}
@@ -123,73 +135,112 @@ function AppBackground() {
         />
       )}
 
-      {/* Persistent Effects Layers */}
       {backgroundConfig.type === "aura" && <BackgroundAura />}
       {backgroundConfig.showNoise && <BackgroundNoise />}
       {backgroundConfig.showGeometric && <BackgroundGeometric />}
 
-      {/* Dim Overlay */}
-      <div
-        className="fixed inset-0 pointer-events-none z-[1]"
-        style={{ background: `rgba(0,0,0,${(backgroundConfig.overlayOpacity ?? 14) / 100})` }}
-      />
+      {/* Darken overlay so text stays readable on bright wallpapers */}
+      <div className="fixed inset-0 bg-black/50 pointer-events-none z-[1]" />
     </>
   );
 }
 
-// ---------------------------------------------------------------------------
-// AppRoutes — route definitions and auth/onboarding guards
-// ---------------------------------------------------------------------------
+// AppRoutes — handles routing, auth guards, and onboarding redirects
 
 function AppRoutes() {
-  const { isLocalAdmin, userProfile, loading, user, impersonatedUser } = useAuth();
+  const { isLocalAdmin, userProfile, loading, user, impersonatedUser } =
+    useAuth();
   const location = useLocation();
 
-  const isPublicRoute = ["/login", "/signup", "/privacy-policy"].includes(location.pathname);
+  const isPublicRoute = ["/login", "/signup", "/privacy-policy"].includes(
+    location.pathname,
+  );
 
   // Show loading spinner while auth is resolving
   if (!isPublicRoute && !loading && user && !userProfile && !isLocalAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ position: "relative", zIndex: 1 }}>
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ position: "relative", zIndex: 1 }}
+      >
         <div className="w-8 h-8 rounded-full border-4 border-blue-600 border-t-transparent animate-spin" />
       </div>
     );
   }
 
   // Redirect to onboarding if profile not yet completed
-  if (!loading && userProfile && !userProfile.onboardingCompleted && !isLocalAdmin) {
+  if (
+    !loading &&
+    userProfile &&
+    !userProfile.onboardingCompleted &&
+    !isLocalAdmin
+  ) {
     if (location.pathname !== "/onboarding") {
       return <Navigate to="/onboarding" replace />;
     }
   }
 
   // Prevent accessing onboarding once completed
-  if (!loading && userProfile?.onboardingCompleted && location.pathname === "/onboarding") {
+  if (
+    !loading &&
+    userProfile?.onboardingCompleted &&
+    location.pathname === "/onboarding"
+  ) {
     return <Navigate to="/" replace />;
   }
 
   return (
     <div style={{ position: "relative", zIndex: 1 }}>
-      <React.Suspense fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="w-8 h-8 rounded-full border-4 border-white/30 border-t-white animate-spin" />
-        </div>
-      }>
+      <React.Suspense
+        fallback={
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full border-4 border-white/30 border-t-white animate-spin" />
+          </div>
+        }
+      >
         <Routes>
-          {/* ── Public auth routes ── */}
-          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-          <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/signup"
+            element={
+              <PublicRoute>
+                <Signup />
+              </PublicRoute>
+            }
+          />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+          <Route
+            path="/onboarding"
+            element={
+              <ProtectedRoute>
+                <Onboarding />
+              </ProtectedRoute>
+            }
+          />
 
-          {/* ── Protected app routes ── */}
-          <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
             <Route
               index
               element={
-                isLocalAdmin && !impersonatedUser
-                  ? <Navigate to="/admin" replace />
-                  : <Dashboard />
+                isLocalAdmin && !impersonatedUser ? (
+                  <Navigate to="/admin" replace />
+                ) : (
+                  <Dashboard />
+                )
               }
             />
             <Route path="pipeline" element={<Pipeline />} />
@@ -198,7 +249,10 @@ function AppRoutes() {
             <Route path="analytics" element={<Analytics />} />
             <Route path="resume" element={<ResumeBuilder />} />
             <Route path="admin/*" element={<AdminPortal />} />
-            <Route path="*" element={<div className="p-8 text-white">Page not found</div>} />
+            <Route
+              path="*"
+              element={<div className="p-8 text-white">Page not found</div>}
+            />
           </Route>
         </Routes>
       </React.Suspense>
@@ -211,17 +265,13 @@ function AppRoutes() {
   );
 }
 
-// ---------------------------------------------------------------------------
-// App — provider tree
-// ---------------------------------------------------------------------------
+// App — wraps everything in the provider tree
 
 function App() {
   return (
     <ThemeProvider>
-      {/* Fixed wallpaper at z=0 */}
       <AppBackground />
 
-      {/* App content at z=1+ */}
       <AuthProvider>
         <NotificationProvider>
           <JobProvider>

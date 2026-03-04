@@ -10,7 +10,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { recordAdminLog } from "../lib/adminLogger";
 import { auth, db } from "../lib/firebase";
 
-interface UserProfile {
+export interface UserProfile {
   uid: string;
   email: string;
   firstName?: string;
@@ -18,7 +18,7 @@ interface UserProfile {
   dob?: string;
   plan: "Free" | "Pro";
   status: "Active" | "Suspended" | "Pending";
-
+  createdAt?: any;
   onboardingCompleted?: boolean;
 }
 
@@ -61,8 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const [loading, setLoading] = useState(true);
 
-  const isAdmin =
-    isLocalAdmin || user?.email === "admin@savethejob.com" || !!user;
+  const isAdmin = isLocalAdmin || user?.email === "admin@savethejob.com";
 
   const impersonateUser = (target: UserProfile | null) => {
     if (!isAdmin) return;

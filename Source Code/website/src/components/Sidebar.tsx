@@ -4,6 +4,7 @@ import {
   History,
   KanbanSquare,
   LayoutDashboard,
+  LogOut,
   Palette,
   Radio,
   Sparkles,
@@ -12,10 +13,8 @@ import {
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useTheme } from "../context/ThemeContext";
 import Logo from "./Logo";
 import NotificationDropdown from "./NotificationDropdown";
-import ThemeToggle from "./ThemeToggle";
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -24,35 +23,34 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
-  const { user, isLocalAdmin, impersonatedUser } = useAuth();
-  const { backgroundConfig } = useTheme();
-  const isDark = backgroundConfig.value === "#0B0F19";
+  const { user, isLocalAdmin, impersonatedUser, signOut } = useAuth();
 
   // Show user nav items when impersonating (God Mode)
   const showAdminNav = isLocalAdmin && !impersonatedUser;
 
   const navItems = showAdminNav
     ? [
-      { label: "User Command", path: "/admin", icon: Users },
-      { label: "System Vitals", path: "/admin/vitals", icon: Activity },
-      { label: "Security Pulse", path: "/admin/logs", icon: History },
-      { label: "Broadcast", path: "/admin/broadcast", icon: Radio },
-    ]
+        { label: "User Command", path: "/admin", icon: Users },
+        { label: "System Vitals", path: "/admin/vitals", icon: Activity },
+        { label: "Security Pulse", path: "/admin/logs", icon: History },
+        { label: "Broadcast", path: "/admin/broadcast", icon: Radio },
+      ]
     : [
-      { label: "Dashboard", path: "/", icon: LayoutDashboard },
-      { label: "Pipeline", path: "/pipeline", icon: KanbanSquare },
-      { label: "Network", path: "/network", icon: Users },
-      { label: "Analytics", path: "/analytics", icon: BarChart3 },
-      { label: "AI Resume", path: "/resume", icon: Sparkles },
-    ];
+        { label: "Dashboard", path: "/", icon: LayoutDashboard },
+        { label: "Pipeline", path: "/pipeline", icon: KanbanSquare },
+        { label: "Network", path: "/network", icon: Users },
+        { label: "Analytics", path: "/analytics", icon: BarChart3 },
+        { label: "AI Resume", path: "/resume", icon: Sparkles },
+      ];
 
   return (
     <div
-      className={`fixed inset-y-0 left-0 z-40 w-64 lg:w-72 premium-glass transition-transform duration-300 ease-in-out md:static md:translate-x-0 flex flex-col h-screen shrink-0 rounded-r-2xl ${isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
-        }`}
+      className={`fixed inset-y-0 left-0 z-40 w-64 lg:w-72 premium-glass transition-transform duration-300 ease-in-out md:static md:translate-x-0 flex flex-col h-screen shrink-0 rounded-r-2xl ${
+        isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
+      }`}
     >
       <div className="px-4 lg:px-6 pt-8 pb-4 lg:pt-10 lg:pb-6 flex items-center justify-between md:justify-center shrink-0 relative">
-        <Logo className="h-10 lg:h-11" />
+        <Logo className="h-12 lg:h-14" />
         <button
           onClick={onClose}
           className="md:hidden p-2 text-slate-300 hover:text-white transition-colors premium-glass rounded-full shadow-sm"
@@ -71,22 +69,21 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 key={item.label}
                 to={item.path}
                 onClick={() => onClose && onClose()}
-                className={`flex items-center gap-3 lg:gap-4 px-3 lg:px-4 py-3 lg:py-3.5 rounded-2xl text-[14px] lg:text-[15px] font-medium transition-all duration-300 group relative overflow-hidden ${isActive
-                  ? "text-white shadow-lg shadow-blue-500/20"
-                  : "text-white hover:bg-black/20"
-                  }`}
+                className={`flex items-center gap-3 lg:gap-4 px-3 lg:px-4 py-3 lg:py-3.5 rounded-2xl text-[14px] lg:text-[15px] font-medium transition-all duration-300 group relative overflow-hidden ${
+                  isActive
+                    ? "text-white shadow-lg shadow-blue-500/20"
+                    : "text-white hover:bg-black/20"
+                }`}
               >
                 {isActive && (
-                  <div className={`absolute inset-0 rounded-2xl -z-10 transition-all duration-300 backdrop-blur-md ${isDark
-                    ? "bg-white/30 border border-white/40"
-                    : "bg-gradient-to-r from-blue-500/80 to-indigo-500/80"
-                    }`} />
+                  <div className="absolute inset-0 rounded-2xl -z-10 transition-all duration-300 backdrop-blur-md bg-white/30 border border-white/40" />
                 )}
                 <div
-                  className={`flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 ${isActive
-                    ? "bg-white/20 text-white shadow-inner"
-                    : "bg-transparent text-white group-hover:bg-white/10 group-hover:shadow-sm"
-                    }`}
+                  className={`flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 ${
+                    isActive
+                      ? "bg-white/20 text-white shadow-inner"
+                      : "bg-transparent text-white group-hover:bg-white/10 group-hover:shadow-sm"
+                  }`}
                 >
                   <Icon
                     className="w-[18px] h-[18px]"
@@ -120,7 +117,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </Link>
           <div className="flex items-center border-t border-white/5 px-4 py-3 gap-2 bg-black/10 rounded-br-2xl">
             <NotificationDropdown position="above" />
-            <ThemeToggle />
             <button
               onClick={() =>
                 window.dispatchEvent(new Event("open-theme-customizer"))
@@ -130,6 +126,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             >
               <Palette className="w-[17px] h-[17px]" />
             </button>
+            {isLocalAdmin && !impersonatedUser && (
+              <button
+                onClick={signOut}
+                className="p-2 text-slate-300 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all"
+                title="Sign Out"
+              >
+                <LogOut className="w-[17px] h-[17px]" />
+              </button>
+            )}
           </div>
         </div>
       </div>
