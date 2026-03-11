@@ -1,4 +1,5 @@
 // Scrape logic to extract Job Title and Company from standard pages
+const EXTENSION_ORIGIN = new URL(chrome.runtime.getURL("")).origin;
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "scrapeJob") {
@@ -27,7 +28,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       isLikelyJobPage = !!(jobData.title && jobData.company);
     } else {
       // For generic sites, attempt intelligent JSON-LD extraction first
-      const metadata = extractJobMetadata();
+      const metadata = getParserMetadata();
       if (
         metadata &&
         metadata.title &&
@@ -93,7 +94,7 @@ function createSaveButton() {
       popupIframe.id = "popup-iframe";
       popupIframe.className = "popup-iframe";
       popupIframe.src = chrome.runtime.getURL("popup.html?isIframe=true");
-      // Allow it to have camera access or whatever is needed later
+      // Allow it to have clipboard access for copy operations
       popupIframe.setAttribute("allow", "clipboard-write");
 
       document.body.appendChild(popupIframe);
@@ -119,7 +120,14 @@ function createSaveButton() {
 
   // Listen for close message from iframe
   window.addEventListener("message", (event) => {
-    if (event.data === "closeSaveTheJobPopup" && popupIframe) {
+    const fromPopupFrame =
+      popupIframe && event.source === popupIframe.contentWindow;
+    const validOrigin = event.origin === EXTENSION_ORIGIN;
+    const shouldClose =
+      event.data === "closeSaveTheJobPopup" ||
+      event.data?.type === "STJ_CLOSE_POPUP";
+
+    if (fromPopupFrame && validOrigin && shouldClose) {
       popupIframe.classList.remove("show");
     }
   });
@@ -127,66 +135,24 @@ function createSaveButton() {
   document.body.appendChild(btn);
 }
 
-function extractJobMetadata() {
-  let jobData = {
+function getParserMetadata() {
+  if (window.STJJobParser?.extractJobMetadata) {
+    return window.STJJobParser.extractJobMetadata();
+  }
+
+  return {
     title: "",
     company: "",
     location: "",
     url: window.location.href,
     description: "",
+    datePosted: "",
   };
-
-  // 1. Try JSON-LD (Standard for Jobs)
-  const jsonLdScripts = document.querySelectorAll(
-    'script[type="application/ld+json"]',
-  );
-  for (const script of jsonLdScripts) {
-    try {
-      const data = JSON.parse(script.textContent);
-      const items = Array.isArray(data) ? data : data["@graph"] || [data];
-      for (const item of items) {
-        if (item["@type"] === "JobPosting") {
-          jobData.title = item.title || "";
-
-          if (item.hiringOrganization) {
-            if (typeof item.hiringOrganization === "string") {
-              jobData.company = item.hiringOrganization;
-            } else {
-              jobData.company = item.hiringOrganization.name || "";
-            }
-          }
-
-          /* Location detection disabled by user request - manual entry only
-          if (item.jobLocation) {
-             // ... code omitted ...
-          }
-          */
-
-          jobData.description = item.description || "";
-          // If we found a valid JobPosting, we stop and use it
-          if (jobData.title && jobData.company) return jobData;
-        }
-      }
-    } catch (e) {}
-  }
-
-  // 2. Meta Tag Fallback
-  if (!jobData.title)
-    jobData.title =
-      document.querySelector('meta[property="og:title"]')?.content || "";
-  if (!jobData.company)
-    jobData.company =
-      document.querySelector('meta[property="og:site_name"]')?.content || "";
-
-  // Location detection disabled
-  jobData.location = "";
-
-  return jobData;
 }
 
 function getJobDetails() {
   // Use smart metadata extraction first
-  let jobData = extractJobMetadata();
+  let jobData = getParserMetadata();
 
   // Initialize with what we found
   let title = jobData.title || "";

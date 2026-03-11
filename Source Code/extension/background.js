@@ -33,24 +33,30 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 });
 
 // Handle manual open
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "openPopup") {
-    const width = 450;
-    const height = 650;
-
-    chrome.windows.getCurrent((win) => {
-      const left = Math.round((win.width - width) / 2 + win.left);
-      const top = Math.round((win.height - height) / 2 + win.top);
-
-      chrome.windows.create({
-        url: `popup.html?tabId=${sender.tab.id}`,
-        type: "popup",
-        width: width,
-        height: height,
-        left: left,
-        top: top,
-        focused: true,
-      });
-    });
+chrome.runtime.onMessage.addListener((request, sender) => {
+  if (request.action !== "openPopup") {
+    return;
   }
+
+  if (!sender.tab || typeof sender.tab.id !== "number") {
+    return;
+  }
+
+  const width = 450;
+  const height = 650;
+
+  chrome.windows.getCurrent((win) => {
+    const left = Math.round((win.width - width) / 2 + win.left);
+    const top = Math.round((win.height - height) / 2 + win.top);
+
+    chrome.windows.create({
+      url: `popup.html?tabId=${sender.tab.id}`,
+      type: "popup",
+      width: width,
+      height: height,
+      left: left,
+      top: top,
+      focused: true,
+    });
+  });
 });

@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // Grab references to all DOM elements we need
   const authView = document.getElementById("auth-view");
   const mainView = document.getElementById("main-view");
   const successView = document.getElementById("success-view");
@@ -21,21 +20,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnAuthSubmit = document.getElementById("btn-auth-submit");
   const btnGoogle = document.getElementById("btn-google");
   const authToggle = document.getElementById("auth-toggle");
-  const btnUidSubmit = document.getElementById("btn-uid-submit");
-  const uidInput = document.getElementById("auth-uid");
+
+  const popupServices = window.STJPopup || {};
+  const authService = popupServices.authService;
+  const firestoreService = popupServices.firestoreService;
+  const scrapeService = popupServices.scrapeService;
 
   let isSignUp = false;
-  let manualUid = null; // Store for manual bypass
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-
-  // Check storage first for manual UID
-  chrome.storage.local.get(["manualUid"], (result) => {
-    if (result.manualUid) {
-      manualUid = result.manualUid;
-      showMainView();
-    }
-  });
 
   function showMainView() {
     authView.classList.add("hidden");
@@ -50,31 +41,49 @@ document.addEventListener("DOMContentLoaded", () => {
     successView.classList.add("hidden");
   }
 
-  // Listen for auth state changes
-  auth.onAuthStateChanged((user) => {
-    if (user && !user.isAnonymous) {
-      showMainView();
-    } else if (!manualUid) {
-      showAuthView();
-    }
-  });
-
-  // Manual UID Flow
-  if (btnUidSubmit) {
-    btnUidSubmit.addEventListener("click", () => {
-      const uid = uidInput.value.trim();
-      if (!uid) {
-        showAuthError("Please paste a valid UID from your Account settings");
-        return;
-      }
-      chrome.storage.local.set({ manualUid: uid }, () => {
-        manualUid = uid;
-        showMainView();
-      });
-    });
+  function showSuccessView() {
+    mainView.classList.add("hidden");
+    successView.classList.remove("hidden");
   }
 
-  // Toggle between Sign In and Sign Up
+  function showError(message) {
+    errorMsg.innerText = message;
+    errorMsg.classList.remove("hidden");
+  }
+
+  function showAuthError(message) {
+    authErrorMsg.innerText = message;
+    authErrorMsg.classList.remove("hidden");
+  }
+
+  function fillScrapedFields(scrapedData) {
+    titleInput.value = scrapedData.title || "";
+    companyInput.value = scrapedData.company || "";
+    locationInput.value = scrapedData.location || "";
+    linkInput.value = scrapedData.url || "";
+  }
+
+  function resetSaveButton() {
+    saveBtn.disabled = false;
+    saveBtn.innerText = "Save Application";
+  }
+
+  if (!authService || !firestoreService || !scrapeService) {
+    showAuthError(
+      "Extension failed to initialize. Please reload the extension.",
+    );
+    showAuthView();
+    return;
+  }
+
+  const configError =
+    authService.getConfigError() || firestoreService.getConfigError();
+  if (configError) {
+    showAuthError(configError);
+    showAuthView();
+    return;
+  }
+
   authToggle.addEventListener("click", () => {
     isSignUp = !isSignUp;
     if (isSignUp) {
@@ -87,7 +96,6 @@ document.addEventListener("DOMContentLoaded", () => {
     authErrorMsg.classList.add("hidden");
   });
 
-  // Handle Email/Password Auth
   btnAuthSubmit.addEventListener("click", async () => {
     const email = authEmail.value.trim();
     const password = authPassword.value.trim();
@@ -103,130 +111,71 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       if (isSignUp) {
-        await auth.createUserWithEmailAndPassword(email, password);
+        await authService.signUpWithEmailPassword(email, password);
       } else {
-        await auth.signInWithEmailAndPassword(email, password);
+        await authService.signInWithEmailPassword(email, password);
       }
-    } catch (err) {
-      console.error("Auth error:", err);
-      showAuthError(err.message || "Authentication failed.");
+
+      showMainView();
+    } catch (error) {
+      console.error("Auth error:", error);
+      showAuthError(
+        authService.mapAuthError(
+          error.code || error.message,
+          "Authentication failed.",
+        ),
+      );
     } finally {
       btnAuthSubmit.disabled = false;
       btnAuthSubmit.innerText = isSignUp ? "Sign Up" : "Sign In";
     }
   });
 
-  // Handle Google Auth
   btnGoogle.addEventListener("click", async () => {
     btnGoogle.disabled = true;
     authErrorMsg.classList.add("hidden");
 
-    chrome.identity.getAuthToken({ interactive: true }, async function (token) {
-      if (chrome.runtime.lastError) {
-        console.error("Chrome Identity error:", chrome.runtime.lastError);
+    try {
+      await authService.signInWithGoogle();
+      showMainView();
+    } catch (error) {
+      if (error.message && /OAuth2 request failed/i.test(error.message)) {
         showAuthError(
           "Google sign-in failed. Did you configure the OAuth Client ID in manifest.json?",
         );
-        btnGoogle.disabled = false;
-        return;
-      }
-
-      try {
-        const credential = firebase.auth.GoogleAuthProvider.credential(
-          null,
-          token,
+      } else {
+        console.error("Google sign-in error:", error);
+        showAuthError(
+          authService.mapAuthError(
+            error.code || error.message,
+            "Google sign-in failed.",
+          ),
         );
-        await auth.signInWithCredential(credential);
-      } catch (err) {
-        console.error("Firebase Auth error:", err);
-        showAuthError(err.message || "Firebase sign-in failed.");
-      } finally {
-        btnGoogle.disabled = false;
       }
-    });
+    } finally {
+      btnGoogle.disabled = false;
+    }
   });
 
-  // Handle Sign Out
   signOutBtn.addEventListener("click", async () => {
     try {
-      manualUid = null;
-      chrome.storage.local.remove(["manualUid"]);
-      await auth.signOut();
+      await authService.signOut();
       showAuthView();
-    } catch (err) {
-      console.error("Sign Out error:", err);
+    } catch (error) {
+      console.error("Sign Out error:", error);
     }
   });
 
-  // 1. On load, inject content.js into the active tab to scrape data
-  function scrapePage() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const paramTabId = urlParams.get("tabId");
-
-    if (paramTabId) {
-      const tabId = parseInt(paramTabId, 10);
-      chrome.tabs.get(tabId, (tab) => {
-        if (chrome.runtime.lastError || !tab) {
-          console.error("Target tab not found or closed.");
-          return;
-        }
-        performScrape(tab);
-      });
-    } else {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const activeTab = tabs[0];
-        if (activeTab) performScrape(activeTab);
-      });
-    }
-  }
-
-  function performScrape(activeTab) {
-    if (activeTab && activeTab.id) {
-      // The content script is already injected via manifest.json on <all_urls>.
-      // We just send the message to the active tab.
-      chrome.tabs.sendMessage(
-        activeTab.id,
-        { action: "scrapeJob" },
-        (response) => {
-          if (chrome.runtime.lastError) {
-            console.warn(
-              "Could not scrape page (maybe it's a restricted Chrome URL?). Defaulting to empty.",
-              chrome.runtime.lastError.message,
-            );
-            titleInput.value = activeTab.title || "";
-            linkInput.value = activeTab.url || "";
-            return;
-          }
-
-          if (response) {
-            // Pre-fill fields
-            titleInput.value = response.title || activeTab.title || "";
-            companyInput.value = response.company || "";
-            locationInput.value = response.location || "";
-            linkInput.value = response.url || activeTab.url || "";
-          } else {
-            titleInput.value = activeTab.title || "";
-            linkInput.value = activeTab.url || "";
-          }
-        },
-      );
-    }
-  }
-
-  // 2. Handle Save Button click (Push to Firestore)
   saveBtn.addEventListener("click", async () => {
-    // Basic validation
     if (!titleInput.value || !companyInput.value) {
       showError("Job Title and Company are required.");
       return;
     }
 
-    const user = auth.currentUser;
-    const activeUserId =
-      manualUid || (user && !user.isAnonymous ? user.uid : null);
-
-    if (!activeUserId) {
+    const session = await authService.ensureValidSession();
+    if (!session || !session.uid) {
       showError("You must be logged in to save jobs.");
+      showAuthView();
       return;
     }
 
@@ -242,47 +191,55 @@ document.addEventListener("DOMContentLoaded", () => {
         priority: prioritySelect.value,
         status: statusSelect.value,
         link: linkInput.value || null,
-        userId: activeUserId,
+        userId: session.uid,
         dateApplied: new Intl.DateTimeFormat("en-US", {
           month: "short",
           day: "numeric",
           year: "numeric",
         }).format(new Date()),
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       };
 
-      await db.collection("jobs").add(newJob);
-
-      // Success State
-      mainView.classList.add("hidden");
-      successView.classList.remove("hidden");
-    } catch (err) {
-      console.error("Firebase save failed:", err);
+      await firestoreService.saveJob(newJob, session.idToken);
+      showSuccessView();
+    } catch (error) {
+      console.error("Save job failed:", error);
       showError("Failed to save to database.");
-      saveBtn.disabled = false;
-      saveBtn.innerText = "Save this application";
+      resetSaveButton();
     }
   });
 
-  // 3. Helper Functions
-  function showError(msg) {
-    errorMsg.innerText = msg;
-    errorMsg.classList.remove("hidden");
-  }
-
-  function showAuthError(msg) {
-    authErrorMsg.innerText = msg;
-    authErrorMsg.classList.remove("hidden");
-  }
-
-  // Close popup
   closeBtn.addEventListener("click", () => {
     if (window.parent !== window) {
-      // We are inside an iframe on the page
-      window.parent.postMessage("closeSaveTheJobPopup", "*");
-    } else {
-      // We are in a normal Chrome popup window
-      window.close();
+      window.parent.postMessage({ type: "STJ_CLOSE_POPUP" }, "*");
+      return;
     }
+
+    window.close();
+  });
+
+  async function initializeAuthState() {
+    const session = await authService.ensureValidSession();
+    if (session && session.uid) {
+      showMainView();
+      return;
+    }
+
+    showAuthView();
+  }
+
+  async function scrapePage() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramTabId = urlParams.get("tabId");
+    const tabId = paramTabId ? parseInt(paramTabId, 10) : null;
+
+    const scrapedData = await scrapeService.scrapeFromTabId(
+      Number.isInteger(tabId) ? tabId : null,
+    );
+    fillScrapedFields(scrapedData);
+  }
+
+  initializeAuthState().catch((error) => {
+    console.error("Failed to initialize auth state:", error);
+    showAuthView();
   });
 });

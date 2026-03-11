@@ -11,7 +11,28 @@
       "https://www.googleapis.com/auth/userinfo.profile"
     ]
   },
-  "host_permissions": ["<all_urls>"],
+  "host_permissions": [
+    "https://identitytoolkit.googleapis.com/*",
+    "https://securetoken.googleapis.com/*",
+    "https://firestore.googleapis.com/*",
+    "*://*.linkedin.com/*",
+    "*://*.indeed.com/*",
+    "*://*.glassdoor.com/*",
+    "*://*.monster.com/*",
+    "*://*.ziprecruiter.com/*",
+    "*://*.handshake.com/*",
+    "*://*.joinhandshake.com/*",
+    "*://*.workday.com/*",
+    "*://*.workdayjobs.com/*",
+    "*://*.greenhouse.io/*",
+    "*://boards.greenhouse.io/*",
+    "*://*.lever.co/*",
+    "*://jobs.lever.co/*",
+    "*://*.bamboohr.com/*",
+    "*://*.ashbyhq.com/*",
+    "*://*.smartrecruiters.com/*",
+    "*://*.icims.com/*"
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_title": "SaveTheJob",
@@ -31,9 +52,27 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": [
+        "*://*.linkedin.com/*",
+        "*://*.indeed.com/*",
+        "*://*.glassdoor.com/*",
+        "*://*.monster.com/*",
+        "*://*.ziprecruiter.com/*",
+        "*://*.handshake.com/*",
+        "*://*.joinhandshake.com/*",
+        "*://*.workday.com/*",
+        "*://*.workdayjobs.com/*",
+        "*://*.greenhouse.io/*",
+        "*://boards.greenhouse.io/*",
+        "*://*.lever.co/*",
+        "*://jobs.lever.co/*",
+        "*://*.bamboohr.com/*",
+        "*://*.ashbyhq.com/*",
+        "*://*.smartrecruiters.com/*",
+        "*://*.icims.com/*"
+      ],
       "css": ["css/content.css"],
-      "js": ["content.js"]
+      "js": ["utils/jobParser.js", "content.js"]
     }
   ],
   "web_accessible_resources": [
@@ -42,11 +81,29 @@
         "popup.html",
         "popup.js",
         "config.js",
-        "firebase-app-compat.js",
-        "firebase-auth-compat.js",
-        "firebase-firestore-compat.js"
+        "utils/popup/authService.js",
+        "utils/popup/firestoreService.js",
+        "utils/popup/scrapeService.js"
       ],
-      "matches": ["<all_urls>"]
+      "matches": [
+        "*://*.linkedin.com/*",
+        "*://*.indeed.com/*",
+        "*://*.glassdoor.com/*",
+        "*://*.monster.com/*",
+        "*://*.ziprecruiter.com/*",
+        "*://*.handshake.com/*",
+        "*://*.joinhandshake.com/*",
+        "*://*.workday.com/*",
+        "*://*.workdayjobs.com/*",
+        "*://*.greenhouse.io/*",
+        "*://boards.greenhouse.io/*",
+        "*://*.lever.co/*",
+        "*://jobs.lever.co/*",
+        "*://*.bamboohr.com/*",
+        "*://*.ashbyhq.com/*",
+        "*://*.smartrecruiters.com/*",
+        "*://*.icims.com/*"
+      ]
     }
   ],
   "content_security_policy": {

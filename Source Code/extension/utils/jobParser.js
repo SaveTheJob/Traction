@@ -1,29 +1,46 @@
-// Smart Job Parser using Meta Tags, JSON-LD, and Microdata
+// Shared job parser loaded before content.js in content scripts.
+(function () {
+  function getMeta(property) {
+    const meta = document.querySelector(
+      `meta[property="${property}"], meta[name="${property}"]`,
+    );
+    return meta ? meta.getAttribute("content") : "";
+  }
 
-export function extractJobMetadata() {
-  let jobData = {
-    title: "",
-    company: "",
-    location: "",
-    url: window.location.href,
-    description: "",
-    datePosted: "",
-  };
+  function extractJobMetadata() {
+    const jobData = {
+      title: "",
+      company: "",
+      location: "",
+      url: window.location.href,
+      description: "",
+      datePosted: "",
+    };
 
-  // 1. JSON-LD (Most reliable standard)
-  const jsonLdScripts = document.querySelectorAll(
-    'script[type="application/ld+json"]',
-  );
-  for (const script of jsonLdScripts) {
-    try {
-      const data = JSON.parse(script.textContent);
-      // Data might be an array or nested in @graph
-      const items = Array.isArray(data) ? data : data["@graph"] || [data];
+    const jsonLdScripts = document.querySelectorAll(
+      'script[type="application/ld+json"]',
+    );
 
-      for (const item of items) {
-        if (item["@type"] === "JobPosting") {
+    for (const script of jsonLdScripts) {
+      try {
+        const data = JSON.parse(script.textContent);
+        const items = Array.isArray(data) ? data : data["@graph"] || [data];
+
+        for (const item of items) {
+          if (item["@type"] !== "JobPosting") {
+            continue;
+          }
+
           jobData.title = item.title || jobData.title;
-          jobData.company = item.hiringOrganization?.name || jobData.company;
+
+          if (item.hiringOrganization) {
+            if (typeof item.hiringOrganization === "string") {
+              jobData.company = item.hiringOrganization;
+            } else {
+              jobData.company = item.hiringOrganization.name || jobData.company;
+            }
+          }
+
           const address = item.jobLocation?.address;
           if (address) {
             jobData.location =
@@ -31,51 +48,49 @@ export function extractJobMetadata() {
                 .filter(Boolean)
                 .join(", ") || jobData.location;
           }
+
           jobData.description = item.description || jobData.description;
           jobData.datePosted = item.datePosted || jobData.datePosted;
-          break; // Found it
+          break;
         }
+      } catch (error) {
+        // Ignore malformed JSON-LD blocks.
       }
-    } catch (e) {
-      console.warn("Failed to parse JSON-LD", e);
     }
+
+    if (!jobData.title) {
+      jobData.title =
+        getMeta("og:title") || getMeta("twitter:title") || document.title;
+    }
+
+    if (!jobData.company) {
+      jobData.company = getMeta("og:site_name") || getMeta("twitter:site");
+    }
+
+    if (!jobData.description) {
+      jobData.description = getMeta("og:description") || getMeta("description");
+    }
+
+    if (!jobData.title) {
+      const h1 = document.querySelector("h1");
+      if (h1) {
+        jobData.title = h1.innerText.trim();
+      }
+    }
+
+    if (jobData.title) {
+      jobData.title = jobData.title.split("|")[0].split(" - ")[0].trim();
+    }
+
+    if (!jobData.company) {
+      const domain = window.location.hostname.replace("www.", "").split(".")[0];
+      jobData.company = domain.charAt(0).toUpperCase() + domain.slice(1);
+    }
+
+    return jobData;
   }
 
-  // 2. Open Graph / Twitter Cards (Social Media Fallback)
-  if (!jobData.title) {
-    jobData.title =
-      getMeta("og:title") || getMeta("twitter:title") || document.title;
-  }
-  if (!jobData.company) {
-    jobData.company = getMeta("og:site_name") || getMeta("twitter:site");
-  }
-  if (!jobData.description) {
-    jobData.description = getMeta("og:description") || getMeta("description");
-  }
-
-  // 3. Heuristic Text Parsing (Last Resort)
-  if (!jobData.title) {
-    const h1 = document.querySelector("h1");
-    if (h1) jobData.title = h1.innerText.trim();
-  }
-
-  // Clean up title (remove " | Company Name" etc)
-  if (jobData.title) {
-    jobData.title = jobData.title.split("|")[0].split(" - ")[0].trim();
-  }
-
-  // Clean company name from domain if missing
-  if (!jobData.company) {
-    const domain = window.location.hostname.replace("www.", "").split(".")[0];
-    jobData.company = domain.charAt(0).toUpperCase() + domain.slice(1);
-  }
-
-  return jobData;
-}
-
-function getMeta(property) {
-  const meta = document.querySelector(
-    `meta[property="${property}"], meta[name="${property}"]`,
-  );
-  return meta ? meta.getAttribute("content") : "";
-}
+  window.STJJobParser = Object.freeze({
+    extractJobMetadata,
+  });
+})();

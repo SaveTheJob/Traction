@@ -91,8 +91,10 @@ export default function PrivacyPolicy() {
           personal information.
         </p>
         <p>
-          <strong>Do we collect any information from third parties?</strong> We
-          do not collect any information from third parties.
+          <strong>Do we collect any information from third parties?</strong> If
+          you choose social login, we may receive basic profile information
+          (such as your name and email address) from that provider. Otherwise,
+          we do not collect information about you from third parties.
         </p>
         <p>
           <strong>How do we process your information?</strong> We process your
