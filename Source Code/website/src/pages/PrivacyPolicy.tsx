@@ -21,7 +21,7 @@ export default function PrivacyPolicy() {
       <article className="max-w-[800px] mx-auto w-full px-5 py-8 text-slate-300 text-[15px] leading-relaxed [&_h1]:text-slate-100 [&_h1]:text-[26px] [&_h1]:font-bold [&_h1]:mb-1 [&_h2]:text-slate-100 [&_h2]:text-[19px] [&_h2]:font-bold [&_h2]:mt-10 [&_h2]:pb-2 [&_h2]:border-b [&_h2]:border-white/10 [&_h3]:text-slate-100 [&_h3]:text-[17px] [&_h3]:font-bold [&_h3]:mt-6 [&_a]:text-blue-400 hover:[&_a]:underline [&_ul]:pl-5 [&_ol]:pl-5 [&_p]:mb-4 [&_li]:mb-1">
         <h1>PRIVACY POLICY</h1>
         <p className="text-slate-300 text-[15px] mt-0 mb-8">
-          <strong>Last updated February 24, 2026</strong>
+          <strong>Last updated October 14, 2026</strong>
         </p>
 
         <p>
@@ -241,7 +241,11 @@ export default function PrivacyPolicy() {
         </ul>
         <p id="sensitiveinfo">
           <strong>Sensitive Information.</strong> We do not process sensitive
-          information.
+          information, except that if you use Discover and answer "yes" when
+          asked whether you will need visa sponsorship, that answer may indicate
+          your immigration status. We use it only as described in{" "}
+          <a href="#discover">Discover job matching</a> below, and you can change
+          or delete it at any time.
         </p>
         <p>
           All personal information that you provide to us must be true,
@@ -317,6 +321,53 @@ export default function PrivacyPolicy() {
             Limited Use requirements
           </a>
           .
+        </p>
+
+        <h3 id="discover">Discover job matching</h3>
+        <p>
+          <strong>
+            <em>In Short:</em>
+          </strong>{" "}
+          <em>
+            If you turn on Discover, we store your job-search preferences and one
+            yes/no answer about visa sponsorship, and a server we operate uses
+            them to find matching roles for you.
+          </em>
+        </p>
+        <p>
+          If you set up Discover, we store the preferences you enter under Tune
+          matches: the kinds of roles and keywords you are interested in, your
+          graduation month and the terms you are available, preferred locations,
+          companies you list as warm leads, targets or hidden, your score
+          thresholds, and an optional alert link (a Discord webhook or ntfy.sh
+          topic). We also store your answer to "Will you need visa sponsorship
+          now or in the future?" as a yes or no. We do not ask for or store your
+          visa type, citizenship, or immigration status.
+        </p>
+        <p>
+          Twice a day, a server we operate reads these preferences, compares them
+          with public job postings from company career sites and community job
+          lists, and saves the matching roles to your account with a score and
+          the reasons for it. Your sponsorship answer is used only to decide how
+          roles that mention citizenship, security clearance, or sponsorship
+          requirements are ranked and labeled. We do not share your Discover
+          preferences or your sponsorship answer with employers or other third
+          parties, and other users cannot see them. If you add a careers-page
+          link, the company feed it creates is shared with all Discover users,
+          without saying who added it.
+        </p>
+        <p>
+          If you set an alert link, we send new matches and follow-up reminders
+          to it, and Discord or ntfy handle those messages under their own
+          privacy policies.
+        </p>
+        <p>
+          You can change your Discover settings at any time, or delete them from
+          Discover &gt; Tune matches. When you delete them, we remove your
+          settings immediately and your matches, careers-page requests, and run
+          history on the next refresh. Jobs you saved to your pipeline stay in
+          your account. Matches you dismiss, and matches whose postings close,
+          are deleted automatically after 30 days.
         </p>
 
         {/* ─── 2. HOW DO WE PROCESS ─── */}
