@@ -16,7 +16,7 @@ service cloud.firestore {
     // Firebase Auth UIDs allowed into the admin portal. Keep in sync with VITE_ADMIN_UIDS
     // in Source Code/website/.env.local (that only shows the portal; this enforces it).
     function isAdmin() {
-      return signedIn() && request.auth.uid in ['REPLACE_WITH_ADMIN_UID'];
+      return signedIn() && request.auth.uid in ['7l0wLOQs3BdKoyUlMPqTCqhfC802'];
     }
 
     function owns(data) {
