@@ -78,7 +78,7 @@ Installed. Next:
   2. Optionally limit who is served: traction.beta_allowlist in $ETC/config.yaml
      (Firebase Auth UIDs; empty serves everyone with Discover turned on)
   3. Check every source is reachable from this box:
-       cd $LINK && sudo -u traction $VENV/bin/python -m collector --config $ETC/config.yaml selftest
+       cd $LINK && runuser -u traction -- $VENV/bin/python -m collector --config $ETC/config.yaml selftest
   4. First real run (takes a few minutes while it reads job descriptions):
        systemctl start traction-collector.service && journalctl -u traction-collector -f
   Schedule: systemctl list-timers traction-collector.timer

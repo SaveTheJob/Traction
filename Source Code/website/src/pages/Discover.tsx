@@ -47,6 +47,7 @@ import CustomSelect from "../components/CustomSelect";
 import type { ToastMessage } from "../components/Toast";
 import ToastContainer from "../components/Toast";
 import type { Job, Priority } from "../context/JobContext";
+import { useAuth } from "../context/AuthContext";
 import { useJobs } from "../context/JobContext";
 import { useCollectorMeta, useDiscoveryProfile } from "../hooks/useDiscoveryProfile";
 import { REFRESH_TIMES, literalMatcher, locationMatcher } from "../lib/discover";
@@ -402,6 +403,8 @@ function DiscoveryCard({
 export default function Discover() {
   const { uid, profile, loading: profileLoading, canEdit, save: saveProfile } = useDiscoveryProfile();
   const { inviteOnly } = useCollectorMeta();
+  const { userProfile, impersonatedUser } = useAuth();
+  const isPro = (impersonatedUser ?? userProfile)?.plan === "Pro";
   const { jobs, createJob, markFollowedUp, openModal, limitError, clearLimitError } = useJobs();
 
   const [items, setItems] = useState<Discovery[]>([]);
@@ -669,13 +672,20 @@ export default function Discover() {
       {capped && (
         <div className="premium-glass rounded-2xl border border-blue-400/20 px-4 py-3 mb-5 sm:mb-6 text-xs sm:text-sm text-slate-200 flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-blue-300 shrink-0" />
-          <span>
-            Showing your top {run?.cap} of {run?.matches?.toLocaleString()} matches on the Free plan.{" "}
-            <Link to="/account" className="font-bold text-white underline underline-offset-2">
-              Upgrade to Pro
-            </Link>{" "}
-            to see them all.
-          </span>
+          {isPro ? (
+            <span>
+              Showing your top {run?.cap} of {run?.matches?.toLocaleString()} matches. Raise your minimum score in
+              Tune matches to narrow them down.
+            </span>
+          ) : (
+            <span>
+              Showing your top {run?.cap} of {run?.matches?.toLocaleString()} matches on the Free plan.{" "}
+              <Link to="/account" className="font-bold text-white underline underline-offset-2">
+                Upgrade to Pro
+              </Link>{" "}
+              to see them all.
+            </span>
+          )}
         </div>
       )}
 
