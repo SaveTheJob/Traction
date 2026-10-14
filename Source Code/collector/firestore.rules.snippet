@@ -1,0 +1,25 @@
+// Merge these blocks into the project's existing Firestore rules
+// (inside `match /databases/{database}/documents { ... }`).
+// The collector writes with the Admin SDK, which bypasses rules, so clients
+// only ever read their own discoveries and change their triage status.
+
+match /discoveries/{discoveryId} {
+  allow read: if request.auth != null
+              && resource.data.userId == request.auth.uid;
+  allow update: if request.auth != null
+                && resource.data.userId == request.auth.uid
+                && request.resource.data.diff(resource.data).affectedKeys()
+                     .hasOnly(['status', 'jobId'])
+                && request.resource.data.status in ['new', 'saved', 'dismissed'];
+  allow create, delete: if false;
+}
+
+match /collectorRuns/{uid} {
+  allow read: if request.auth != null && request.auth.uid == uid;
+  allow write: if false;
+}
+
+// If the existing `jobs` rules whitelist fields, also allow:
+//   discoveryId (string), fitScore (number), followedUpAt (string or null)
+// If admins impersonate users (God Mode), add the same admin check the
+// existing rules use for `jobs` to the two read rules above.

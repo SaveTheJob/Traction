@@ -1,0 +1,12 @@
+[Unit]
+Description=Run the Traction job collector twice a day (Phoenix time)
+
+[Timer]
+# Explicit time zone, since the server itself may be in another one.
+OnCalendar=*-*-* 06:40:00 America/Phoenix
+OnCalendar=*-*-* 14:40:00 America/Phoenix
+RandomizedDelaySec=5min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

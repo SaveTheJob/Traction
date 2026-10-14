@@ -1,6 +1,7 @@
 import {
   Activity,
   BarChart3,
+  Compass,
   History,
   KanbanSquare,
   LayoutDashboard,
@@ -37,6 +38,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       ]
     : [
         { label: "Dashboard", path: "/", icon: LayoutDashboard },
+        { label: "Discover", path: "/discover", icon: Compass },
         { label: "Pipeline", path: "/pipeline", icon: KanbanSquare },
         { label: "Network", path: "/network", icon: Users },
         { label: "Analytics", path: "/analytics", icon: BarChart3 },

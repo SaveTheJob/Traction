@@ -1,0 +1,30 @@
+[Unit]
+Description=Traction job collector (find, screen and score roles; push to Traction)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=traction
+Group=traction
+WorkingDirectory=/opt/traction-collector
+Environment=TRACTION_COLLECTOR_CONFIG=/etc/traction-collector/config.yaml
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+# The code under /opt is root-owned and read-only to this service. It never
+# updates itself: new code only lands when root re-runs deploy/install-lxc.sh.
+ExecStart=/opt/traction-venv/bin/python -m collector run
+TimeoutStartSec=30min
+Nice=10
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/traction-collector
+CapabilityBoundingSet=
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX

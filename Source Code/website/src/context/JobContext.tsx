@@ -23,6 +23,8 @@ export type Status =
   | "Offer"
   | "Rejected";
 
+export const FREE_PLAN_JOB_LIMIT = 50;
+
 export interface JobDocument {
   id: string;
   name: string;
@@ -44,6 +46,11 @@ export interface Job {
   documents?: JobDocument[];
   userId?: string;
   createdAt?: import("firebase/firestore").Timestamp | null;
+  /** Set when the job was saved from the Discover page */
+  discoveryId?: string;
+  fitScore?: number;
+  /** ISO date of the last follow-up sent for an Applied job */
+  followedUpAt?: string;
 }
 
 export type JobDataPayload = Omit<
@@ -54,8 +61,11 @@ export type JobDataPayload = Omit<
 interface JobContextType {
   jobs: Job[];
   addJob: (job: JobDataPayload) => Promise<boolean>;
+  /** Like addJob, but resolves to the new document id (or null on failure). */
+  createJob: (job: JobDataPayload) => Promise<string | null>;
   updateJobStatus: (id: string, newStatus: Status) => void;
   updateJob: (id: string, jobData: JobDataPayload) => void;
+  markFollowedUp: (id: string) => Promise<void>;
   deleteJob: (id: string) => void;
   isModalOpen: boolean;
   editingJobId: string | null;
@@ -72,7 +82,7 @@ interface JobContextType {
 const JobContext = createContext<JobContextType | undefined>(undefined);
 
 export function JobProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, userProfile, isAdmin } = useAuth();
   const effectiveUserId = useEffectiveUserId();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
@@ -112,18 +122,25 @@ export function JobProvider({ children }: { children: ReactNode }) {
     return unsubscribe;
   }, [effectiveUserId]);
 
-  const addJob = async (jobData: JobDataPayload): Promise<boolean> => {
-    if (!user) return false;
+  const createJob = async (jobData: JobDataPayload): Promise<string | null> => {
+    if (!user) return null;
 
-    if (jobs.length >= 50) {
+    // The free-plan cap applies only to Free accounts; Pro and admins are unlimited.
+    const isLimited = !isAdmin && userProfile?.plan !== "Pro";
+    if (isLimited && jobs.length >= FREE_PLAN_JOB_LIMIT) {
       setLimitError(
-        "You have reached the 50 application free limit! Please visit your Account settings to upgrade to Pro.",
+        `You have reached the ${FREE_PLAN_JOB_LIMIT} application free limit! Please visit your Account settings to upgrade to Pro.`,
       );
-      return false;
+      return null;
     }
 
+    // Firestore rejects undefined values, so drop them before writing.
+    const cleaned = Object.fromEntries(
+      Object.entries(jobData).filter(([, v]) => v !== undefined),
+    );
+
     const newJob = {
-      ...jobData,
+      ...cleaned,
       userId: effectiveUserId,
       dateApplied: new Intl.DateTimeFormat("en-US", {
         month: "short",
@@ -133,19 +150,37 @@ export function JobProvider({ children }: { children: ReactNode }) {
       createdAt: serverTimestamp(),
     };
     try {
-      await addDoc(collection(db, "jobs"), newJob);
-      return true;
+      const ref = await addDoc(collection(db, "jobs"), newJob);
+      return ref.id;
     } catch (error) {
       console.error("Error adding document: ", error);
-      return false;
+      return null;
     }
+  };
+
+  const addJob = async (jobData: JobDataPayload): Promise<boolean> => {
+    return (await createJob(jobData)) !== null;
   };
 
   const updateJobStatus = async (id: string, newStatus: Status) => {
     if (!user) return;
     try {
       const jobRef = doc(db, "jobs", id);
-      await updateDoc(jobRef, { status: newStatus });
+      // Moving a saved job into Applied stamps the real apply date, which
+      // starts its follow-up clock. Other moves leave the date alone.
+      const current = jobs.find((j) => j.id === id);
+      const extra =
+        newStatus === "Applied" && current?.status === "Saved"
+          ? {
+              dateApplied: new Intl.DateTimeFormat("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              }).format(new Date()),
+              followedUpAt: null,
+            }
+          : {};
+      await updateDoc(jobRef, { status: newStatus, ...extra });
     } catch (error) {
       console.error("Error updating document status: ", error);
     }
@@ -155,9 +190,23 @@ export function JobProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     try {
       const jobRef = doc(db, "jobs", id);
-      await updateDoc(jobRef, jobData);
+      const cleaned = Object.fromEntries(
+        Object.entries(jobData).filter(([, v]) => v !== undefined),
+      );
+      await updateDoc(jobRef, cleaned);
     } catch (error) {
       console.error("Error updating document: ", error);
+    }
+  };
+
+  const markFollowedUp = async (id: string) => {
+    if (!user) return;
+    try {
+      await updateDoc(doc(db, "jobs", id), {
+        followedUpAt: new Date().toISOString().slice(0, 10),
+      });
+    } catch (error) {
+      console.error("Error marking follow-up: ", error);
     }
   };
 
@@ -196,8 +245,10 @@ export function JobProvider({ children }: { children: ReactNode }) {
       value={{
         jobs,
         addJob,
+        createJob,
         updateJobStatus,
         updateJob,
+        markFollowedUp,
         deleteJob,
         isModalOpen,
         editingJobId,

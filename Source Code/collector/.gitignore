@@ -1,0 +1,6 @@
+config.yaml
+service-account*.json
+*.db
+latest.md
+__pycache__/
+.venv/

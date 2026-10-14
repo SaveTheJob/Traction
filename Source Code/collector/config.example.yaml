@@ -1,0 +1,120 @@
+# Traction collector config.
+# Copy to /etc/traction-collector/config.yaml (the install script does this) and edit.
+# Regex fragments below are matched case-insensitively as whole words.
+
+traction:
+  user_id: ""                       # your Firebase Auth UID (Firebase console > Authentication > Users)
+  service_account: /etc/traction-collector/service-account.json
+  app_url: https://traction-37.web.app   # used for links in the digest
+
+settings:
+  db_path: /var/lib/traction-collector/state.db
+  report_dir: /var/lib/traction-collector
+  min_score: 60            # roles below this never reach Traction
+  notify_min_score: 70     # roles at or above this go in the push digest
+  max_new_per_run: 600     # cap on brand-new Discover cards per run
+  followup_days: 7         # nudge about "Applied" jobs older than this
+  workday_queries: ["intern", "new grad", "university graduate", "early career"]
+  screen:
+    enabled: true
+    min_prescore: 45       # only read JDs for roles that could plausibly make the cut
+    max_per_run: 200
+    workers: 6
+    recheck_days: 14
+
+notify:
+  webhook: ""              # optional: Discord webhook URL or https://ntfy.sh/<your-topic>
+
+# ---------------------------------------------------------------------------
+# Who this is for. Tune these to the applicant.
+# ---------------------------------------------------------------------------
+profile:
+  graduation: 2027-12
+  internship_terms: ["Summer 2027"]
+  part_time_terms: ["Fall 2027"]          # final semester: part-time pre-OPT only
+  unavailable_terms: ["Summer 2026", "Fall 2026", "Winter 2026", "Spring 2027", "Winter 2027", "Spring 2026"]
+  newgrad_open_from: 2027-05-01          # before this, new-grad roles mostly start too early
+  grad_window_ok: ["December 2027", "Dec 2027", "Dec. 2027", "Fall 2027", "Winter 2027", "2028"]
+  grad_window_bad: ["May 2027", "June 2027", "Spring 2027", "Summer 2027", "December 2026", "Dec 2026", "2026"]
+  home_region: ["AZ", "Arizona", "Phoenix", "Tempe", "Chandler", "Scottsdale", "Mesa", "Gilbert",
+                "Glendale", "Peoria", "Goodyear", "Tucson", "Casa Grande"]
+  roles:
+    core: [embedded, firmware, fpga, asic, soc, silicon, "pre-silicon", "post-silicon", rtl, vlsi,
+           verification, validation, hardware, electrical, electronics, pcb, "board design", iot,
+           robotics, mechatronics, "systems engineer\\w*", "test engineer\\w*", "product engineer\\w*",
+           semiconductor, "digital design", "signal integrity", "power electronics", "controls?",
+           autonomy, autonomous, "sensors?", wireless, rf, kernel, "device drivers?", bsp,
+           "linux", automotive, avionics, "computer engineer\\w*", "edge"]
+    strong: [software, swe, sde, "developers?", "back[- ]?end", "full[- ]?stack", "front[- ]?end",
+             platform, infrastructure, devops, "site reliability", sre, cloud, security,
+             "cyber\\w*", "network\\w*", tooling, "test automation", "release", mobile, android,
+             ios, web, "systems"]
+    ok: [data, "machine learning", ml, ai, "computer vision", analytics, "deep learning",
+         "research engineer\\w*"]
+    avoid: ["product manag\\w*", "program manag\\w*", "project manag\\w*", "quant\\w*", trading,
+            "traders?", sales, marketing, finance, accounting, business, "recruit\\w*",
+            "human resources", legal, ux, graphic, "supply chain", mechanical, civil, chemical,
+            "process engineer\\w*", "manufacturing engineer\\w*", facilities, industrial, "actuar\\w*",
+            "investment", "consult\\w*", "audit\\w*", "tax"]
+  companies:
+    warm: ["Example Corp", "Another Company"]   # companies where you have a contact or referral
+    cap_exempt: ["Arizona State University", "University", "Mayo Clinic"]
+    target: [Microchip, NXP, onsemi, Intel, TSMC, "Taiwan Semiconductor", Amkor, "Analog Devices",
+             Marvell, Micron, "Texas Instruments", GlobalFoundries, Qualcomm, Garmin, Bosch, Arm,
+             "Lucid Motors", Rivian, Tesla, Zoox, Waymo, "Cirrus Logic", "Western Digital", Cadence,
+             Synopsys, "Motorola Solutions", Axon, GoDaddy, NVIDIA, AMD, Apple, Microsoft, Google,
+             Amazon, Cisco, Broadcom, Medtronic, Keysight, Infineon, Qorvo, "General Motors"]
+    defense: [RTX, Raytheon, Lockheed, Northrop, "General Dynamics", L3Harris, Anduril, Boeing,
+              "BAE Systems", Leidos, SAIC, "Booz Allen", CACI, MITRE, Sandia, "Los Alamos",
+              "Lawrence Livermore", "Applied Physics Lab\\w*", "JHU APL", "Huntington Ingalls",
+              Textron, "Sierra Nevada", "Shield AI", "Collins Aerospace", "Pratt", Peraton,
+              ManTech, Parsons, "Ensign-Bickford Aerospace", Nightwing, IntelliGenesis,
+              Intelliforce, "General Atomics", "Honeywell Aerospace"]
+
+# ---------------------------------------------------------------------------
+# Community lists (fast, broad, refreshed many times a day by their maintainers)
+# ---------------------------------------------------------------------------
+sources:
+  - label: simplify-intern
+    type: simplify
+    track: intern
+    url: https://raw.githubusercontent.com/SimplifyJobs/Summer2027-Internships/dev/.github/scripts/listings.json
+  - label: simplify-newgrad
+    type: simplify
+    track: newgrad
+    url: https://raw.githubusercontent.com/SimplifyJobs/New-Grad-Positions/dev/.github/scripts/listings.json
+  - label: vansh-2027
+    type: markdown
+    track: intern
+    url: https://raw.githubusercontent.com/vanshb03/Summer2027-Internships/main/README.md
+  - label: speedy-intern-2027
+    type: markdown
+    track: intern
+    url: https://raw.githubusercontent.com/speedyapply/2027-SWE-College-Jobs/main/README.md
+  - label: speedy-newgrad-2027
+    type: markdown
+    track: newgrad
+    url: https://raw.githubusercontent.com/speedyapply/2027-SWE-College-Jobs/main/NEW_GRAD_USA.md
+
+# ---------------------------------------------------------------------------
+# Direct company feeds: catches postings hours before they hit the lists,
+# plus roles the lists never pick up. Tenants taken from real posting URLs.
+# ---------------------------------------------------------------------------
+watchlist:
+  - {company: NXP Semiconductors, ats: workday, host: nxp.wd3.myworkdayjobs.com, tenant: nxp, site: careers}
+  - {company: Microchip Technology, ats: workday, host: wd5.myworkdaysite.com, tenant: microchiphr, site: External}
+  - {company: Intel, ats: workday, host: intel.wd1.myworkdayjobs.com, tenant: intel, site: External}
+  - {company: Analog Devices, ats: workday, host: analogdevices.wd1.myworkdayjobs.com, tenant: analogdevices, site: External}
+  - {company: Marvell, ats: workday, host: marvell.wd1.myworkdayjobs.com, tenant: marvell, site: MarvellCareers}
+  - {company: Micron Technology, ats: workday, host: micron.wd1.myworkdayjobs.com, tenant: micron, site: External}
+  - {company: GlobalFoundries, ats: workday, host: globalfoundries.wd1.myworkdayjobs.com, tenant: globalfoundries, site: External}
+  - {company: ReliaQuest, ats: workday, host: reliaquest.wd5.myworkdayjobs.com, tenant: reliaquest, site: ReliaQuest_Careers}
+  - {company: AVEVA, ats: workday, host: aveva.wd3.myworkdayjobs.com, tenant: aveva, site: AVEVA_careers}
+  - {company: Motorola Solutions, ats: workday, host: motorolasolutions.wd5.myworkdayjobs.com, tenant: motorolasolutions, site: Careers}
+  - {company: Cadence Design Systems, ats: workday, host: cadence.wd1.myworkdayjobs.com, tenant: cadence, site: Univ_Careers}
+  - {company: Axon, ats: greenhouse, token: axon}
+  - {company: Lucid Motors, ats: greenhouse, token: lucidmotors}
+  - {company: Cirrus Logic, ats: lever, token: cirrus}
+  - {company: Zoox, ats: lever, token: zoox}
+  - {company: Western Digital, ats: smartrecruiters, token: WesternDigital}
+  - {company: Bosch, ats: smartrecruiters, token: BoschGroup}

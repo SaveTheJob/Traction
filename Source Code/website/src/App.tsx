@@ -35,6 +35,7 @@ import NewContactModal from "./components/NewContactModal";
 const Account = React.lazy(() => import("./pages/Account"));
 const Analytics = React.lazy(() => import("./pages/Analytics"));
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
+const Discover = React.lazy(() => import("./pages/Discover"));
 const AdminPortal = React.lazy(() => import("./pages/AdminPortal"));
 const Login = React.lazy(() => import("./pages/Login"));
 const Network = React.lazy(() => import("./pages/Network"));
@@ -243,6 +244,7 @@ function AppRoutes() {
                 )
               }
             />
+            <Route path="discover" element={<Discover />} />
             <Route path="pipeline" element={<Pipeline />} />
             <Route path="account" element={<Account />} />
             <Route path="network" element={<Network />} />
