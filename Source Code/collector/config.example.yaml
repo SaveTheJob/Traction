@@ -1,75 +1,131 @@
-# Traction collector config.
+# Traction collector config: infrastructure only.
 # Copy to /etc/traction-collector/config.yaml (the install script does this) and edit.
-# Regex fragments below are matched case-insensitively as whole words.
+#
+# Who to collect for lives in Firestore: every user with an enabled `discoveryProfiles/{uid}`
+# doc (set from Discover > Tune matches) is served by the same run.
+# Role and company lists below are regex fragments, matched case-insensitively as whole
+# words. Anything users type in the app is matched as literal text instead.
 
 traction:
-  user_id: ""                       # your Firebase Auth UID (Firebase console > Authentication > Users)
-  service_account: /etc/traction-collector/service-account.json
-  app_url: https://traction-37.web.app   # used for links in the digest
+  service_account: /etc/traction-collector/service-account.json   # "" = runtime identity (Cloud Run)
+  app_url: https://traction-37.web.app   # used for links in digests and the User-Agent
+  beta_allowlist: []                     # Firebase uids allowed to use Discover; empty = everyone
 
 settings:
   db_path: /var/lib/traction-collector/state.db
   report_dir: /var/lib/traction-collector
-  min_score: 60            # roles below this never reach Traction
-  notify_min_score: 70     # roles at or above this go in the push digest
-  max_new_per_run: 600     # cap on brand-new Discover cards per run
-  followup_days: 7         # nudge about "Applied" jobs older than this
+  live_cap: {free: 25, pro: 300}   # most live Discover cards per user, by plan
+  min_score_delta: 3               # re-push a card only when its score moves at least this much
+  prune_after_days: 30             # delete dismissed or inactive cards older than this
+  dismissed_memory_days: 180       # don't re-show a pruned dismissed role for this long
+  write_warn: 10000                # warn when one run writes more than this (free tier: 20k/day)
+  followup_days: 7                 # digest nudge about "Applied" jobs older than this
   workday_queries: ["intern", "new grad", "university graduate", "early career"]
   screen:
     enabled: true
-    min_prescore: 45       # only read JDs for roles that could plausibly make the cut
+    min_prescore: 45       # only read JDs for roles that could make someone's cut
     max_per_run: 200
     workers: 6
     recheck_days: 14
-
-notify:
-  webhook: ""              # optional: Discord webhook URL or https://ntfy.sh/<your-topic>
+  feeds:
+    max_per_user: 20                # company feeds one user may add
+    max_requests_per_run: 5         # feed requests handled per user per run; extras are rejected
+    max_seconds: 180                # time budget for checking new feeds; the rest wait a run
 
 # ---------------------------------------------------------------------------
-# Who this is for. Tune these to the applicant.
+# Role families. Users pick families in the app; a title earns
+#   core 40, family category 34, strong 30, strong category 26, ok 16, ok category 14
+# from the best match across the families they picked. "@id" pulls in another
+# family's core list. `categories` match Simplify's category field (substring).
 # ---------------------------------------------------------------------------
-profile:
-  graduation: 2027-12
-  internship_terms: ["Summer 2027"]
-  part_time_terms: ["Fall 2027"]          # final semester: part-time pre-OPT only
-  unavailable_terms: ["Summer 2026", "Fall 2026", "Winter 2026", "Spring 2027", "Winter 2027", "Spring 2026"]
-  newgrad_open_from: 2027-05-01          # before this, new-grad roles mostly start too early
-  grad_window_ok: ["December 2027", "Dec 2027", "Dec. 2027", "Fall 2027", "Winter 2027", "2028"]
-  grad_window_bad: ["May 2027", "June 2027", "Spring 2027", "Summer 2027", "December 2026", "Dec 2026", "2026"]
-  home_region: ["AZ", "Arizona", "Phoenix", "Tempe", "Chandler", "Scottsdale", "Mesa", "Gilbert",
-                "Glendale", "Peoria", "Goodyear", "Tucson", "Casa Grande"]
-  roles:
-    core: [embedded, firmware, fpga, asic, soc, silicon, "pre-silicon", "post-silicon", rtl, vlsi,
-           verification, validation, hardware, electrical, electronics, pcb, "board design", iot,
-           robotics, mechatronics, "systems engineer\\w*", "test engineer\\w*", "product engineer\\w*",
-           semiconductor, "digital design", "signal integrity", "power electronics", "controls?",
-           autonomy, autonomous, "sensors?", wireless, rf, kernel, "device drivers?", bsp,
-           "linux", automotive, avionics, "computer engineer\\w*", "edge"]
-    strong: [software, swe, sde, "developers?", "back[- ]?end", "full[- ]?stack", "front[- ]?end",
-             platform, infrastructure, devops, "site reliability", sre, cloud, security,
-             "cyber\\w*", "network\\w*", tooling, "test automation", "release", mobile, android,
-             ios, web, "systems"]
-    ok: [data, "machine learning", ml, ai, "computer vision", analytics, "deep learning",
-         "research engineer\\w*"]
-    avoid: ["product manag\\w*", "program manag\\w*", "project manag\\w*", "quant\\w*", trading,
-            "traders?", sales, marketing, finance, accounting, business, "recruit\\w*",
-            "human resources", legal, ux, graphic, "supply chain", mechanical, civil, chemical,
-            "process engineer\\w*", "manufacturing engineer\\w*", facilities, industrial, "actuar\\w*",
-            "investment", "consult\\w*", "audit\\w*", "tax"]
-  companies:
-    warm: ["Example Corp", "Another Company"]   # companies where you have a contact or referral
-    cap_exempt: ["Arizona State University", "University", "Mayo Clinic"]
-    target: [Microchip, NXP, onsemi, Intel, TSMC, "Taiwan Semiconductor", Amkor, "Analog Devices",
-             Marvell, Micron, "Texas Instruments", GlobalFoundries, Qualcomm, Garmin, Bosch, Arm,
-             "Lucid Motors", Rivian, Tesla, Zoox, Waymo, "Cirrus Logic", "Western Digital", Cadence,
-             Synopsys, "Motorola Solutions", Axon, GoDaddy, NVIDIA, AMD, Apple, Microsoft, Google,
-             Amazon, Cisco, Broadcom, Medtronic, Keysight, Infineon, Qorvo, "General Motors"]
-    defense: [RTX, Raytheon, Lockheed, Northrop, "General Dynamics", L3Harris, Anduril, Boeing,
-              "BAE Systems", Leidos, SAIC, "Booz Allen", CACI, MITRE, Sandia, "Los Alamos",
-              "Lawrence Livermore", "Applied Physics Lab\\w*", "JHU APL", "Huntington Ingalls",
-              Textron, "Sierra Nevada", "Shield AI", "Collins Aerospace", "Pratt", Peraton,
-              ManTech, Parsons, "Ensign-Bickford Aerospace", Nightwing, IntelliGenesis,
-              Intelliforce, "General Atomics", "Honeywell Aerospace"]
+role_families:
+  embedded:
+    label: Embedded & firmware
+    core: [embedded, firmware, iot, robotics, mechatronics, "systems engineer\\w*", "controls?",
+           autonomy, autonomous, "sensors?", wireless, rf, kernel, "device drivers?", bsp, linux,
+           automotive, avionics, "computer engineer\\w*", edge]
+    strong: ["@hardware", "@software", "@infra", "@security", "@mobile_web", systems]
+    ok: ["@data_ml"]
+    categories: {core: [hardware], strong: [software], ok: ["ai/ml", data]}
+  hardware:
+    label: Hardware, silicon & test
+    core: [fpga, asic, soc, silicon, "pre-silicon", "post-silicon", rtl, vlsi, verification,
+           validation, hardware, electrical, electronics, pcb, "board design", "test engineer\\w*",
+           "product engineer\\w*", semiconductor, "digital design", "signal integrity",
+           "power electronics"]
+    strong: ["@embedded", "@software", "@infra", "@security", "@mobile_web", systems]
+    ok: ["@data_ml"]
+    categories: {core: [hardware], strong: [software], ok: ["ai/ml", data]}
+  software:
+    label: Software engineering
+    core: [software, swe, sde, "developers?", "back[- ]?end", "full[- ]?stack", tooling,
+           "test automation", "programmers?"]
+    strong: ["@infra", "@mobile_web", "@security", systems]
+    ok: ["@data_ml", "@embedded"]
+    categories: {core: [software], ok: ["ai/ml"]}
+  infra:
+    label: DevOps, SRE & cloud
+    core: [platform, infrastructure, devops, "site reliability", sre, cloud, release, "network\\w*"]
+    strong: ["@software", "@security", systems]
+    ok: ["@data_ml", "@it_support", "@embedded"]
+    categories: {strong: [software]}
+  security:
+    label: Security
+    core: [security, "cyber\\w*", appsec, "penetration test\\w*", "threat \\w+", "vulnerabilit\\w*"]
+    strong: ["@infra", "@software"]
+    ok: ["@it_support", "@embedded"]
+    categories: {strong: [software]}
+  data_ml:
+    label: Data & ML
+    core: [data, "machine learning", ml, ai, "computer vision", analytics, "deep learning",
+           "research engineer\\w*", "data scien\\w*", nlp, llm]
+    strong: ["@software"]
+    ok: ["@quant", "@infra"]
+    categories: {core: ["ai/ml", data], strong: [software], ok: [quant]}
+  mobile_web:
+    label: Mobile & web
+    core: [mobile, android, ios, web, "front[- ]?end", "full[- ]?stack", "ui engineer\\w*"]
+    strong: ["@software"]
+    ok: ["@infra"]
+    categories: {strong: [software]}
+  it_support:
+    label: IT & support
+    core: ["it support", "help ?desk", "service desk", "desktop support", "technical support",
+           "it technician", "it operations", "systems? administrat\\w*", "information technology"]
+    strong: ["@infra", "@security", systems]
+    ok: ["@software"]
+    categories: {ok: [software]}
+  product:
+    label: Product & program management
+    core: ["product manag\\w*", "program manag\\w*", "project manag\\w*", "technical program",
+           "product owner", "associate product", "business analyst"]
+    ok: ["@data_ml"]
+    categories: {core: [product]}
+  quant:
+    label: Quant & trading
+    core: ["quant\\w*", trading, "traders?"]
+    strong: ["@data_ml"]
+    ok: ["@software"]
+    categories: {core: [quant], ok: ["ai/ml"]}
+
+# Titles matching these are excluded unless they also match a core term of a picked family.
+# Terms that belong to a picked family are dropped from this list for that user.
+avoid: ["product manag\\w*", "program manag\\w*", "project manag\\w*", "quant\\w*", trading,
+        "traders?", sales, marketing, finance, accounting, business, "recruit\\w*",
+        "human resources", legal, ux, graphic, "supply chain", mechanical, civil, chemical,
+        "process engineer\\w*", "manufacturing engineer\\w*", facilities, industrial, "actuar\\w*",
+        "investment", "consult\\w*", "audit\\w*", "tax"]
+
+# Applied to everyone. Only users who need visa sponsorship see the cap-exempt bonus
+# and the defense-contractor penalty.
+companies:
+  cap_exempt: ["Arizona State University", "University", "Mayo Clinic"]
+  defense: [RTX, Raytheon, Lockheed, Northrop, "General Dynamics", L3Harris, Anduril, Boeing,
+            "BAE Systems", Leidos, SAIC, "Booz Allen", CACI, MITRE, Sandia, "Los Alamos",
+            "Lawrence Livermore", "Applied Physics Lab\\w*", "JHU APL", "Huntington Ingalls",
+            Textron, "Sierra Nevada", "Shield AI", "Collins Aerospace", "Pratt", Peraton,
+            ManTech, Parsons, "Ensign-Bickford Aerospace", Nightwing, IntelliGenesis,
+            Intelliforce, "General Atomics", "Honeywell Aerospace"]
 
 # ---------------------------------------------------------------------------
 # Community lists (fast, broad, refreshed many times a day by their maintainers)
@@ -114,7 +170,7 @@ watchlist:
   - {company: Cadence Design Systems, ats: workday, host: cadence.wd1.myworkdayjobs.com, tenant: cadence, site: Univ_Careers}
   - {company: Axon, ats: greenhouse, token: axon}
   - {company: Lucid Motors, ats: greenhouse, token: lucidmotors}
-  - {company: Cirrus Logic, ats: lever, token: cirrus}
+  - {company: Cirrus Logic, ats: lever, token: cirrus, region: eu}
   - {company: Zoox, ats: lever, token: zoox}
   - {company: Western Digital, ats: smartrecruiters, token: WesternDigital}
   - {company: Bosch, ats: smartrecruiters, token: BoschGroup}

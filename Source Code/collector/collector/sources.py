@@ -204,7 +204,7 @@ def workday(entry: dict, queries: list[str], max_per_query: int = 60) -> list[Po
                     title=title,
                     location=p.get("locationsText") or "",
                     url=public + path,
-                    source=f"workday:{tenant}",
+                    source=f"workday:{tenant}/{site}",
                     track=track,
                     posted_ts=age_text_to_ts(p.get("postedOn") or ""),
                     terms=terms_from_title(title),
@@ -239,9 +239,14 @@ def greenhouse(entry: dict) -> list[Posting]:
     return out
 
 
+def lever_api(entry: dict) -> str:
+    """Lever hosts EU customers (jobs.eu.lever.co) on a separate API."""
+    return "https://api.eu.lever.co" if entry.get("region") == "eu" else "https://api.lever.co"
+
+
 def lever(entry: dict) -> list[Posting]:
     t = entry["token"]
-    data = get_json(f"https://api.lever.co/v0/postings/{t}?mode=json")
+    data = get_json(f"{lever_api(entry)}/v0/postings/{t}?mode=json")
     out = []
     for j in data or []:
         title = (j.get("text") or "").strip()

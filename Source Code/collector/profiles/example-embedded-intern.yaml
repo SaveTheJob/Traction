@@ -1,0 +1,31 @@
+# Example applicant profile in the original single-user format.
+#
+# Load it into Traction with:
+#   python -m collector --config <config> import-profile --uid <firebase uid> --from profiles/example-embedded-intern.yaml
+# or score against it locally without Firestore:
+#   python -m collector --config <config> run --dry-run --profile profiles/example-embedded-intern.yaml
+#
+# Only the keys the importer understands are converted (see collector/profile.py). Role lists
+# now live in config.yaml under `role_families`; `role_families` below picks which ones apply.
+# Users normally edit all of this from Discover > Tune matches instead.
+
+profile:
+  role_families: [embedded, hardware]
+  needs_sponsorship: true
+  min_score: 60
+  notify_min_score: 70
+  tracks: [intern, newgrad]
+  graduation: 2027-12
+  internship_terms: ["Summer 2027"]
+  part_time_terms: ["Fall 2027"]          # final semester: part-time only
+  home_region: ["AZ", "Arizona", "Phoenix", "Tempe", "Chandler", "Scottsdale", "Mesa", "Gilbert",
+                "Glendale", "Peoria", "Goodyear", "Tucson", "Casa Grande"]
+  remote_ok: true
+  companies:
+    warm: ["Example Corp", "Another Company"]   # companies where you have a contact or referral
+    target: [Microchip, NXP, onsemi, Intel, TSMC, "Taiwan Semiconductor", Amkor, "Analog Devices",
+             Marvell, Micron, "Texas Instruments", GlobalFoundries, Qualcomm, Garmin, Bosch, Arm,
+             "Lucid Motors", Rivian, Tesla, Zoox, Waymo, "Cirrus Logic", "Western Digital", Cadence,
+             Synopsys, "Motorola Solutions", Axon, GoDaddy, NVIDIA, AMD, Apple, Microsoft, Google,
+             Amazon, Cisco, Broadcom, Medtronic, Keysight, Infineon, Qorvo, "General Motors"]
+    blocked: []

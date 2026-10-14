@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import hashlib
 import html
+import ipaddress
 import re
+import socket
 import time
 from datetime import datetime, timezone
 from html.parser import HTMLParser
+from urllib.parse import urljoin
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -17,9 +20,20 @@ from urllib3.util.retry import Retry
 USER_AGENT = "TractionCollector/1.0 (+https://traction-37.web.app)"
 
 
+class _Retry(Retry):
+    """Honors Retry-After, but never waits longer than a minute: one rate-limited host
+    must not stall the whole run."""
+
+    MAX_RETRY_AFTER = 60.0
+
+    def get_retry_after(self, response):
+        after = super().get_retry_after(response)
+        return None if after is None else min(after, self.MAX_RETRY_AFTER)
+
+
 def make_session() -> requests.Session:
     s = requests.Session()
-    retry = Retry(
+    retry = _Retry(
         total=3,
         backoff_factor=1.5,
         status_forcelist=(429, 500, 502, 503, 504),
@@ -48,6 +62,37 @@ def post_json(url: str, payload: dict, **kw):
     r = SESSION.post(url, json=payload, headers=headers, timeout=TIMEOUT, **kw)
     r.raise_for_status()
     return r.json()
+
+
+def public_url_ok(url: str) -> bool:
+    """True when url is http(s) and every address its host resolves to is public.
+    Guards generic page fetches so a listing can't point the collector at the local network."""
+    m = re.match(r"^https?://([^/:?#]+)", url or "", re.I)
+    if not m:
+        return False
+    try:
+        infos = socket.getaddrinfo(m.group(1), None)
+    except OSError:
+        return False
+    for info in infos:
+        ip = ipaddress.ip_address(info[4][0].split("%")[0])
+        if not ip.is_global:
+            return False
+    return bool(infos)
+
+
+def get_public_text(url: str, max_hops: int = 5) -> str:
+    """GET a page whose URL came from third-party data, re-checking every redirect hop."""
+    for _ in range(max_hops):
+        if not public_url_ok(url):
+            raise ValueError("not a public URL")
+        r = SESSION.get(url, timeout=TIMEOUT, allow_redirects=False)
+        if r.is_redirect:
+            url = urljoin(url, r.headers["location"])
+            continue
+        r.raise_for_status()
+        return r.text
+    raise ValueError("too many redirects")
 
 
 def get_text(url: str, **kw) -> str:

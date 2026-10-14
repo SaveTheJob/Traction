@@ -11,7 +11,7 @@ import re
 from urllib.parse import parse_qs, urlparse
 
 from .models import Screen
-from .util import get_json, get_text, html_to_text
+from .util import get_json, get_public_text, html_to_text
 
 # ---------------------------------------------------------------------------
 # Fetching the description for a posting URL
@@ -62,10 +62,11 @@ def _greenhouse(url: str) -> str | None:
 
 
 def _lever(url: str) -> str | None:
-    m = re.match(r"https?://jobs\.lever\.co/([^/]+)/([0-9a-f-]{36})", url)
+    m = re.match(r"https?://jobs\.(eu\.)?lever\.co/([^/]+)/([0-9a-f-]{36})", url)
     if not m:
         return None
-    j = get_json(f"https://api.lever.co/v0/postings/{m.group(1)}/{m.group(2)}")
+    api = "https://api.eu.lever.co" if m.group(1) else "https://api.lever.co"
+    j = get_json(f"{api}/v0/postings/{m.group(2)}/{m.group(3)}")
     parts = [j.get("descriptionPlain") or ""]
     for lst in j.get("lists") or []:
         parts.append(lst.get("text") or "")
@@ -103,7 +104,7 @@ def fetch_description(url: str) -> str:
         if text is not None:
             return text
     # Generic page: works for server-rendered career sites, not for JS-only ones.
-    return html_to_text(get_text(url))
+    return html_to_text(get_public_text(url))
 
 
 # ---------------------------------------------------------------------------
@@ -167,10 +168,17 @@ _NO_SPONSOR = _compile(NO_SPONSOR_PATTERNS)
 _SPONSOR = _compile(SPONSOR_PATTERNS)
 
 
+# A sentence ends at a newline or at a period followed by whitespace, except after a
+# single capital letter, so "U.S. citizen" doesn't end a sentence at "U.S."
+_SENTENCE_END = re.compile(r"(?<!\b[A-Z])\.(?=\s|$)|\n")
+
+
 def _sentence(text: str, start: int, end: int) -> str:
-    a = max(text.rfind(".", 0, start), text.rfind("\n", 0, start)) + 1
-    b_candidates = [i for i in (text.find(".", end), text.find("\n", end)) if i != -1]
-    b = min(b_candidates) + 1 if b_candidates else len(text)
+    a = 0
+    for m in _SENTENCE_END.finditer(text, 0, start):
+        a = m.end()
+    m = _SENTENCE_END.search(text, end)
+    b = m.end() if m else len(text)
     s = re.sub(r"\s+", " ", text[a:b]).strip()
     return s[:260] + ("…" if len(s) > 260 else "")
 

@@ -60,7 +60,7 @@ install -d -m 750 -o root -g traction "$ETC"
 install -d -m 750 -o traction -g traction "$STATE"
 if [[ ! -f "$ETC/config.yaml" ]]; then
   install -m 640 -o root -g traction "$LINK/config.example.yaml" "$ETC/config.yaml"
-  echo "    created $ETC/config.yaml (edit user_id before enabling pushes)"
+  echo "    created $ETC/config.yaml (set traction.beta_allowlist to limit who is served)"
 fi
 
 echo "==> systemd units"
@@ -75,7 +75,8 @@ Installed. Next:
   1. Put a service-account key at $ETC/service-account.json (use a dedicated
      account with only the "Cloud Datastore User" role; see README)
        chown root:traction $ETC/service-account.json && chmod 640 $ETC/service-account.json
-  2. Set traction.user_id in $ETC/config.yaml (your Firebase Auth UID)
+  2. Optionally limit who is served: traction.beta_allowlist in $ETC/config.yaml
+     (Firebase Auth UIDs; empty serves everyone with Discover turned on)
   3. Check every source is reachable from this box:
        cd $LINK && sudo -u traction $VENV/bin/python -m collector --config $ETC/config.yaml selftest
   4. First real run (takes a few minutes while it reads job descriptions):
