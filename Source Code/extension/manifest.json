@@ -3,6 +3,7 @@
   "name": "SaveTheJob",
   "version": "1.0",
   "description": "Save jobs directly from LinkedIn, Handshake, and company websites into your SaveTheJob Dashboard.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAy5Ml4nsefoBnunAJdBVc2sbec4WpMf1r80V0TsaYkq/r1LMFL6h9fi4BgyWZBxH9rrGRkxQlGpwyN7sQUnPNHhEsdPyDrywUkmK5SRrMjSIlQjTvGlHRI6nExYWtJms5CXM0KjlFl9L85U8NvxoYXLOCmpIP9vo1jGzjlWeCf1Wdsku/eauaObnOhdYFXiTcB25scpQlh1A+pLMv26t0v9+NPoSwcrdgVLe5BHvQHzR/vYIfWMOF1t1j5i63MQWzcBt/oNn+AmkNhKagJI0F0+AgvUEhLO1Zcc0GdRENlNtwPjQrMyBVH0nOwVYLFfNYw+FqnwL/1Y318t0gXn1WeQIDAQAB",
   "permissions": ["activeTab", "scripting", "storage", "identity"],
   "oauth2": {
     "client_id": "27606484237-b8qv20dk4v23aiivh7gdo6q8o7rf71bu.apps.googleusercontent.com",

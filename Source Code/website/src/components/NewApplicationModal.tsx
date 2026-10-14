@@ -155,7 +155,7 @@ export default function NewApplicationModal() {
                   variant="solid"
                   className="text-sm font-medium"
                   options={[
-                    { value: "Wishlist", label: "Saved" },
+                    { value: "Saved", label: "Saved" },
                     { value: "Applied", label: "Applied" },
                     { value: "Interviewing", label: "Interviewing" },
                     { value: "Offer", label: "Offer" },

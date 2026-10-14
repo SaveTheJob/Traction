@@ -17,7 +17,7 @@ import { useAuth } from "./AuthContext";
 
 export type Priority = "High" | "Medium" | "Low";
 export type Status =
-  | "Wishlist"
+  | "Saved"
   | "Applied"
   | "Interviewing"
   | "Offer"
@@ -96,7 +96,10 @@ export function JobProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const jobsData: Job[] = [];
       snapshot.forEach((document) => {
-        jobsData.push({ id: document.id, ...document.data() } as Job);
+        const data = document.data();
+        // Jobs saved before the rename still carry the old "Wishlist" status
+        if (data.status === "Wishlist") data.status = "Saved";
+        jobsData.push({ id: document.id, ...data } as Job);
       });
       // Sort by creation time if available, putting newest at the end
       jobsData.sort((a, b) => {

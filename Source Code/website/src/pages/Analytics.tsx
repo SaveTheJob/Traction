@@ -18,7 +18,7 @@ export default function Analytics() {
     {} as Record<string, number>,
   );
 
-  const statusLabelMap: Record<string, string> = { Wishlist: "Saved" };
+  const statusLabelMap: Record<string, string> = { Saved: "Saved" };
 
   const statusData = Object.entries(statusCounts)
     .map(([name, value]) => ({ name: statusLabelMap[name] || name, value }))
@@ -92,7 +92,7 @@ export default function Analytics() {
         {/* Conversion Funnel */}
         <ConversionFunnel
           totalJobs={totalJobs}
-          saved={jobs.filter((j) => j.status === "Wishlist").length}
+          saved={jobs.filter((j) => j.status === "Saved").length}
           interviewing={interviewing}
           offers={offers}
         />

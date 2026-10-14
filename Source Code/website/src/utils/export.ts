@@ -173,7 +173,7 @@ export async function exportToExcel(opts: ExportOptions) {
     Applied: { bg: "FFDBEAFE", fg: "FF1E40AF" },
     Interviewing: { bg: "FFFEF9C3", fg: "FF713F12" },
     Offer: { bg: "FFDCFCE7", fg: "FF14532D" },
-    Wishlist: { bg: "FFF3E8FF", fg: "FF581C87" },
+    Saved: { bg: "FFF3E8FF", fg: "FF581C87" },
     Rejected: { bg: "FFFEE2E2", fg: "FF7F1D1D" },
   };
 

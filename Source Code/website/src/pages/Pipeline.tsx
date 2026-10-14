@@ -10,7 +10,7 @@ import { useJobs } from "../context/JobContext";
 
 const COLUMNS: { id: Status; label: string; color: string }[] = [
   {
-    id: "Wishlist",
+    id: "Saved",
     label: "Saved",
     color: "premium-glass-heavy text-slate-300",
   },

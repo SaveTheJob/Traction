@@ -48,7 +48,7 @@ export default function ConversionFunnel({
           Statistics
         </h2>
         <p className="text-xs sm:text-sm text-slate-300 mt-1 font-medium">
-          Visualize your success rate from saved to offer
+          Visualize your success rate from applied to offer
         </p>
       </div>
 

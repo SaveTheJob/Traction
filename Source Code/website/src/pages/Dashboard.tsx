@@ -51,13 +51,13 @@ export default function Dashboard() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const totalApplications = jobs.filter((j) => j.status !== "Wishlist").length;
+  const totalApplications = jobs.filter((j) => j.status !== "Saved").length;
   const interviewingNumber = jobs.filter(
     (j) => j.status === "Interviewing",
   ).length;
   const offerNumber = jobs.filter((j) => j.status === "Offer").length;
   const rejectedNumber = jobs.filter((j) => j.status === "Rejected").length;
-  const savedNumber = jobs.filter((j) => j.status === "Wishlist").length;
+  const savedNumber = jobs.filter((j) => j.status === "Saved").length;
   const appliedNumber = jobs.filter((j) => j.status === "Applied").length;
   const interviewCount = interviewingNumber + offerNumber;
 
@@ -106,7 +106,7 @@ export default function Dashboard() {
   });
 
   const statusOrder: Record<string, number> = {
-    Wishlist: 0,
+    Saved: 0,
     Applied: 1,
     Interviewing: 2,
     Offer: 3,
@@ -398,7 +398,7 @@ export default function Dashboard() {
                 variant="glass"
                 options={[
                   { value: "All", label: "ALL STATUS" },
-                  { value: "Wishlist", label: "SAVED" },
+                  { value: "Saved", label: "SAVED" },
                   { value: "Applied", label: "APPLIED" },
                   { value: "Interviewing", label: "INTERVIEWING" },
                   { value: "Offer", label: "OFFER" },

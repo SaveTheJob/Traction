@@ -28,7 +28,7 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
           Rejected
         </span>
       );
-    case "Wishlist":
+    case "Saved":
       return (
         <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-900/30 text-purple-300">
           Saved
