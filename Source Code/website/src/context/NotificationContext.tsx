@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
+import { collection, query, orderBy, limit, onSnapshot, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from './AuthContext';
 
@@ -56,8 +56,12 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
     // Firestore Listener for Admin Broadcasts
     useEffect(() => {
+        if (!user?.uid) return;
+        // Only broadcasts this user may read (firestore.rules); needs the
+        // targetUserId + createdAt index in firestore.indexes.json.
         const q = query(
             collection(db, 'notifications'),
+            where('targetUserId', 'in', ['GLOBAL', user.uid]),
             orderBy('createdAt', 'desc'),
             limit(10)
         );

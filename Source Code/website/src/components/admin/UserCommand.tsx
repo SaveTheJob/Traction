@@ -17,7 +17,7 @@ import { recordAdminLog } from "../../lib/adminLogger";
 import { db } from "../../lib/firebase";
 
 const UserCommand: React.FC = () => {
-  const { impersonateUser, isLocalAdmin, user } = useAuth();
+  const { impersonateUser, user } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchDOB, setSearchDOB] = useState("");
@@ -88,7 +88,7 @@ const UserCommand: React.FC = () => {
     try {
       await updateDoc(doc(db, "users", targetUser.uid), editData);
 
-      const adminId = isLocalAdmin ? "Creator-Admin" : user?.email || "Unknown";
+      const adminId = user?.email || "Unknown";
       if (editData.plan && editData.plan !== targetUser.plan) {
         recordAdminLog("PLAN_UPGRADE", adminId, targetUser.email, "SUCCESS");
       }

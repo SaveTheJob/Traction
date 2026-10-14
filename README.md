@@ -79,4 +79,9 @@ The web dashboard is configured to be deployed using Firebase Hosting.
 1. Ensure you have the Firebase CLI installed: `npm install -g firebase-tools`
 2. Login to Firebase: `firebase login`
 3. Build the website: `cd "Source Code/website" && npm run build`
-4. Deploy to Firebase: `firebase deploy`
+4. Deploy the site from `Source Code/website`: `firebase deploy --only hosting`
+5. Deploy the Firestore security rules and indexes from the repo root: `firebase deploy --only firestore`
+
+The Firebase web config is public by design, so `firestore.rules` is what protects user data.
+Admins are listed by Firebase Auth UID in `firestore.rules` (`isAdmin`) and in `VITE_ADMIN_UIDS`
+in `Source Code/website/.env.local`; keep the two in sync.

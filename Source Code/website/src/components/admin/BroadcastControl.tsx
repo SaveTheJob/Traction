@@ -6,7 +6,7 @@ import { recordAdminLog } from "../../lib/adminLogger";
 import { db } from "../../lib/firebase";
 
 const BroadcastControl: React.FC = () => {
-  const { isLocalAdmin, user } = useAuth();
+  const { user } = useAuth();
   const [message, setMessage] = useState("");
   const [targetUid, setTargetUid] = useState("");
   const [type, setType] = useState<
@@ -28,7 +28,7 @@ const BroadcastControl: React.FC = () => {
 
       recordAdminLog(
         targetUid.trim() ? "DIRECT_BROADCAST" : "GLOBAL_BROADCAST",
-        isLocalAdmin ? "Creator-Admin" : user?.email || "Unknown",
+        user?.email || "Unknown",
         targetUid.trim() || "ALL_USERS",
         "SUCCESS",
       );

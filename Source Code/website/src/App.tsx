@@ -150,8 +150,7 @@ function AppBackground() {
 // AppRoutes — handles routing, auth guards, and onboarding redirects
 
 function AppRoutes() {
-  const { isLocalAdmin, userProfile, loading, user, impersonatedUser } =
-    useAuth();
+  const { userProfile, loading, user } = useAuth();
   const location = useLocation();
 
   const isPublicRoute = ["/login", "/signup", "/privacy-policy"].includes(
@@ -159,7 +158,7 @@ function AppRoutes() {
   );
 
   // Show loading spinner while auth is resolving
-  if (!isPublicRoute && !loading && user && !userProfile && !isLocalAdmin) {
+  if (!isPublicRoute && !loading && user && !userProfile) {
     return (
       <div
         className="min-h-screen flex items-center justify-center"
@@ -174,8 +173,7 @@ function AppRoutes() {
   if (
     !loading &&
     userProfile &&
-    !userProfile.onboardingCompleted &&
-    !isLocalAdmin
+    !userProfile.onboardingCompleted
   ) {
     if (location.pathname !== "/onboarding") {
       return <Navigate to="/onboarding" replace />;
@@ -237,13 +235,7 @@ function AppRoutes() {
           >
             <Route
               index
-              element={
-                isLocalAdmin && !impersonatedUser ? (
-                  <Navigate to="/admin" replace />
-                ) : (
-                  <Dashboard />
-                )
-              }
+              element={<Dashboard />}
             />
             <Route path="discover" element={<Discover />} />
             <Route path="discover/settings" element={<DiscoverSettings />} />

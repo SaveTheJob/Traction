@@ -22,19 +22,24 @@ export interface UserProfile {
   onboardingCompleted?: boolean;
 }
 
-const LOCAL_ADMIN_KEY = "savethejob_is_local_admin";
+// Firebase Auth UIDs that may open the admin portal. This only shows the portal;
+// firestore.rules (isAdmin) is what actually grants access, so keep the two in sync.
+const ADMIN_UIDS = new Set(
+  (import.meta.env.VITE_ADMIN_UIDS ?? "")
+    .split(",")
+    .map((s: string) => s.trim())
+    .filter(Boolean),
+);
 
 interface AuthContextType {
   user: User | null;
   userProfile: UserProfile | null;
   impersonatedUser: UserProfile | null;
   isAdmin: boolean;
-  isLocalAdmin: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
   impersonateUser: (user: UserProfile | null) => void;
-  loginAsLocalAdmin: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -42,12 +47,10 @@ const AuthContext = createContext<AuthContextType>({
   userProfile: null,
   impersonatedUser: null,
   isAdmin: false,
-  isLocalAdmin: false,
   loading: true,
   signOut: async () => {},
   updatePassword: async () => {},
   impersonateUser: () => {},
-  loginAsLocalAdmin: () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -56,33 +59,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [impersonatedUser, setImpersonatedUser] = useState<UserProfile | null>(
     null,
   );
-  const [isLocalAdmin, setIsLocalAdmin] = useState(() => {
-    return sessionStorage.getItem(LOCAL_ADMIN_KEY) === "true";
-  });
   const [loading, setLoading] = useState(true);
 
-  const isAdmin = isLocalAdmin || user?.email === "admin@savethejob.com";
+  const isAdmin = !!user && ADMIN_UIDS.has(user.uid);
 
   const impersonateUser = (target: UserProfile | null) => {
     if (!isAdmin) return;
     setImpersonatedUser(target);
     if (target) {
-      recordAdminLog(
-        "GOD_MODE_ENTRY",
-        isLocalAdmin ? "Creator-Admin" : user?.email || "Unknown",
-        target.email,
-      );
+      recordAdminLog("GOD_MODE_ENTRY", user?.email || "Unknown", target.email);
     }
-  };
-
-  const loginAsLocalAdmin = () => {
-    setIsLocalAdmin(true);
-    sessionStorage.setItem(LOCAL_ADMIN_KEY, "true");
-  };
-
-  const logoutLocalAdmin = () => {
-    setIsLocalAdmin(false);
-    sessionStorage.removeItem(LOCAL_ADMIN_KEY);
   };
 
   useEffect(() => {
@@ -162,9 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
-      if (isLocalAdmin) {
-        logoutLocalAdmin();
-      }
+      setImpersonatedUser(null);
       await firebaseSignOut(auth);
     } catch (error) {
       console.error("Error signing out:", error);
@@ -183,12 +167,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         userProfile,
         impersonatedUser,
         isAdmin,
-        isLocalAdmin,
         loading,
         signOut,
         updatePassword,
         impersonateUser,
-        loginAsLocalAdmin,
       }}
     >
       {!loading && children}

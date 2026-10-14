@@ -8,6 +8,7 @@ import {
   LogOut,
   Palette,
   Radio,
+  ShieldCheck,
   Sparkles,
   Users,
   X,
@@ -24,10 +25,11 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
-  const { user, isLocalAdmin, impersonatedUser, signOut } = useAuth();
+  const { user, isAdmin, impersonatedUser, signOut } = useAuth();
 
-  // Show user nav items when impersonating (God Mode)
-  const showAdminNav = isLocalAdmin && !impersonatedUser;
+  // Admins see the admin nav inside the portal (but the user nav while impersonating)
+  const inAdminPortal = isAdmin && !impersonatedUser && location.pathname.startsWith("/admin");
+  const showAdminNav = inAdminPortal;
 
   const navItems = showAdminNav
     ? [
@@ -35,6 +37,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         { label: "System Vitals", path: "/admin/vitals", icon: Activity },
         { label: "Security Pulse", path: "/admin/logs", icon: History },
         { label: "Broadcast", path: "/admin/broadcast", icon: Radio },
+        { label: "Back to app", path: "/", icon: LayoutDashboard },
       ]
     : [
         { label: "Dashboard", path: "/", icon: LayoutDashboard },
@@ -43,6 +46,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         { label: "Network", path: "/network", icon: Users },
         { label: "Analytics", path: "/analytics", icon: BarChart3 },
         { label: "AI Resume", path: "/resume", icon: Sparkles },
+        ...(isAdmin && !impersonatedUser
+          ? [{ label: "Admin Portal", path: "/admin", icon: ShieldCheck }]
+          : []),
       ];
 
   return (
@@ -106,18 +112,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       <div className="mt-auto">
         <div className="premium-glass rounded-none rounded-br-2xl border-t border-white/10 shadow-lg flex flex-col">
           <Link
-            to={isLocalAdmin ? "/admin" : "/account"}
+            to="/account"
             className="flex items-center gap-2.5 lg:gap-3 p-4 lg:p-5 group hover:bg-white/5 transition-all"
           >
             <div
-              className={`w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 uppercase shadow-inner ${isLocalAdmin ? "bg-blue-600 shadow-blue-500/20" : "bg-slate-700"}`}
+              className={`w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 uppercase shadow-inner ${inAdminPortal ? "bg-blue-600 shadow-blue-500/20" : "bg-slate-700"}`}
             >
-              {isLocalAdmin ? "A" : user?.email ? user.email.charAt(0) : "U"}
+              {user?.email ? user.email.charAt(0) : "U"}
             </div>
             <span className="text-[14px] font-bold text-slate-100 truncate">
-              {isLocalAdmin
-                ? "Admin Access"
-                : user?.displayName || "My Account"}
+              {user?.displayName || "My Account"}
             </span>
           </Link>
           <div className="flex items-center border-t border-white/5 px-4 py-3 gap-2 bg-black/10 rounded-br-2xl">
@@ -131,7 +135,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             >
               <Palette className="w-[17px] h-[17px]" />
             </button>
-            {isLocalAdmin && !impersonatedUser && (
+            {inAdminPortal && (
               <button
                 onClick={signOut}
                 className="p-2 text-slate-300 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all"

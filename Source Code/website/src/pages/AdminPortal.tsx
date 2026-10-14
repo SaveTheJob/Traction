@@ -1,13 +1,18 @@
 import { ShieldCheck } from 'lucide-react';
 import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import BroadcastControl from '../components/admin/BroadcastControl';
 import SecurityPulse from '../components/admin/SecurityPulse';
 import SystemVitals from '../components/admin/SystemVitals';
 import UserCommand from '../components/admin/UserCommand';
+import { useAuth } from '../context/AuthContext';
 
 const AdminPortal: React.FC = () => {
     const location = useLocation();
+    const { isAdmin } = useAuth();
+
+    // Firestore rules enforce admin access; this just keeps others out of the UI.
+    if (!isAdmin) return <Navigate to="/" replace />;
 
     const renderContent = () => {
         if (location.pathname === '/admin/vitals') return <SystemVitals />;
