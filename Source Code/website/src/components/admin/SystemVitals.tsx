@@ -11,6 +11,7 @@ import {
 import { Activity, Cpu, Database, Globe, ShieldAlert } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { db } from "../../lib/firebase";
+import CollectorHealth from "./CollectorHealth";
 
 interface HourlyBucket {
   hour: number;
@@ -201,6 +202,7 @@ const SystemVitals: React.FC = () => {
           <span>23:59</span>
         </div>
       </div>
+      <CollectorHealth />
     </div>
   );
 };

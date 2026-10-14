@@ -64,7 +64,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       <div className="flex-1 px-3 lg:px-4 py-4 lg:py-6 overflow-y-auto scrollbar-theme flex flex-col gap-2">
         <nav className="space-y-1.5 flex-1">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
+            // Sub-pages (e.g. /discover/settings) keep their section highlighted
+            const isActive =
+              location.pathname === item.path ||
+              (item.path === "/discover" && location.pathname.startsWith("/discover/"));
             const Icon = item.icon;
             return (
               <Link

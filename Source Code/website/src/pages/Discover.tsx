@@ -14,6 +14,7 @@ import {
   doc,
   onSnapshot,
   query,
+  serverTimestamp,
   updateDoc,
   where,
 } from "firebase/firestore";
@@ -26,23 +27,29 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
+  Ban,
   Compass,
-  Cpu,
   ExternalLink,
   EyeOff,
+  Info,
   MapPin,
   RotateCcw,
   Search,
   ShieldAlert,
   ShieldCheck,
+  SlidersHorizontal,
+  Sparkles,
+  Target,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import CustomSelect from "../components/CustomSelect";
 import type { ToastMessage } from "../components/Toast";
 import ToastContainer from "../components/Toast";
 import type { Job, Priority } from "../context/JobContext";
 import { useJobs } from "../context/JobContext";
-import { useEffectiveUserId } from "../hooks/useEffectiveUserId";
+import { useCollectorMeta, useDiscoveryProfile } from "../hooks/useDiscoveryProfile";
+import { REFRESH_TIMES, literalMatcher, locationMatcher } from "../lib/discover";
 import { db } from "../lib/firebase";
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -74,7 +81,12 @@ interface Discovery {
   gradWindow: string;
   postedAt?: Timestamp | null;
   firstSeenAt?: Timestamp | null;
+  /** Shown in "To review" (open, above the user's bar, within their plan's cap) */
   active: boolean;
+  /** The posting itself has closed (older docs only have `active`) */
+  closed?: boolean;
+  /** Which tier of the user's role families matched: "core" | "strong" | "ok" */
+  roleTier?: string;
   status: DiscoveryStatus;
   jobId?: string;
 }
@@ -83,12 +95,14 @@ interface CollectorRun {
   lastRunAt?: Timestamp | null;
   rawPostings?: number;
   uniqueRoles?: number;
+  matches?: number;
+  live?: number;
+  cap?: number;
   sourceErrors?: Record<string, string>;
 }
 
 const PAGE_SIZE = 40;
 const FOLLOW_UP_DAYS = 7;
-const AZ_RE = /\b(AZ|Arizona|Phoenix|Tempe|Chandler|Scottsdale|Mesa|Gilbert|Tucson)\b/i;
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -119,11 +133,14 @@ function daysSince(dateApplied: string): number | null {
   return Math.floor((Date.now() - t) / 86_400_000);
 }
 
-function isHardware(d: Discovery): boolean {
-  return (
-    d.category.toLowerCase().includes("hardware") ||
-    d.fitReasons.some((r) => r.startsWith("Core role match"))
-  );
+function isClosed(d: Discovery): boolean {
+  return d.closed ?? !d.active;
+}
+
+/** A top-tier match for the role families or keywords the user picked. */
+function isFocus(d: Discovery): boolean {
+  if (d.roleTier) return d.roleTier === "core";
+  return d.fitReasons.some((r) => r.startsWith("Core role match") || r.startsWith("Matches your keyword"));
 }
 
 // ── Small pieces ────────────────────────────────────────────────────────────
@@ -163,33 +180,37 @@ function Toggle({
   );
 }
 
-function FlagBadges({ d }: { d: Discovery }) {
+const INFO_BADGE = "bg-sky-500/15 text-sky-200 border-sky-400/25";
+
+/** Work-authorization badges. For users who need sponsorship they're warnings; for
+ * everyone else they're informational notes and sponsorship-only badges are hidden. */
+function FlagBadges({ d, sponsorMode }: { d: Discovery; sponsorMode: boolean }) {
   const badges: { label: string; cls: string; icon: React.ReactNode }[] = [];
   if (d.flags.citizen)
     badges.push({
-      label: "Citizenship / clearance",
-      cls: "bg-red-500/20 text-red-300 border-red-400/30",
-      icon: <ShieldAlert className="w-3 h-3" />,
+      label: sponsorMode ? "Citizenship / clearance" : "Mentions citizenship / clearance",
+      cls: sponsorMode ? "bg-red-500/20 text-red-300 border-red-400/30" : INFO_BADGE,
+      icon: sponsorMode ? <ShieldAlert className="w-3 h-3" /> : <Info className="w-3 h-3" />,
     });
   if (d.flags.exportControl && !d.flags.citizen)
     badges.push({
       label: "Export control",
-      cls: "bg-amber-500/20 text-amber-200 border-amber-400/30",
-      icon: <AlertTriangle className="w-3 h-3" />,
+      cls: sponsorMode ? "bg-amber-500/20 text-amber-200 border-amber-400/30" : INFO_BADGE,
+      icon: sponsorMode ? <AlertTriangle className="w-3 h-3" /> : <Info className="w-3 h-3" />,
     });
-  if (d.flags.noSponsor && !d.flags.citizen)
+  if (sponsorMode && d.flags.noSponsor && !d.flags.citizen)
     badges.push({
       label: "No sponsorship",
       cls: "bg-amber-500/20 text-amber-200 border-amber-400/30",
       icon: <AlertTriangle className="w-3 h-3" />,
     });
-  if (d.flags.sponsorFriendly)
+  if (sponsorMode && d.flags.sponsorFriendly)
     badges.push({
       label: "Sponsor-friendly",
       cls: "bg-emerald-500/20 text-emerald-300 border-emerald-400/30",
       icon: <ShieldCheck className="w-3 h-3" />,
     });
-  if (!d.flags.screened && badges.length === 0)
+  if (sponsorMode && !d.flags.screened && badges.length === 0)
     badges.push({
       label: "Not screened",
       cls: "bg-white/5 text-slate-300 border-white/10",
@@ -214,16 +235,21 @@ function FlagBadges({ d }: { d: Discovery }) {
 function DiscoveryCard({
   d,
   isNew,
+  sponsorMode,
   onSave,
   onDismiss,
   onRestore,
+  onHideCompany,
   busy,
 }: {
   d: Discovery;
   isNew: boolean;
+  sponsorMode: boolean;
   onSave: (d: Discovery) => void;
   onDismiss: (d: Discovery) => void;
   onRestore: (d: Discovery) => void;
+  /** Absent when the viewer can't edit the profile (admin viewing as a user) */
+  onHideCompany?: (d: Discovery) => void;
   busy: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -248,7 +274,7 @@ function DiscoveryCard({
                 NEW
               </span>
             )}
-            {!d.active && (
+            {isClosed(d) && (
               <span className="text-[10px] font-extrabold tracking-widest px-1.5 py-0.5 rounded-md bg-white/10 text-slate-300">
                 CLOSED
               </span>
@@ -274,7 +300,7 @@ function DiscoveryCard({
         {d.terms.slice(0, 2).map((t) => (
           <Chip key={t}>{t}</Chip>
         ))}
-        <FlagBadges d={d} />
+        <FlagBadges d={d} sponsorMode={sponsorMode} />
       </div>
 
       <ul className="text-[12px] text-slate-300 space-y-1">
@@ -328,11 +354,23 @@ function DiscoveryCard({
               <BookmarkPlus className="w-3.5 h-3.5" />
               Save to pipeline
             </button>
+            {onHideCompany && (
+              <button
+                disabled={busy}
+                onClick={() => onHideCompany(d)}
+                className="ml-auto p-2 rounded-xl text-slate-300 hover:text-amber-200 hover:bg-amber-500/10 transition-colors disabled:opacity-50"
+                title={`Hide all roles from ${d.company}`}
+                aria-label={`Hide all roles from ${d.company}`}
+              >
+                <Ban className="w-4 h-4" />
+              </button>
+            )}
             <button
               disabled={busy}
               onClick={() => onDismiss(d)}
-              className="ml-auto p-2 rounded-xl text-slate-300 hover:text-red-300 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+              className={`${onHideCompany ? "" : "ml-auto "}p-2 rounded-xl text-slate-300 hover:text-red-300 hover:bg-red-500/10 transition-colors disabled:opacity-50`}
               title="Not interested"
+              aria-label="Not interested"
             >
               <EyeOff className="w-4 h-4" />
             </button>
@@ -362,7 +400,8 @@ function DiscoveryCard({
 // ── Page ────────────────────────────────────────────────────────────────────
 
 export default function Discover() {
-  const uid = useEffectiveUserId();
+  const { uid, profile, loading: profileLoading, canEdit, save: saveProfile } = useDiscoveryProfile();
+  const { inviteOnly } = useCollectorMeta();
   const { jobs, createJob, markFollowedUp, openModal, limitError, clearLimitError } = useJobs();
 
   const [items, setItems] = useState<Discovery[]>([]);
@@ -372,8 +411,8 @@ export default function Discover() {
   const [view, setView] = useState<DiscoveryStatus>("new");
   const [search, setSearch] = useState("");
   const [hideRedFlags, setHideRedFlags] = useState(true);
-  const [azOnly, setAzOnly] = useState(false);
-  const [hwOnly, setHwOnly] = useState(false);
+  const [locOnly, setLocOnly] = useState(false);
+  const [focusOnly, setFocusOnly] = useState(false);
   const [sort, setSort] = useState<"fit" | "newest">("fit");
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -440,7 +479,7 @@ export default function Discover() {
   }, [uid]);
 
   // Reset paging when filters change
-  useEffect(() => setLimit(PAGE_SIZE), [track, view, search, hideRedFlags, azOnly, hwOnly, sort]);
+  useEffect(() => setLimit(PAGE_SIZE), [track, view, search, hideRedFlags, locOnly, focusOnly, sort]);
 
   const isNewSinceVisit = useCallback(
     (d: Discovery) => !!d.firstSeenAt && d.firstSeenAt.toMillis() > lastVisit,
@@ -457,18 +496,27 @@ export default function Discover() {
     [jobs],
   );
 
+  const sponsorMode = profile?.needsSponsorship ?? false;
+  const inMyLocations = useMemo(() => locationMatcher(profile?.locations.preferred ?? []), [profile]);
+  // Cards from a company hidden since the last refresh disappear right away.
+  const blockedRx = useMemo(() => literalMatcher(profile?.companies.blocked ?? []), [profile]);
+  const visible = useMemo(
+    () => items.filter((d) => !blockedRx || d.status === "saved" || !blockedRx.test(d.company)),
+    [items, blockedRx],
+  );
+
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
-    const list = items.filter((d) => {
+    const list = visible.filter((d) => {
       if (d.track !== track) return false;
       if ((d.status || "new") !== view) return false;
       if (view === "new" && !d.active) return false;
-      if (hideRedFlags && view === "new") {
+      if (sponsorMode && hideRedFlags && view === "new") {
         if (d.flags?.citizen) return false;
         if (d.track === "newgrad" && d.flags?.noSponsor) return false;
       }
-      if (azOnly && !AZ_RE.test(d.location || "")) return false;
-      if (hwOnly && !isHardware(d)) return false;
+      if (locOnly && !inMyLocations(d.location || "")) return false;
+      if (focusOnly && !isFocus(d)) return false;
       if (s && !`${d.company} ${d.title} ${d.location}`.toLowerCase().includes(s)) return false;
       return true;
     });
@@ -479,27 +527,28 @@ export default function Discover() {
           (a.postedAt?.toMillis() ?? a.firstSeenAt?.toMillis() ?? 0),
     );
     return list;
-  }, [items, track, view, search, hideRedFlags, azOnly, hwOnly, sort]);
+  }, [visible, track, view, search, sponsorMode, hideRedFlags, locOnly, inMyLocations, focusOnly, sort]);
 
   const stats = useMemo(() => {
-    const live = items.filter((d) => d.active && (d.status || "new") === "new");
+    const live = visible.filter((d) => d.active && (d.status || "new") === "new");
+    const ok = (d: Discovery) => !sponsorMode || !d.flags?.citizen;
     return {
       newSinceVisit: live.filter(isNewSinceVisit).length,
-      highFit: live.filter((d) => d.fitScore >= 80 && !d.flags?.citizen).length,
-      arizona: live.filter((d) => AZ_RE.test(d.location || "") && !d.flags?.citizen).length,
-      saved: items.filter((d) => d.status === "saved").length,
+      highFit: live.filter((d) => d.fitScore >= 80 && ok(d)).length,
+      inLocations: live.filter((d) => inMyLocations(d.location || "") && ok(d)).length,
+      saved: visible.filter((d) => d.status === "saved").length,
     };
-  }, [items, isNewSinceVisit]);
+  }, [visible, isNewSinceVisit, sponsorMode, inMyLocations]);
 
   const counts = useMemo(() => {
     const c: Record<Track, number> = { intern: 0, newgrad: 0 };
-    for (const d of items) if (d.active && (d.status || "new") === "new") c[d.track]++;
+    for (const d of visible) if (d.active && (d.status || "new") === "new") c[d.track]++;
     return c;
-  }, [items]);
+  }, [visible]);
 
   // Actions
   const setStatus = async (d: Discovery, status: DiscoveryStatus, extra: Record<string, unknown> = {}) => {
-    await updateDoc(doc(db, "discoveries", d.id), { status, ...extra });
+    await updateDoc(doc(db, "discoveries", d.id), { status, ...extra, statusChangedAt: serverTimestamp() });
   };
 
   const handleSave = async (d: Discovery) => {
@@ -561,7 +610,28 @@ export default function Discover() {
     }
   };
 
+  const handleHideCompany = async (d: Discovery) => {
+    if (!profile) return;
+    const blocked = profile.companies.blocked;
+    if (blocked.some((c) => c.toLowerCase() === d.company.toLowerCase())) return;
+    if (blocked.length >= 100) {
+      addToast("You've hidden 100 companies. Remove some in Tune matches first.", "warning");
+      return;
+    }
+    setBusyId(d.id);
+    try {
+      await saveProfile({ ...profile, companies: { ...profile.companies, blocked: [...blocked, d.company] } });
+      addToast(`Hid ${d.company}. Undo it in Tune matches.`);
+    } catch (e) {
+      console.error(e);
+      addToast("Couldn't hide that company.", "error");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const lastRun = ago(run?.lastRunAt);
+  const capped = !!run?.cap && !!run?.matches && run.matches > run.cap;
 
   return (
     <div className="p-3 sm:p-4 md:p-5 lg:p-8 h-full flex flex-col max-w-[1700px] mx-auto overflow-y-auto scrollbar-theme">
@@ -587,14 +657,34 @@ export default function Discover() {
             )}
           </p>
         </div>
+        <Link
+          to="/discover/settings"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold text-white bg-white/10 hover:bg-white/20 border border-white/10 transition-all shrink-0"
+        >
+          <SlidersHorizontal className="w-4 h-4" />
+          Tune matches
+        </Link>
       </div>
+
+      {capped && (
+        <div className="premium-glass rounded-2xl border border-blue-400/20 px-4 py-3 mb-5 sm:mb-6 text-xs sm:text-sm text-slate-200 flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-blue-300 shrink-0" />
+          <span>
+            Showing your top {run?.cap} of {run?.matches?.toLocaleString()} matches on the Free plan.{" "}
+            <Link to="/account" className="font-bold text-white underline underline-offset-2">
+              Upgrade to Pro
+            </Link>{" "}
+            to see them all.
+          </span>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-5 sm:mb-6">
         {[
           { label: "New since last visit", value: stats.newSinceVisit },
           { label: "High fit (80+)", value: stats.highFit },
-          { label: "In Arizona", value: stats.arizona },
+          { label: "In your locations", value: stats.inLocations },
           { label: "Saved from Discover", value: stats.saved },
         ].map((s) => (
           <div key={s.label} className="premium-glass rounded-2xl px-4 py-3 sm:px-5 sm:py-4">
@@ -679,17 +769,21 @@ export default function Discover() {
           ))}
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Toggle on={hideRedFlags} onClick={() => setHideRedFlags((x) => !x)}>
-            <ShieldCheck className="w-3.5 h-3.5" />
-            Hide visa red flags
-          </Toggle>
-          <Toggle on={azOnly} onClick={() => setAzOnly((x) => !x)}>
-            <MapPin className="w-3.5 h-3.5" />
-            Arizona
-          </Toggle>
-          <Toggle on={hwOnly} onClick={() => setHwOnly((x) => !x)}>
-            <Cpu className="w-3.5 h-3.5" />
-            Embedded &amp; hardware
+          {sponsorMode && (
+            <Toggle on={hideRedFlags} onClick={() => setHideRedFlags((x) => !x)}>
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Hide visa red flags
+            </Toggle>
+          )}
+          {!!profile?.locations.preferred.length && (
+            <Toggle on={locOnly} onClick={() => setLocOnly((x) => !x)}>
+              <MapPin className="w-3.5 h-3.5" />
+              My locations
+            </Toggle>
+          )}
+          <Toggle on={focusOnly} onClick={() => setFocusOnly((x) => !x)}>
+            <Target className="w-3.5 h-3.5" />
+            My focus
           </Toggle>
         </div>
         <div className="flex items-center gap-2 xl:ml-auto w-full xl:w-auto">
@@ -717,16 +811,38 @@ export default function Discover() {
       </div>
 
       {/* Results */}
-      {!loaded ? (
+      {!loaded || profileLoading ? (
         <div className="flex-1 flex items-center justify-center py-20">
           <div className="w-8 h-8 rounded-full border-4 border-white/30 border-t-white animate-spin" />
+        </div>
+      ) : !profile && items.length === 0 ? (
+        <div className="premium-glass rounded-2xl p-8 text-center text-slate-200">
+          <Compass className="w-10 h-10 mx-auto mb-3 opacity-80" />
+          <p className="font-bold text-white">Set up Discover</p>
+          <p className="text-sm mt-1 max-w-md mx-auto">
+            Tell Discover what you're looking for and it will find matching internships and new-grad roles, screened
+            for work-authorization requirements, twice a day.
+          </p>
+          {canEdit && (
+            <Link
+              to="/discover/settings"
+              className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 rounded-2xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-lg shadow-blue-500/20 transition-all"
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              Set up Discover
+            </Link>
+          )}
         </div>
       ) : items.length === 0 ? (
         <div className="premium-glass rounded-2xl p-8 text-center text-slate-200">
           <Compass className="w-10 h-10 mx-auto mb-3 opacity-80" />
-          <p className="font-bold text-white">No roles yet</p>
-          <p className="text-sm mt-1">
-            Once the Traction collector runs on your server, matching roles show up here automatically.
+          <p className="font-bold text-white">{profile?.enabled === false ? "Discover is off" : "No roles yet"}</p>
+          <p className="text-sm mt-1 max-w-md mx-auto">
+            {profile?.enabled === false
+              ? "Turn it back on in Tune matches to get new roles."
+              : inviteOnly && !run
+                ? "Discover is invite-only during the beta. Your settings are saved, and matches will appear here once you're added."
+                : `Your first matches arrive on the next refresh (${REFRESH_TIMES}).`}
           </p>
         </div>
       ) : filtered.length === 0 ? (
@@ -744,9 +860,11 @@ export default function Discover() {
                 key={d.id}
                 d={d}
                 isNew={isNewSinceVisit(d)}
+                sponsorMode={sponsorMode}
                 onSave={handleSave}
                 onDismiss={handleDismiss}
                 onRestore={handleRestore}
+                onHideCompany={canEdit && profile ? handleHideCompany : undefined}
                 busy={busyId === d.id}
               />
             ))}
@@ -761,6 +879,22 @@ export default function Discover() {
           )}
         </>
       )}
+
+      <p className="text-[11px] text-slate-400 mt-8 pb-2 text-center">
+        Roles come from company career sites and the community lists by{" "}
+        <a href="https://github.com/SimplifyJobs" target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-200">
+          SimplifyJobs
+        </a>
+        ,{" "}
+        <a href="https://github.com/vanshb03/Summer2027-Internships" target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-200">
+          vanshb03
+        </a>{" "}
+        and{" "}
+        <a href="https://github.com/speedyapply/2027-SWE-College-Jobs" target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-200">
+          speedyapply
+        </a>
+        . Screening is automatic: always read the posting before applying.
+      </p>
 
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>

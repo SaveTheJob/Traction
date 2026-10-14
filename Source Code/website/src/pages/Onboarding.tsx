@@ -1,8 +1,9 @@
 import { doc, updateDoc } from "firebase/firestore";
-import { AlertTriangle, ArrowRight, Calendar, User } from "lucide-react";
+import { AlertTriangle, ArrowRight, Calendar, Compass, User } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { PRESETS } from "../lib/discover";
 import { db } from "../lib/firebase";
 import { formatDobInput, isValidDob } from "../utils/dob";
 
@@ -14,6 +15,8 @@ export default function Onboarding() {
   const [dob, setDob] = useState(userProfile?.dob || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
+  // Step 2 is optional: pick a Discover preset or skip to the dashboard.
+  const [step, setStep] = useState<"profile" | "discover">("profile");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,10 +40,8 @@ export default function Onboarding() {
         dob,
         onboardingCompleted: true,
       });
-      // Small delay for animation satisfaction
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 500);
+      setStep("discover");
+      setIsSubmitting(false);
     } catch (error) {
       console.error("Error updating profile:", error);
       setFormError("Failed to save profile. Please try again.");
@@ -86,6 +87,42 @@ export default function Onboarding() {
           </div>
         </div>
 
+        {step === "discover" ? (
+          <div className="p-5 sm:p-6 bg-black/10 backdrop-blur-md space-y-4">
+            <div>
+              <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                <Compass className="w-4 h-4 text-blue-300" />
+                Set up Discover (optional)
+              </h2>
+              <p className="text-xs text-slate-300 mt-1">
+                Discover finds internships and new-grad roles that fit you, twice a day. Pick a starting point; you can
+                fine-tune it next.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {PRESETS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  // Full reload so the app picks up the completed profile
+                  onClick={() => (window.location.href = `/discover/settings?preset=${p.id}`)}
+                  className="text-left rounded-2xl p-4 border bg-black/20 border-white/5 hover:bg-white/5 transition-all"
+                >
+                  <p className="text-sm font-bold text-white">{p.label}</p>
+                  <p className="text-xs text-slate-300 mt-1">{p.description}</p>
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => (window.location.href = "/")}
+              className="w-full text-sm font-bold text-slate-200 hover:text-white py-3 rounded-2xl hover:bg-white/5 transition-all flex items-center justify-center gap-2"
+            >
+              Skip for now
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
         <div className="p-5 sm:p-6 bg-black/10 backdrop-blur-md">
           <form onSubmit={handleSubmit} className="space-y-6">
             {formError && (
@@ -158,7 +195,7 @@ export default function Onboarding() {
                   <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                 ) : (
                   <>
-                    Continue to Dashboard
+                    Continue
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
                   </>
                 )}
@@ -173,6 +210,7 @@ export default function Onboarding() {
             </div>
           </form>
         </div>
+        )}
       </div>
     </div>
   );
