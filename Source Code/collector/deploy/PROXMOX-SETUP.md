@@ -37,7 +37,7 @@ pct exec $ID -- bash -c "curl -fsSL https://raw.githubusercontent.com/SaveTheJob
 The install script clones `master` into `/opt/traction`, creates the `traction` user, a Python
 venv, `/etc/traction-collector/config.yaml` and the systemd timer.
 
-## 3. Add the key and limit Discover to the beta list
+## 3. Add the key
 
 Still on the Proxmox host:
 
@@ -46,11 +46,10 @@ pct push $ID /root/traction-key.json /etc/traction-collector/service-account.jso
 pct exec $ID -- chown root:traction /etc/traction-collector/service-account.json
 pct exec $ID -- chmod 640 /etc/traction-collector/service-account.json
 rm /root/traction-key.json
-pct exec $ID -- sed -i 's/^  beta_allowlist: \[\]/  beta_allowlist: ["7l0wLOQs3BdKoyUlMPqTCqhfC802"]/' /etc/traction-collector/config.yaml
 ```
 
-`beta_allowlist` holds the Firebase UIDs Discover serves. Add more UIDs to invite people;
-make it `[]` to open Discover to everyone.
+`beta_allowlist` in the config is `[]`, which serves everyone who turns Discover on. To make
+Discover invite-only, list the Firebase UIDs it should serve instead.
 
 ## 4. Check it and run once
 

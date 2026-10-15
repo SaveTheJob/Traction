@@ -11,7 +11,7 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function verified() { return signedIn() && request.auth.token.email_verified == true; }
     // Keep in sync with VITE_ADMIN_UIDS in Source Code/website/.env.local.
-    function isAdmin() { return verified() && request.auth.uid in ['7l0wLOQs3BdKoyUlMPqTCqhfC802']; }
+    function isAdmin() { return verified() && request.auth.uid in ['BTj4HcHuujN9OBkdke6FEECjU333']; }
     function isOwner(uid) { return verified() && request.auth.uid == uid; }
 
     function str(v, max) { return v is string && v.size() <= max; }

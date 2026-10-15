@@ -6,7 +6,7 @@ import {
   getDoc, getDocs, limit, orderBy, query, serverTimestamp, setDoc, updateDoc, where,
 } from "firebase/firestore";
 
-const ADMIN = "7l0wLOQs3BdKoyUlMPqTCqhfC802";
+const ADMIN = "BTj4HcHuujN9OBkdke6FEECjU333";
 let env;
 const ctx = (uid, extra = {}) =>
   env.authenticatedContext(uid, { email: `${uid}@example.com`, email_verified: true, ...extra }).firestore();
