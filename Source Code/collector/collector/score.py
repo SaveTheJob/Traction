@@ -115,7 +115,7 @@ class Scorer:
         self.exclude = _lit(profile.exclude_keywords)
         self.warm = _lit(profile.warm)
         self.target = _lit(profile.target)
-        self.blocked = _lit(profile.blocked)
+        self.hidden = _lit(profile.hidden)
         cos = cfg.get("companies") or {}
         self.cap_exempt = _rx(cos.get("cap_exempt"))
         self.defense = _rx(cos.get("defense"))
@@ -241,7 +241,7 @@ class Scorer:
 
         if post.track not in self.tracks:
             return Result(0, [], "Not a track you picked")
-        if self.blocked and self.blocked.search(post.company):
+        if self.hidden and self.hidden.search(post.company):
             return Result(0, [], "Company you hid")
         if post.degrees and not any("bachelor" in d.lower() for d in post.degrees):
             return Result(0, [], "Graduate degree required")

@@ -1,4 +1,4 @@
-# Traction collector as a container (Cloud Run Job, Docker, Podman).
+# Offerward collector as a container (Cloud Run Job, Docker, Podman).
 # The systemd install in deploy/ doesn't use this; both run the same code.
 FROM python:3.12-slim
 

@@ -1,19 +1,20 @@
-# Traction collector
+# Offerward collector
 
 Finds early-career roles, reads each posting for work-authorization requirements,
-scores them against every Traction user's Discover profile, and pushes the good ones
-into their **Discover** page. One run serves everyone. Runs twice a day on a small
+scores them against every Offerward user's Discover settings, and writes the good ones
+to their **Discover** page. One run serves everyone. Runs twice a day on a small
 Linux box (a Proxmox LXC works well) or as a Cloud Run Job.
 
 ## What it does each run
 
-1. **Loads profiles**: every `discoveryProfiles/{uid}` doc with `enabled: true` (set from
+1. **Loads settings**: every `users/{uid}/discover/settings` doc with `enabled: true` (set from
    Discover > Tune matches), limited to `traction.beta_allowlist` when that's non-empty
-2. **Adds company feeds** users requested by pasting a careers-page URL (`feedRequests`),
-   after checking the host is a known job board and the feed returns postings
+2. **Adds company feeds** users requested by pasting a careers-page URL
+   (`users/{uid}/feedRequests`), after checking the host is a known job board and the feed
+   returns postings
 3. **Gathers** postings once for everyone from
    - community lists: SimplifyJobs (Summer 2027 internships, new grad), vanshb03, speedyapply
-   - direct company feeds: the `watchlist` in config plus user-added `companyFeeds`
+   - direct company feeds: the `watchlist` in config plus user-added `feeds`
      (Workday, Greenhouse, Lever, Ashby, SmartRecruiters)
 4. **Filters** to US locations and dedupes the same role across sources
    (prefers the company's own link over an aggregator's)
@@ -27,14 +28,17 @@ Linux box (a Proxmox LXC works well) or as a Cloud Run Job.
    cap-exempt), recency. Sponsorship penalties, the defense-contractor penalty and the
    cap-exempt bonus apply only to users who said they need sponsorship; for everyone else
    those flags are informational
-7. **Pushes** each user's best open roles to `discoveries/{uid}_{roleKey}` (up to 25 on Free,
-   300 on Pro), never touching the user-owned `status`/`jobId`/`statusChangedAt` fields.
-   A card is rewritten only when its score moves 3+ points, it goes live or not, or its
-   flags change. Dismissed and inactive cards are deleted after 30 days
+7. **Writes** one `users/{uid}/discover/feed` doc per user: their top 300 open, untriaged
+   roles at or above their minimum score, plus the roles they saved (until 30 days after the
+   posting closes) and dismissed (for 30 days). Saved/dismissed marks come from
+   `users/{uid}/discover/triage`, which only the user writes; dismissals older than 180 days
+   are removed from it. The feed is rewritten only when something meaningful changed (card
+   set, a score moving 3+ points, opened/closed, flags); the last version is kept in `state.db`.
+   A feed never exceeds 400 cards or 900 KB
 8. **Notifies** (optional, per user) via Discord webhook or ntfy.sh topic with new roles at
-   or above their alert score, plus "Applied" jobs due a follow-up
-9. **Reports** to `collectorRuns/{uid}` for each user, `collectorRuns/_global` for the admin
-   portal, and `<report_dir>/latest.md` on the server
+   or above their alert score, plus applied jobs due a follow-up
+9. **Reports** to `system/health` for the admin portal and `<report_dir>/latest.md` on the
+   server. When `notify.admin_webhook` is set, a failed run or source also pings the admin
 
 Screening is a heuristic. A role without red flags is not a guarantee: always read
 the posting before applying.
@@ -44,13 +48,13 @@ the posting before applying.
 ```bash
 C=/etc/traction-collector/config.yaml
 python -m collector --config $C selftest                 # every source and config feed reachable?
-python -m collector --config $C run --dry-run            # full run for Firestore profiles, no writes
+python -m collector --config $C run --dry-run            # full run for Firestore settings, no writes
 python -m collector --config $C run                      # real run
 python -m collector --config $C run --dry-run --profile profiles/example-embedded-intern.yaml
                                                          # score for a local profile, no Firestore at all
 python -m collector --config $C top --uid <uid> --track intern -n 20   # best roles from local state
 python -m collector --config $C import-profile --uid <uid> --from profiles/example-embedded-intern.yaml
-                                                         # write a YAML profile to discoveryProfiles/<uid>
+                                                         # write a YAML profile to users/<uid>/discover/settings
 ```
 
 `import-profile --print` shows the document without writing it. It accepts the original
@@ -112,7 +116,7 @@ and units. Config and state are never touched.
 The `Dockerfile` runs the same code. On Cloud Run, skip the key file entirely: run the job
 as the `traction-collector` service account above and set `traction.service_account: ""`
 so it uses the job's own identity. State (`state.db`) must persist between runs, or every
-run re-screens and re-pushes everything, so mount a Cloud Storage bucket there and keep
+run re-screens everything and rewrites every feed, so mount a Cloud Storage bucket there and keep
 one task at a time (SQLite on a bucket mount has no locking).
 
 ```bash
@@ -137,15 +141,37 @@ The job's service account also needs `roles/storage.objectUser` on the bucket an
 
 ## Firestore
 
-The collector reads `discoveryProfiles`, `feedRequests`, `companyFeeds` and `users` (for the
-plan), and writes `discoveries`, `companyFeeds`, `feedRequests` status, `collectorMeta` and
-`collectorRuns`. Rules for these live in the repo's `firestore.rules`. The Admin SDK ignores
-rules, so client access is all they govern.
+| Path | Collector |
+|---|---|
+| `users/{uid}/discover/settings` | reads (collection-group query on `discover`, `enabled == true`) |
+| `users/{uid}/discover/triage` | reads; deletes dismissals older than 180 days, one field at a time |
+| `users/{uid}/discover/feed` | writes (the whole doc: `refreshedAt`, `totalMatches`, `cap`, `failedSources`, `cards`) |
+| `users/{uid}/feedRequests/{id}` | reads pending ones (collection-group query); writes `status`, `reason`, `feedId`, `duplicate`, `processedAt` |
+| `users/{uid}/jobs` | reads applied jobs for follow-up nudges (users with a webhook only) |
+| `feeds/{feedId}` | writes config mirrors, user-added feeds, and `status`/`earlyCareerCount`/`lastError` when they change |
+| `system/discover` | writes role-family labels and `inviteOnly` when they change |
+| `system/health` | writes `lastRun` every run |
 
-No composite indexes are needed: every query is on equality filters only.
-Each run logs its Firestore reads and writes and warns above `settings.write_warn`
-(the free tier allows 20k writes a day).
+Rules for these live in the repo's `firestore.rules`. The Admin SDK ignores rules, so client
+access is all they govern. No composite indexes are needed: the collection-group queries
+use single-field overrides in `firestore.indexes.json`, and the follow-up query filters on
+`status` only. Each run logs its Firestore reads and writes and warns above
+`settings.write_warn` (the free tier allows 20k writes a day).
 
+## Tests
+
+```bash
+.venv/bin/pip install -r requirements.txt -r requirements-dev.txt
+.venv/bin/python -m pytest -q                 # offline: scoring, profiles, feed parsing, feed building
+```
+
+The emulator test runs two full collector runs against the Firestore emulator (project
+`demo-offerward`, never the live one). From the repo's `tests/rules/` directory:
+
+```bash
+firebase emulators:start --only firestore --project demo-offerward     # leave running
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8086 .venv/bin/python -m pytest -m emulator -q   # from here
+```
 ## Tuning
 
 Infrastructure and shared lists live in `config.yaml`; what each user wants lives in their
@@ -153,10 +179,11 @@ profile, edited from the app.
 
 - `role_families`: id, label and `core`/`strong`/`ok` title lists for each family users can
   pick. A title scores from the best match across the families a user picked; `@id` pulls in
-  another family's core list. Labels show up in the app via `collectorMeta/roleFamilies`.
+  another family's core list. Labels show up in the app via `system/discover`.
 - `avoid`: titles excluded unless they match a core term (terms in a picked family don't count)
 - `companies.cap_exempt` / `companies.defense`: shared lists, used only for users who need sponsorship
-- `settings.live_cap`, `min_score_delta`, `prune_after_days`: what reaches Firestore and how often
+- `notify.admin_webhook`: optional Discord webhook or `https://ntfy.sh/<topic>` told when a run
+  or a source fails
 
 User keywords and company names are matched as literal text (escaped), never as regex.
 
@@ -179,7 +206,7 @@ Run `selftest` after editing.
 
 ## Crawling politely
 
-Requests identify as `TractionCollector/1.0 (+<app_url>)`, retry with backoff on 429/5xx
+Requests identify as `OfferwardCollector/1.0 (+<app_url>)`, retry with backoff on 429/5xx
 (honoring `Retry-After`), and job descriptions are cached for `screen.recheck_days`.
 Posting pages from third-party lists are fetched only when they resolve to public
 addresses, re-checked on every redirect. User-supplied URLs are never fetched directly.

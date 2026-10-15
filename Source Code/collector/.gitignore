@@ -4,3 +4,4 @@ service-account*.json
 latest.md
 __pycache__/
 .venv/
+.pytest_cache/

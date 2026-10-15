@@ -1,1 +1,1 @@
-"""Traction job collector."""
+"""Offerward job collector."""

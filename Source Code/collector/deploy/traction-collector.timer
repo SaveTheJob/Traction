@@ -1,5 +1,5 @@
 [Unit]
-Description=Run the Traction job collector twice a day (Phoenix time)
+Description=Run the Offerward job collector twice a day (Phoenix time)
 
 [Timer]
 # Explicit time zone, since the server itself may be in another one.

@@ -1,6 +1,6 @@
 # Example applicant profile in the original single-user format.
 #
-# Load it into Traction with:
+# Load it into Offerward with:
 #   python -m collector --config <config> import-profile --uid <firebase uid> --from profiles/example-embedded-intern.yaml
 # or score against it locally without Firestore:
 #   python -m collector --config <config> run --dry-run --profile profiles/example-embedded-intern.yaml

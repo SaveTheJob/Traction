@@ -125,31 +125,26 @@ def verify(entry: dict) -> str | None:
 
 
 def process_requests(fs, cfg: dict, known_ids: set[str]) -> dict:
-    """Handle pending feedRequests. Returns counts for the run summary."""
+    """Handle pending users/{uid}/feedRequests. Returns counts for the run summary."""
     st = cfg["settings"]["feeds"]
     deadline = time.monotonic() + st["max_seconds"]
     counts = {"added": 0, "duplicate": 0, "rejected": 0}
     per_user: dict[str, int] = {}
     added_by_user: dict[str, int] = {}
-    for req_id, req in fs.pending_feed_requests():
+    for ref, req, uid in fs.pending_feed_requests():
         if time.monotonic() > deadline:
             break  # the rest stay pending for the next run
-        uid = req.get("userId") if isinstance(req.get("userId"), str) else ""
-        if not uid:
-            fs.resolve_feed_request(req_id, "rejected", "Missing user.")
-            counts["rejected"] += 1
-            continue
         per_user[uid] = per_user.get(uid, 0) + 1
         if per_user[uid] > st["max_requests_per_run"]:
             # Answer instead of leaving them pending, so a flood can't pile up between runs.
-            fs.resolve_feed_request(req_id, "rejected", "Too many requests at once. Try again after the next refresh.")
+            fs.resolve_feed_request(ref, "rejected", "Too many requests at once. Try again after the next refresh.")
             counts["rejected"] += 1
             continue
         try:
             entry = entry_from_url(str(req.get("url") or ""), str(req.get("company") or ""))
             fid = feed_id(entry)
             if fid in known_ids:
-                fs.resolve_feed_request(req_id, "added", "Already tracked", fid, duplicate=True)
+                fs.resolve_feed_request(ref, "added", "Already tracked", fid, duplicate=True)
                 counts["duplicate"] += 1
                 continue
             if uid not in added_by_user:
@@ -160,15 +155,15 @@ def process_requests(fs, cfg: dict, known_ids: set[str]) -> dict:
             if name:
                 entry["company"] = name
             fs.add_feed(fid, entry)  # this run's gather fills in earlyCareerCount
-            fs.resolve_feed_request(req_id, "added", "", fid)
+            fs.resolve_feed_request(ref, "added", "", fid)
             known_ids.add(fid)
             added_by_user[uid] += 1
             counts["added"] += 1
         except FeedError as e:
-            fs.resolve_feed_request(req_id, "rejected", str(e))
+            fs.resolve_feed_request(ref, "rejected", str(e))
             counts["rejected"] += 1
         except Exception as e:  # never leave a request stuck on an unexpected error
-            log.warning("feed request %s failed: %s", req_id, e)
-            fs.resolve_feed_request(req_id, "rejected", "Couldn't read that careers page's job feed.")
+            log.warning("feed request %s failed: %s", ref.path, e)
+            fs.resolve_feed_request(ref, "rejected", "Couldn't read that careers page's job feed.")
             counts["rejected"] += 1
     return counts

@@ -17,7 +17,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 # Identify honestly, with a contact URL, so site operators know who is calling.
-USER_AGENT = "TractionCollector/1.0 (+https://traction-37.web.app)"
+USER_AGENT = "OfferwardCollector/1.0 (+https://traction-37.web.app)"
 
 
 class _Retry(Retry):

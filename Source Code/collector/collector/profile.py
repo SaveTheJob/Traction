@@ -1,6 +1,6 @@
 """Applicant profiles: what one user wants Discover to find.
 
-Profiles come from Firestore `discoveryProfiles/{uid}` (written by the app's
+Profiles come from Firestore `users/{uid}/discover/settings` (written by the app's
 Tune matches page) or, for local testing and the one-off import, from YAML.
 Everything is validated and size-capped here, whatever the source: rules
 validate client writes too, but the collector never trusts a document it reads.
@@ -72,11 +72,10 @@ class Profile:
     exclude_keywords: list[str] = field(default_factory=list)
     warm: list[str] = field(default_factory=list)
     target: list[str] = field(default_factory=list)
-    blocked: list[str] = field(default_factory=list)
+    hidden: list[str] = field(default_factory=list)
     min_score: int = 60
     webhook: str = ""
     notify_min_score: int = 70
-    plan: str = "free"  # from users/{uid}.plan, not from the profile doc
 
     @property
     def grad_ym(self) -> tuple[int, int] | None:
@@ -91,10 +90,10 @@ class Profile:
         terms = d.get("terms") if isinstance(d.get("terms"), dict) else {}
         locs = d.get("locations") if isinstance(d.get("locations"), dict) else {}
         cos = d.get("companies") if isinstance(d.get("companies"), dict) else {}
-        notify = d.get("notify") if isinstance(d.get("notify"), dict) else {}
+        alerts = d.get("alerts") if isinstance(d.get("alerts"), dict) else {}
         tracks = [t for t in _texts(d.get("tracks"), 2) if t in ("intern", "newgrad")]
         grad = d.get("graduation") if isinstance(d.get("graduation"), str) else ""
-        webhook = notify.get("webhook") if isinstance(notify.get("webhook"), str) else ""
+        webhook = alerts.get("webhook") if isinstance(alerts.get("webhook"), str) else ""
         return cls(
             uid=uid,
             enabled=_bool(d.get("enabled"), False),
@@ -110,14 +109,14 @@ class Profile:
             exclude_keywords=_texts(d.get("excludeKeywords"), MAX_KEYWORDS),
             warm=_texts(cos.get("warm"), MAX_COMPANIES),
             target=_texts(cos.get("target"), MAX_COMPANIES),
-            blocked=_texts(cos.get("blocked"), MAX_COMPANIES),
+            hidden=_texts(cos.get("hidden"), MAX_COMPANIES),
             min_score=_int(d.get("minScore"), 40, 90, 60),
             webhook=webhook if valid_webhook(webhook) else "",
-            notify_min_score=_int(notify.get("minScore"), 40, 100, 70),
+            notify_min_score=_int(alerts.get("minScore"), 40, 100, 70),
         )
 
     def to_doc(self) -> dict:
-        """The discoveryProfiles document shape (without updatedAt)."""
+        """The discover/settings document shape (without updatedAt)."""
         return {
             "enabled": self.enabled,
             "tracks": self.tracks,
@@ -128,9 +127,9 @@ class Profile:
             "roleFamilies": self.role_families,
             "includeKeywords": self.include_keywords,
             "excludeKeywords": self.exclude_keywords,
-            "companies": {"warm": self.warm, "target": self.target, "blocked": self.blocked},
+            "companies": {"warm": self.warm, "target": self.target, "hidden": self.hidden},
             "minScore": self.min_score,
-            "notify": {"webhook": self.webhook, "minScore": self.notify_min_score},
+            "alerts": {"webhook": self.webhook, "minScore": self.notify_min_score},
         }
 
     # -- YAML --------------------------------------------------------------
@@ -160,9 +159,9 @@ class Profile:
             "includeKeywords": p.get("include_keywords") or [],
             "excludeKeywords": p.get("exclude_keywords") or [],
             "companies": {"warm": cos.get("warm") or [], "target": cos.get("target") or [],
-                          "blocked": cos.get("blocked") or []},
+                          "hidden": cos.get("hidden") or cos.get("blocked") or []},  # `blocked`: old name
             "minScore": p.get("min_score", 60),
-            "notify": {"webhook": p.get("webhook", ""), "minScore": p.get("notify_min_score", 70)},
+            "alerts": {"webhook": p.get("webhook", ""), "minScore": p.get("notify_min_score", 70)},
         }
         return cls.from_doc(uid, doc, set(families))
 

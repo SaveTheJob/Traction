@@ -18,6 +18,7 @@ from pathlib import Path
 import yaml
 
 from . import config as C
+from .notify import send_admin_alert
 from .profile import Profile
 from .runner import run, source_label
 from .screen import screen_posting
@@ -89,8 +90,9 @@ def cmd_import_profile(cfg: dict, uid: str, path: str, print_only: bool) -> int:
     if sa and not os.path.exists(sa):
         raise SystemExit(f"Service account key not found at {sa}")
     from .firestore_sync import FirestoreSync
-    FirestoreSync(sa).write_profile(prof)
-    print(f"Wrote discoveryProfiles/{uid}:")
+    fs = FirestoreSync(sa)
+    fs.write_settings(uid, {**doc, "updatedAt": fs.fs.SERVER_TIMESTAMP})
+    print(f"Wrote users/{uid}/discover/settings:")
     print(json.dumps(doc, indent=2))
     return 0
 
@@ -101,7 +103,7 @@ def main(argv=None) -> int:
     ap.add_argument("-v", "--verbose", action="store_true")
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("run")
-    r.add_argument("--dry-run", action="store_true", help="don't write to Firestore or send digests")
+    r.add_argument("--dry-run", action="store_true", help="don't write to Firestore or send digests or alerts")
     r.add_argument("--no-screen", action="store_true", help="skip reading job descriptions")
     r.add_argument("--profile", action="append", default=[], metavar="YAML",
                    help="score for this local profile instead of Firestore profiles (dry runs only; repeatable)")
@@ -111,7 +113,7 @@ def main(argv=None) -> int:
     t.add_argument("--track", choices=["intern", "newgrad"])
     t.add_argument("--min-score", type=int, default=60)
     t.add_argument("-n", type=int, default=25)
-    ip = sub.add_parser("import-profile", help="write a YAML profile to discoveryProfiles/{uid}")
+    ip = sub.add_parser("import-profile", help="write a YAML profile to users/{uid}/discover/settings")
     ip.add_argument("--uid", required=True, help="Firebase Auth UID of the user")
     ip.add_argument("--from", dest="path", required=True, metavar="YAML")
     ip.add_argument("--print", dest="print_only", action="store_true", help="show the doc, don't write it")
@@ -128,7 +130,15 @@ def main(argv=None) -> int:
             if not args.dry_run:
                 raise SystemExit("--profile only works with --dry-run (local profiles are never pushed).")
             local = [load_profile_file(p, f"local:{Path(p).stem}", cfg) for p in args.profile]
-        summary = run(cfg, dry_run=args.dry_run, no_screen=args.no_screen, local_profiles=local)
+        admin = "" if args.dry_run else cfg["notify"]["admin_webhook"]
+        try:
+            summary = run(cfg, dry_run=args.dry_run, no_screen=args.no_screen, local_profiles=local)
+        except Exception as e:
+            send_admin_alert(admin, "Offerward collector run failed", [repr(e)[:500]])
+            raise
+        if summary["failedSources"]:
+            send_admin_alert(admin, "Offerward collector: sources failed",
+                             [f"{k}: {v[:150]}" for k, v in summary["failedSources"].items()])
         return 1 if summary["failedSources"] and not summary["sourcesOk"] else 0
     if args.cmd == "selftest":
         return cmd_selftest(cfg)

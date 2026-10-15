@@ -17,10 +17,6 @@ DEFAULTS = {
     "settings": {
         "db_path": "/var/lib/traction-collector/state.db",
         "report_dir": "/var/lib/traction-collector",
-        "live_cap": {"free": 25, "pro": 300},
-        "min_score_delta": 3,
-        "prune_after_days": 30,
-        "dismissed_memory_days": 180,
         "write_warn": 10000,
         "followup_days": 7,
         "workday_queries": ["intern", "new grad", "university graduate", "early career"],
@@ -37,6 +33,7 @@ DEFAULTS = {
             "max_seconds": 180,
         },
     },
+    "notify": {"admin_webhook": ""},
     "sources": [],
     "watchlist": [],
     "role_families": {},

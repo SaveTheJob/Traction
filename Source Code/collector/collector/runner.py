@@ -1,5 +1,5 @@
 """One collector run: gather, filter, dedupe, screen once, then score, store,
-push and notify for every user."""
+write each user's Discover feed and notify."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . import sources as S
+from .feed import CAP, build_cards, compact, expired_dismissals, needs_write, parse_triage
 from .feeds import feed_id, process_requests
 from .models import Posting, Screen
 from .notify import send_digest
@@ -24,6 +25,8 @@ from .util import SESSION, days_ago, is_us_location, now_ts
 log = logging.getLogger("collector")
 
 ATS_PREFIXES = ("workday:", "greenhouse:", "lever:", "ashby:", "smartrecruiters:")
+# The run summary fields written to system/health's lastRun (plus `at`)
+HEALTH_KEYS = ("durationSec", "rawPostings", "uniqueRoles", "usersServed", "reads", "writes", "failedSources")
 
 
 def source_label(entry: dict) -> str:
@@ -127,7 +130,7 @@ def run(cfg: dict, dry_run: bool = False, no_screen: bool = False,
         local_profiles: list[Profile] | None = None) -> dict:
     started = time.time()
     st = cfg["settings"]
-    SESSION.headers["User-Agent"] = f"TractionCollector/1.0 (+{cfg['traction']['app_url']})"
+    SESSION.headers["User-Agent"] = f"OfferwardCollector/1.0 (+{cfg['traction']['app_url']})"
     store = Store(st["db_path"])
     run_id = store.start_run()
     seen_at = now_ts()
@@ -142,7 +145,7 @@ def run(cfg: dict, dry_run: bool = False, no_screen: bool = False,
                              "For a local test without Firestore use: run --dry-run --profile <yaml>")
         from .firestore_sync import FirestoreSync
         fs = FirestoreSync(sa)
-        profiles = fs.load_profiles(cfg["role_families"], cfg["traction"]["beta_allowlist"])
+        profiles = fs.load_settings(cfg["role_families"], cfg["traction"]["beta_allowlist"])
     log.info("serving %d profile(s)", len(profiles))
 
     feed_counts: dict = {}
@@ -150,7 +153,7 @@ def run(cfg: dict, dry_run: bool = False, no_screen: bool = False,
     if fs:
         fs_feeds = fs.feeds()
         if not dry_run:
-            fs.write_role_families(cfg["role_families"], bool(cfg["traction"]["beta_allowlist"]), store)
+            fs.write_system_discover(cfg["role_families"], bool(cfg["traction"]["beta_allowlist"]), store)
             known = set(fs_feeds) | {feed_id(e) for e in cfg["watchlist"]}
             feed_counts = process_requests(fs, cfg, known)
             fs.flush()
@@ -202,39 +205,51 @@ def run(cfg: dict, dry_run: bool = False, no_screen: bool = False,
             res = scorer.score(r, cached[r.url] or Screen())
             results.append((r.key, res.score, res.reasons, res.excluded, res.tier))
         store.put_matches(prof.uid, results)
-    if fs:
-        store.drop_users_except({p.uid for p in profiles})
     store.commit()
 
-    # Users who deleted their Discover settings: remove their cards and requests too.
-    purged = 0
-    if fs and not dry_run:
-        gone = store.known_uids() - {p.uid for p in profiles}
-        gone -= fs.existing_profiles(gone) if gone else set()
-        for uid in gone:
-            try:
-                fs.purge_user(uid, store)
-                purged += 1
-            except Exception as e:
-                log.warning("purge failed for %s: %s", uid, e)
-        store.commit()
-
-    # 4) push to Traction, per user
+    # 4) write each user's Discover feed
     users: dict[str, dict] = {}
     for prof in profiles:
-        cands = store.candidates(prof.uid, prof.min_score)
-        users[prof.uid] = {"matches": len(cands), "plan": prof.plan}
+        users[prof.uid] = {"matches": len(store.candidates(prof.uid, prof.min_score))}
     if fs and not dry_run:
+        # Users no longer served (Discover turned off or deleted, account deleted, off the allowlist):
+        # delete their feed so the app stops showing it, and forget their local state only once
+        # that delete has committed (a failed batch leaves them known, so the next run retries).
+        served = {p.uid for p in profiles}
+        for uid in sorted(store.known_uids() - served):
+            fs.delete_feed(uid, after=lambda uid=uid: store.forget_user(uid))
+        try:
+            fs.flush()
+        except Exception as e:
+            log.warning("deleting feeds of users no longer served failed: %s", e)
+        store.commit()
+        lookup = _ScreenLookup(store)
         for prof in profiles:
             try:
-                res = fs.sync_user(store, prof, st, _ScreenLookup(store), new_keys)
-                store.commit()
+                now = now_ts()
+                triage = parse_triage(fs.read_triage(prof.uid))
+                live = store.candidates(prof.uid, prof.min_score)
+                triaged_rows = store.roles_by_keys(prof.uid, sorted(triage))
+                cards = build_cards(live, triaged_rows, triage, lookup.get, now)
+                expired = expired_dismissals(triage, now)
+                if expired:
+                    fs.delete_triage_keys(prof.uid, expired)
+                wrote = needs_write(store.last_feed(prof.uid), cards)
+                if wrote:
+                    fs.write_feed(prof.uid, {
+                        "refreshedAt": fs.fs.SERVER_TIMESTAMP, "totalMatches": len(live), "cap": CAP,
+                        "failedSources": len(errors), "cards": cards,
+                    })
+                fs.flush()  # per user, so one user's failed write can't take another's with it
+                if wrote:
+                    store.save_feed(prof.uid, compact(cards))
+                    store.commit()
             except Exception as e:
-                log.warning("sync failed for %s: %s", prof.uid, e)
+                log.warning("feed write failed for %s: %s", prof.uid, e)
                 users[prof.uid]["error"] = str(e)[:300]
                 continue
-            hot = res.pop("notify")
-            users[prof.uid].update(res)
+            users[prof.uid].update({"cards": len(cards), "wrote": wrote, "expired": len(expired)})
+            hot = [c for c in cards if c["roleKey"] in new_keys and c["score"] >= prof.notify_min_score]
             followups: list[dict] = []
             if prof.webhook:
                 try:
@@ -242,24 +257,16 @@ def run(cfg: dict, dry_run: bool = False, no_screen: bool = False,
                 except Exception as e:
                     log.warning("follow-up check failed for %s: %s", prof.uid, e)
                 send_digest(prof.webhook, hot, followups, cfg["traction"]["app_url"])
-            fs.write_user_run(prof.uid, {
-                "rawPostings": len(raw),
-                "uniqueRoles": len(roles),
-                "matches": users[prof.uid]["matches"],
-                "live": res["live"],
-                "cap": res["cap"],
-                "sourceErrors": errors,
-            })
         config_feeds = {feed_id(e): e for e in cfg["watchlist"]}
         current = fs.feeds()  # an admin may have removed a feed mid-run; don't recreate it
         for label, fid in label_to_fid.items():
             if fid not in config_feeds and fid not in current:
                 continue
             if fid in config_feeds and fid not in current:
-                fs.mirror_config_feed(fid, config_feeds[fid])  # so the admin table and autocomplete see it
-            fs.feed_status(fid, label in ok_sources, errors.get(label, ""), per_feed.get(label, 0))
+                fs.mirror_config_feed(fid, config_feeds[fid])
+            fs.feed_status(fid, label in ok_sources, errors.get(label, ""), per_feed.get(label, 0),
+                           current=current.get(fid))
         fs.flush()
-        store.expire_tombstones(st["dismissed_memory_days"])
         store.commit()
 
     summary = {
@@ -269,21 +276,21 @@ def run(cfg: dict, dry_run: bool = False, no_screen: bool = False,
         "screened": screened,
         "closed": len(closed),
         "usersServed": len(profiles),
-        "usersPurged": purged,
         "sourcesOk": len(ok_sources),
         "failedSources": errors,
         "feedRequests": feed_counts,
         "durationSec": round(time.time() - started, 1),
     }
     if fs:
-        summary["firestoreReads"] = fs.reads
-        summary["firestoreWrites"] = fs.writes
-        if summary["firestoreWrites"] > st["write_warn"]:
+        summary["reads"] = fs.reads
+        summary["writes"] = fs.writes
+        if summary["writes"] > st["write_warn"]:
             log.warning("this run wrote %d Firestore docs (warn above %d; free tier is 20k/day)",
-                        summary["firestoreWrites"], st["write_warn"])
+                        summary["writes"], st["write_warn"])
         if not dry_run:
-            fs.write_global_run(summary)
+            fs.write_system_health({k: summary[k] for k in HEALTH_KEYS})
             fs.flush()
+            store.commit()  # meta written by after-commit callbacks
     write_report(store, st, summary, profiles, users)
     store.finish_run(run_id, {**summary, "users": users})
     log.info("done: %s", json.dumps(summary))
@@ -307,16 +314,17 @@ class _ScreenLookup(dict):
 def write_report(store: Store, st: dict, summary: dict, profiles: list[Profile], users: dict):
     out = Path(st["report_dir"]) / "latest.md"
     out.parent.mkdir(parents=True, exist_ok=True)
-    lines = [f"# Traction collector report, {datetime.now():%Y-%m-%d %H:%M}", ""]
+    lines = [f"# Offerward collector report, {datetime.now():%Y-%m-%d %H:%M}", ""]
     lines.append(", ".join(f"{k}: {v}" for k, v in summary.items() if not isinstance(v, (list, dict))))
     if summary["failedSources"]:
         lines += ["", "## Source errors"] + [f"- {k}: {v}" for k, v in summary["failedSources"].items()]
     for prof in profiles:
         u = users.get(prof.uid, {})
         lines += ["", f"## {prof.uid}",
-                  "", f"{u.get('matches', 0)} matches at or above {prof.min_score}; plan {prof.plan}"
-                      + (f"; live {u['live']}, created {u['created']}, updated {u['updated']}, pruned {u['pruned']}"
-                         if "live" in u else "")]
+                  "", f"{u.get('matches', 0)} matches at or above {prof.min_score}"
+                      + (f"; {u['cards']} cards, feed {'written' if u['wrote'] else 'unchanged'}"
+                         if "cards" in u else "")
+                      + (f"; error: {u['error']}" if "error" in u else "")]
         for track, name in (("intern", "Internships"), ("newgrad", "New grad")):
             if track not in prof.tracks:
                 continue

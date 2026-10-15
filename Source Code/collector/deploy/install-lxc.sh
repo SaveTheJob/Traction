@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install the Traction collector inside a Debian 12 LXC (or any systemd Debian/Ubuntu box).
+# Install the Offerward collector inside a Debian 12 LXC (or any systemd Debian/Ubuntu box).
 # Run as root inside the container:
 #   bash install-lxc.sh
 # Re-running is safe: it updates the code, venv and units, and never overwrites config.

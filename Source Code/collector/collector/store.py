@@ -25,7 +25,8 @@ CREATE TABLE IF NOT EXISTS roles (
     posted_ts    REAL,
     first_seen   REAL NOT NULL,
     last_seen    REAL NOT NULL,
-    active       INTEGER NOT NULL DEFAULT 1
+    active       INTEGER NOT NULL DEFAULT 1,
+    closed_at    REAL
 );
 CREATE INDEX IF NOT EXISTS roles_active ON roles(active);
 CREATE TABLE IF NOT EXISTS screens (
@@ -43,18 +44,11 @@ CREATE TABLE IF NOT EXISTS matches (
     tier      TEXT NOT NULL,
     PRIMARY KEY (uid, key)
 );
--- What each user's discoveries/{uid}_{key} doc holds. deleted_at marks a pruned
--- dismissed doc, kept so the role isn't shown again as new.
-CREATE TABLE IF NOT EXISTS pushes (
-    uid        TEXT NOT NULL,
-    key        TEXT NOT NULL,
-    score      INTEGER NOT NULL,
-    active     INTEGER NOT NULL,
-    closed     INTEGER NOT NULL,
-    flags      TEXT NOT NULL,
-    pushed_at  REAL NOT NULL,
-    deleted_at REAL,
-    PRIMARY KEY (uid, key)
+-- Compact summary of the feed last written for each user (see feed.compact), to skip no-op writes.
+CREATE TABLE IF NOT EXISTS feeds_written (
+    uid        TEXT PRIMARY KEY,
+    cards      TEXT NOT NULL,
+    written_at REAL NOT NULL
 );
 CREATE TABLE IF NOT EXISTS runs (
     id        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -80,6 +74,10 @@ class Store:
         for col in ("score", "reasons", "excluded", "pushed_score", "pushed_active"):
             if col in cols:
                 self.db.execute(f"ALTER TABLE roles DROP COLUMN {col}")
+        if "closed_at" not in cols:
+            self.db.execute("ALTER TABLE roles ADD COLUMN closed_at REAL")
+        # Per-card pushes were replaced by one feed doc per user.
+        self.db.execute("DROP TABLE IF EXISTS pushes")
         self.db.commit()
 
     # -- screens -----------------------------------------------------------
@@ -117,7 +115,7 @@ class Store:
             return True
         self.db.execute(
             "UPDATE roles SET location=?, url=?, terms=?, category=?, sources=?, hints=?,"
-            " posted_ts=COALESCE(?, posted_ts), last_seen=?, active=1 WHERE key=?",
+            " posted_ts=COALESCE(?, posted_ts), last_seen=?, active=1, closed_at=NULL WHERE key=?",
             (post.location, post.url, json.dumps(post.terms), post.category, json.dumps(post.sources),
              json.dumps(sorted(post.hints)), post.posted_ts, seen_at, post.key),
         )
@@ -133,7 +131,7 @@ class Store:
             if srcs and srcs <= ok_sources:
                 closed.append(r["key"])
         if closed:
-            self.db.executemany("UPDATE roles SET active=0 WHERE key=?", [(k,) for k in closed])
+            self.db.executemany("UPDATE roles SET active=0, closed_at=? WHERE key=?", [(seen_at, k) for k in closed])
         return closed
 
     # -- per-user matches --------------------------------------------------
@@ -147,12 +145,6 @@ class Store:
             [(uid, k, s, json.dumps(r), e, t) for k, s, r, e, t in results],
         )
 
-    def drop_users_except(self, uids: set[str]):
-        """Forget scores for users who are no longer served (pushes are kept)."""
-        known = {r[0] for r in self.db.execute("SELECT DISTINCT uid FROM matches")}
-        for uid in known - uids:
-            self.db.execute("DELETE FROM matches WHERE uid=?", (uid,))
-
     def candidates(self, uid: str, min_score: int) -> list[sqlite3.Row]:
         """Open roles that pass this user's bar, best first."""
         return self.db.execute(
@@ -162,7 +154,7 @@ class Store:
             (uid, min_score),
         ).fetchall()
 
-    def match_rows(self, uid: str, keys: list[str]) -> dict[str, sqlite3.Row]:
+    def roles_by_keys(self, uid: str, keys: list[str]) -> dict[str, sqlite3.Row]:
         out = {}
         for i in range(0, len(keys), 500):
             chunk = keys[i:i + 500]
@@ -188,40 +180,25 @@ class Store:
         return [r[0] for r in self.db.execute("SELECT DISTINCT uid FROM matches ORDER BY uid")]
 
     def known_uids(self) -> set[str]:
-        """Every user with local state (scores or pushed cards)."""
-        return {r[0] for r in self.db.execute("SELECT uid FROM matches UNION SELECT uid FROM pushes")}
+        """Every user with local state (scores or a written feed)."""
+        return {r[0] for r in self.db.execute("SELECT uid FROM matches UNION SELECT uid FROM feeds_written")}
 
     def forget_user(self, uid: str):
         self.db.execute("DELETE FROM matches WHERE uid=?", (uid,))
-        self.db.execute("DELETE FROM pushes WHERE uid=?", (uid,))
+        self.db.execute("DELETE FROM feeds_written WHERE uid=?", (uid,))
 
-    # -- per-user pushes ---------------------------------------------------
+    # -- per-user feed -----------------------------------------------------
 
-    def pushes(self, uid: str) -> dict[str, sqlite3.Row]:
-        return {r["key"]: r for r in self.db.execute("SELECT * FROM pushes WHERE uid=?", (uid,))}
+    def last_feed(self, uid: str) -> dict | None:
+        row = self.db.execute("SELECT cards FROM feeds_written WHERE uid=?", (uid,)).fetchone()
+        return json.loads(row["cards"]) if row else None
 
-    def mark_pushed(self, uid: str, key: str, score: int, active: bool, closed: bool, flags: str):
+    def save_feed(self, uid: str, compact: dict):
         self.db.execute(
-            "INSERT INTO pushes(uid, key, score, active, closed, flags, pushed_at, deleted_at)"
-            " VALUES(?,?,?,?,?,?,?,NULL) ON CONFLICT(uid, key) DO UPDATE SET score=excluded.score,"
-            " active=excluded.active, closed=excluded.closed, flags=excluded.flags,"
-            " pushed_at=excluded.pushed_at, deleted_at=NULL",
-            (uid, key, score, int(active), int(closed), flags, now_ts()),
+            "INSERT INTO feeds_written(uid, cards, written_at) VALUES(?,?,?)"
+            " ON CONFLICT(uid) DO UPDATE SET cards=excluded.cards, written_at=excluded.written_at",
+            (uid, json.dumps(compact), now_ts()),
         )
-
-    def touch_push(self, uid: str, key: str):
-        self.db.execute("UPDATE pushes SET pushed_at=? WHERE uid=? AND key=?", (now_ts(), uid, key))
-
-    def forget_push(self, uid: str, key: str):
-        self.db.execute("DELETE FROM pushes WHERE uid=? AND key=?", (uid, key))
-
-    def tombstone_push(self, uid: str, key: str):
-        self.db.execute("UPDATE pushes SET active=0, deleted_at=? WHERE uid=? AND key=?",
-                        (now_ts(), uid, key))
-
-    def expire_tombstones(self, older_than_days: float):
-        self.db.execute("DELETE FROM pushes WHERE deleted_at IS NOT NULL AND deleted_at < ?",
-                        (now_ts() - older_than_days * 86400,))
 
     # -- meta / runs -------------------------------------------------------
 

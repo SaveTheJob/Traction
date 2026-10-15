@@ -1,7 +1,7 @@
-# Traction collector config: infrastructure only.
+# Offerward collector config: infrastructure only.
 # Copy to /etc/traction-collector/config.yaml (the install script does this) and edit.
 #
-# Who to collect for lives in Firestore: every user with an enabled `discoveryProfiles/{uid}`
+# Who to collect for lives in Firestore: every user with an enabled `users/{uid}/discover/settings`
 # doc (set from Discover > Tune matches) is served by the same run.
 # Role and company lists below are regex fragments, matched case-insensitively as whole
 # words. Anything users type in the app is matched as literal text instead.
@@ -14,12 +14,8 @@ traction:
 settings:
   db_path: /var/lib/traction-collector/state.db
   report_dir: /var/lib/traction-collector
-  live_cap: {free: 25, pro: 300}   # most live Discover cards per user, by plan
-  min_score_delta: 3               # re-push a card only when its score moves at least this much
-  prune_after_days: 30             # delete dismissed or inactive cards older than this
-  dismissed_memory_days: 180       # don't re-show a pruned dismissed role for this long
   write_warn: 10000                # warn when one run writes more than this (free tier: 20k/day)
-  followup_days: 7                 # digest nudge about "Applied" jobs older than this
+  followup_days: 7                 # digest nudge about applied jobs older than this
   workday_queries: ["intern", "new grad", "university graduate", "early career"]
   screen:
     enabled: true
@@ -31,6 +27,9 @@ settings:
     max_per_user: 20                # company feeds one user may add
     max_requests_per_run: 5         # feed requests handled per user per run; extras are rejected
     max_seconds: 180                # time budget for checking new feeds; the rest wait a run
+
+notify:
+  admin_webhook: ""   # optional Discord webhook / https://ntfy.sh/<topic>: told when a run or a source fails
 
 # ---------------------------------------------------------------------------
 # Role families. Users pick families in the app; a title earns

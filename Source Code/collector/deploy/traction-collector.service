@@ -1,5 +1,5 @@
 [Unit]
-Description=Traction job collector (find, screen and score roles; push to Traction)
+Description=Offerward job collector (find, screen and score roles; push to Offerward)
 Wants=network-online.target
 After=network-online.target
 
