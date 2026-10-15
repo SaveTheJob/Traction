@@ -6,7 +6,7 @@ validates every stored field the later rounds use, so Rounds 2–4 add screens a
 not data migrations. Field names below refer to the Round 1 spec
 (`specs/2026-10-14-firestore-restructure-design.md`).
 
-## Round 1: foundation (in progress)
+## Round 1: foundation (built and merged 2026-10-15)
 
 - **Data restructure:** Firestore moves to a `users/{uid}` tree, Discover to a single feed doc per user, plus consistent names and formats.
 - **Removals:** Pro, AI Resume and the document vault, parked in `docs/backlog.md`.
@@ -36,6 +36,22 @@ not data migrations. Field names below refer to the Round 1 spec
 - **Calendar export:** "Add to Google Calendar" link and `.ics` download for each interview and deadline.
 - **Duplicate warning** when adding a job with the same company and title (case-insensitive) as an existing one, with "open existing" or "add anyway".
 - **Source.** `source` and `sourceSite` show on cards and filter the List view.
+
+**Carried over from Round 1** (found in review, deferred):
+- **Sign-in:** a one-time bounce through `/login` right after an in-app sign-in. Fix: a `resolving` flag that ProtectedRoute and PublicRoute treat as loading.
+- **Verification while offline:** if the token refresh fails at the verification landing, the data listeners start with the old token until a reload. Fix: leave `emailVerified` false when the refresh fails.
+- **Delete account:** accounts with both password and Google sign-in must confirm with the password. Offer the Google pop-up too.
+- **Discover wording:** "Last refreshed" and "N sources failed" reflect the last feed *change*, not the last run. Publish `lastRunAt` in `system/discover`, or reword it to "Matches last changed".
+- **Collector:**
+  - purge `discover/triage` for users it no longer serves (the privacy policy promises deletion after 180 days);
+  - wrap the unserved-feed delete loop's auto-flush in the try;
+  - `resolve_feed_request` and `feed_status` use `set(merge=True)`, which can recreate a doc deleted mid-run.
+- **Small fixes:**
+  - history is capped at 50 by the rules: show a clear message on the 51st move;
+  - Dashboard bulk delete should await its deletes;
+  - ConversionFunnel double-counts saved jobs;
+  - SystemVitals should use `Promise.allSettled`.
+- **Tests:** update-path rules tests (unknown key, empty company, over-length text); a test for the extension's JSON-LD parser; `deleteAccountData` chunking.
 
 ## Round 3: network and insights
 
