@@ -7,6 +7,43 @@
     return meta ? meta.getAttribute("content") : "";
   }
 
+  const isJobPosting = (node) =>
+    [].concat(node?.["@type"] || []).includes("JobPosting");
+
+  // Walks arrays and @graph to find the first JobPosting node.
+  function findJobPosting(node) {
+    if (!node || typeof node !== "object") {
+      return null;
+    }
+    if (Array.isArray(node)) {
+      for (const child of node) {
+        const found = findJobPosting(child);
+        if (found) {
+          return found;
+        }
+      }
+      return null;
+    }
+    if (isJobPosting(node)) {
+      return node;
+    }
+    return findJobPosting(node["@graph"]);
+  }
+
+  function locationOf(item) {
+    const places = [].concat(item.jobLocation || []);
+    for (const place of places) {
+      const address = place?.address;
+      const text = [address?.addressLocality, address?.addressRegion]
+        .filter(Boolean)
+        .join(", ");
+      if (text) {
+        return text;
+      }
+    }
+    return item.jobLocationType === "TELECOMMUTE" ? "Remote" : "";
+  }
+
   function extractJobMetadata() {
     const jobData = {
       title: "",
@@ -23,36 +60,25 @@
 
     for (const script of jsonLdScripts) {
       try {
-        const data = JSON.parse(script.textContent);
-        const items = Array.isArray(data) ? data : data["@graph"] || [data];
-
-        for (const item of items) {
-          if (item["@type"] !== "JobPosting") {
-            continue;
-          }
-
-          jobData.title = item.title || jobData.title;
-
-          if (item.hiringOrganization) {
-            if (typeof item.hiringOrganization === "string") {
-              jobData.company = item.hiringOrganization;
-            } else {
-              jobData.company = item.hiringOrganization.name || jobData.company;
-            }
-          }
-
-          const address = item.jobLocation?.address;
-          if (address) {
-            jobData.location =
-              [address.addressLocality, address.addressRegion]
-                .filter(Boolean)
-                .join(", ") || jobData.location;
-          }
-
-          jobData.description = item.description || jobData.description;
-          jobData.datePosted = item.datePosted || jobData.datePosted;
-          break;
+        const item = findJobPosting(JSON.parse(script.textContent));
+        if (!item) {
+          continue;
         }
+
+        jobData.title = item.title || jobData.title;
+
+        if (item.hiringOrganization) {
+          if (typeof item.hiringOrganization === "string") {
+            jobData.company = item.hiringOrganization;
+          } else {
+            jobData.company = item.hiringOrganization.name || jobData.company;
+          }
+        }
+
+        jobData.location = locationOf(item) || jobData.location;
+        jobData.description = item.description || jobData.description;
+        jobData.datePosted = item.datePosted || jobData.datePosted;
+        break;
       } catch (error) {
         // Ignore malformed JSON-LD blocks.
       }

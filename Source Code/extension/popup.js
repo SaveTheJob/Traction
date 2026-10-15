@@ -14,6 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const saveBtn = document.getElementById("save-btn");
   const closeBtn = document.getElementById("close-btn");
   const signOutBtn = document.getElementById("signout-btn");
+  const openAppLink = document.getElementById("open-app-link");
 
   const authEmail = document.getElementById("auth-email");
   const authPassword = document.getElementById("auth-password");
@@ -27,6 +28,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const scrapeService = popupServices.scrapeService;
 
   let isSignUp = false;
+
+  // The site URL lives in config.js with the other project values.
+  const appUrl = (window.STJ_CONFIG || {}).appUrl;
+  if (appUrl) openAppLink.href = `${appUrl}/pipeline`;
+  else openAppLink.classList.add("hidden");
 
   function showMainView() {
     authView.classList.add("hidden");
@@ -167,7 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   saveBtn.addEventListener("click", async () => {
-    if (!titleInput.value || !companyInput.value) {
+    if (!titleInput.value.trim() || !companyInput.value.trim()) {
       showError("Job Title and Company are required.");
       return;
     }
@@ -185,25 +191,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const newJob = {
-        title: titleInput.value,
-        company: companyInput.value,
-        location: locationInput.value,
+        title: titleInput.value.trim(),
+        company: companyInput.value.trim(),
+        location: locationInput.value.trim(),
         priority: prioritySelect.value,
         status: statusSelect.value,
-        link: linkInput.value || null,
-        userId: session.uid,
-        dateApplied: new Intl.DateTimeFormat("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        }).format(new Date()),
+        url: linkInput.value || "",
       };
 
-      await firestoreService.saveJob(newJob, session.idToken);
+      await firestoreService.saveJob(newJob, session);
       showSuccessView();
     } catch (error) {
       console.error("Save job failed:", error);
-      showError("Failed to save to database.");
+      showError(
+        error.status === 403
+          ? "Couldn't save. Check that your email is verified and your device clock is right."
+          : "Couldn't save. Try again.",
+      );
       resetSaveButton();
     }
   });

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "SaveTheJob",
-  "version": "1.0",
-  "description": "Save jobs directly from LinkedIn, Handshake, and company websites into your SaveTheJob Dashboard.",
+  "name": "Offerward",
+  "version": "1.1",
+  "description": "Save jobs from any careers page into your Offerward pipeline.",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAy5Ml4nsefoBnunAJdBVc2sbec4WpMf1r80V0TsaYkq/r1LMFL6h9fi4BgyWZBxH9rrGRkxQlGpwyN7sQUnPNHhEsdPyDrywUkmK5SRrMjSIlQjTvGlHRI6nExYWtJms5CXM0KjlFl9L85U8NvxoYXLOCmpIP9vo1jGzjlWeCf1Wdsku/eauaObnOhdYFXiTcB25scpQlh1A+pLMv26t0v9+NPoSwcrdgVLe5BHvQHzR/vYIfWMOF1t1j5i63MQWzcBt/oNn+AmkNhKagJI0F0+AgvUEhLO1Zcc0GdRENlNtwPjQrMyBVH0nOwVYLFfNYw+FqnwL/1Y318t0gXn1WeQIDAQAB",
   "permissions": ["activeTab", "scripting", "storage", "identity"],
   "oauth2": {
@@ -24,7 +24,6 @@
     "*://*.handshake.com/*",
     "*://*.joinhandshake.com/*",
     "*://*.workday.com/*",
-    "*://*.workdayjobs.com/*",
     "*://*.greenhouse.io/*",
     "*://boards.greenhouse.io/*",
     "*://*.lever.co/*",
@@ -32,11 +31,16 @@
     "*://*.bamboohr.com/*",
     "*://*.ashbyhq.com/*",
     "*://*.smartrecruiters.com/*",
-    "*://*.icims.com/*"
+    "*://*.icims.com/*",
+    "*://*.myworkdayjobs.com/*",
+    "*://*.myworkdaysite.com/*",
+    "*://jobs.ashbyhq.com/*",
+    "*://jobs.smartrecruiters.com/*",
+    "*://jobs.eu.lever.co/*"
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "SaveTheJob",
+    "default_title": "Offerward",
     "default_icon": {
       "16": "assets/icon16.png",
       "48": "assets/icon48.png",
@@ -62,7 +66,6 @@
         "*://*.handshake.com/*",
         "*://*.joinhandshake.com/*",
         "*://*.workday.com/*",
-        "*://*.workdayjobs.com/*",
         "*://*.greenhouse.io/*",
         "*://boards.greenhouse.io/*",
         "*://*.lever.co/*",
@@ -70,7 +73,12 @@
         "*://*.bamboohr.com/*",
         "*://*.ashbyhq.com/*",
         "*://*.smartrecruiters.com/*",
-        "*://*.icims.com/*"
+        "*://*.icims.com/*",
+        "*://*.myworkdayjobs.com/*",
+        "*://*.myworkdaysite.com/*",
+        "*://jobs.ashbyhq.com/*",
+        "*://jobs.smartrecruiters.com/*",
+        "*://jobs.eu.lever.co/*"
       ],
       "css": ["css/content.css"],
       "js": ["utils/jobParser.js", "content.js"]
@@ -95,7 +103,6 @@
         "*://*.handshake.com/*",
         "*://*.joinhandshake.com/*",
         "*://*.workday.com/*",
-        "*://*.workdayjobs.com/*",
         "*://*.greenhouse.io/*",
         "*://boards.greenhouse.io/*",
         "*://*.lever.co/*",
@@ -103,7 +110,12 @@
         "*://*.bamboohr.com/*",
         "*://*.ashbyhq.com/*",
         "*://*.smartrecruiters.com/*",
-        "*://*.icims.com/*"
+        "*://*.icims.com/*",
+        "*://*.myworkdayjobs.com/*",
+        "*://*.myworkdaysite.com/*",
+        "*://jobs.ashbyhq.com/*",
+        "*://jobs.smartrecruiters.com/*",
+        "*://jobs.eu.lever.co/*"
       ]
     }
   ],

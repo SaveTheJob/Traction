@@ -10,7 +10,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
     // Or if it matches known major job boards (even if URL doesn't say "job")
     const isMajorBoard =
-      /linkedin\.com|indeed\.com|glassdoor\.com|monster\.com|ziprecruiter\.com|handshake\.com/i.test(
+      /linkedin\.com|indeed\.com|glassdoor\.com|monster\.com|ziprecruiter\.com|handshake\.com|myworkdayjobs|myworkdaysite|ashbyhq|smartrecruiters/i.test(
         tab.url,
       );
 

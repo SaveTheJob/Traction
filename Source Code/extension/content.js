@@ -22,6 +22,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       "workday.com",
       "greenhouse.io",
       "lever.co",
+      "myworkdayjobs.com",
+      "myworkdaysite.com",
+      "ashbyhq.com",
+      "smartrecruiters.com",
     ];
 
     if (knownSites.some((site) => hostname.includes(site))) {
@@ -77,7 +81,7 @@ function createSaveButton() {
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
       </svg>
-      <span>SaveTheJob</span>
+      <span>Offerward</span>
     `;
 
   btn.onclick = (e) => {
