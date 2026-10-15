@@ -1,0 +1,3 @@
+# Firestore rules tests
+
+These tests run `firestore.rules` (repo root) against the Firestore emulator with project `demo-offerward`; they never touch a live project. Install with `npm install --legacy-peer-deps`, then run `npm test`, which wraps the suite in `firebase emulators:exec --only firestore` (needs the firebase CLI and Java). If `emulators:exec` hangs, start the emulator yourself with `firebase emulators:start --only firestore --project demo-offerward` in one shell (port 8086, from this directory), then in another run `FIRESTORE_EMULATOR_HOST=127.0.0.1:8086 node --test rules.test.mjs` and stop the emulator afterwards.

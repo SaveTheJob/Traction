@@ -1,177 +1,293 @@
 rules_version = '2';
 
-// Traction Firestore rules. Deploy from the repo root: firebase deploy --only firestore
-//
-// The Firebase web config in the website and extension is public by design, so these rules
-// are the only thing between the internet and user data. Everything not matched below is
-// denied. The Discover collector writes with the Admin SDK, which bypasses these rules.
+// Offerward Firestore rules. Deploy from the repo root: firebase deploy --only firestore
+// The Firebase web config is public, so these rules are the security boundary. Anything not
+// matched is denied. The collector writes with the Admin SDK, which bypasses rules.
+// Layout and limits: docs/superpowers/specs/2026-10-14-firestore-restructure-design.md
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function signedIn() {
-      return request.auth != null;
-    }
+    function signedIn() { return request.auth != null; }
+    function verified() { return signedIn() && request.auth.token.email_verified == true; }
+    // Keep in sync with VITE_ADMIN_UIDS in Source Code/website/.env.local.
+    function isAdmin() { return verified() && request.auth.uid in ['7l0wLOQs3BdKoyUlMPqTCqhfC802']; }
+    function isOwner(uid) { return verified() && request.auth.uid == uid; }
 
-    // Firebase Auth UIDs allowed into the admin portal. Keep in sync with VITE_ADMIN_UIDS
-    // in Source Code/website/.env.local (that only shows the portal; this enforces it).
-    function isAdmin() {
-      return signedIn() && request.auth.uid in ['7l0wLOQs3BdKoyUlMPqTCqhfC802'];
+    function str(v, max) { return v is string && v.size() <= max; }
+    function reqStr(v, max) { return v is string && v.size() > 0 && v.size() <= max; }
+    function tsOrNull(v) { return v == null || v is timestamp; }
+    function nowish(arg) {
+      let t = arg;
+      return t is timestamp && t > request.time - duration.value(5, 'm') && t < request.time + duration.value(1, 'm');
     }
+    function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
 
-    function owns(data) {
-      return signedIn() && data.userId == request.auth.uid;
+    // ── Account ─────────────────────────────────────────────────────────────
+    function validGoals(g) {
+      return g is map && g.keys().hasOnly(['weeklyApplications'])
+        && (g.weeklyApplications == null
+            || (g.weeklyApplications is int && g.weeklyApplications >= 1 && g.weeklyApplications <= 100));
     }
-
-    // ── Accounts ─────────────────────────────────────────────────────────────
+    function validBirthDate(d) { return d == '' || (d is string && d.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')); }
 
     match /users/{uid} {
       allow read: if (signedIn() && request.auth.uid == uid) || isAdmin();
-      // New accounts are created by the app on first sign-in (AuthContext).
+      // Created by the app on first sign-in, before email verification.
       allow create: if signedIn() && request.auth.uid == uid
-                    && request.resource.data.keys().hasOnly(
-                         ['uid', 'email', 'firstName', 'lastName', 'dob', 'plan', 'status', 'onboardingCompleted'])
-                    && request.resource.data.uid == uid
-                    && request.resource.data.email == request.auth.token.get('email', '')
-                    && request.resource.data.plan in ['Free', 'Pro']
-                    && request.resource.data.status == 'Active';
-      // Users edit their own name, birthday and onboarding flag; plan and status are admin-only.
-      allow update: if (signedIn() && request.auth.uid == uid
-                        && request.resource.data.diff(resource.data).affectedKeys()
-                             .hasOnly(['firstName', 'lastName', 'dob', 'onboardingCompleted']))
-                    || isAdmin();
-      allow delete: if isAdmin();
+        && request.resource.data.keys().hasOnly(['email', 'firstName', 'lastName', 'birthDate', 'status',
+                                                  'onboarded', 'goals', 'createdAt', 'updatedAt'])
+        && request.resource.data.email == request.auth.token.get('email', '')
+        && str(request.resource.data.firstName, 100) && str(request.resource.data.lastName, 100)
+        && validBirthDate(request.resource.data.birthDate)
+        && request.resource.data.status == 'active'
+        && request.resource.data.onboarded is bool
+        && validGoals(request.resource.data.goals)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if (isOwner(uid)
+          && changed().hasOnly(['firstName', 'lastName', 'birthDate', 'onboarded', 'goals', 'updatedAt'])
+          && str(request.resource.data.firstName, 100) && str(request.resource.data.lastName, 100)
+          && validBirthDate(request.resource.data.birthDate)
+          && request.resource.data.onboarded is bool
+          && validGoals(request.resource.data.goals)
+          && request.resource.data.updatedAt == request.time)
+        || (isAdmin() && changed().hasOnly(['status', 'updatedAt'])
+            && request.resource.data.status in ['active', 'suspended']);
+      allow delete: if isOwner(uid);
+
+      // ── Jobs ──────────────────────────────────────────────────────────────
+      function jobStatus(s) { return s in ['saved', 'applied', 'interviewing', 'offer', 'rejected']; }
+      // Interview entries: every one of up to 20 is checked, but only `at` (timestamp) and `type` (enum).
+      // Rules allow 1000 expression evaluations per request, and the emulator's denial explanation
+      // (which does not short-circuit) must fit too; two checks per entry is what fits. Keys, round and
+      // the text fields (id, location, notes) are NOT checked here: they are the user's own data, the
+      // 1 MiB document limit bounds them, and the UI and extension write and cap them.
+      function validInterviews(arg) {
+        let l = arg;
+        let n = l.size();
+        return l is list && n <= 20
+          && (n < 1 || (l[0].at is timestamp && l[0].type.matches('phone|video|onsite|technical|other') && (n < 2 || (l[1].at is timestamp && l[1].type.matches('phone|video|onsite|technical|other') && (n < 3 || (l[2].at is timestamp && l[2].type.matches('phone|video|onsite|technical|other') && (n < 4 || (l[3].at is timestamp && l[3].type.matches('phone|video|onsite|technical|other') && (n < 5 || (l[4].at is timestamp && l[4].type.matches('phone|video|onsite|technical|other') && (n < 6 || (l[5].at is timestamp && l[5].type.matches('phone|video|onsite|technical|other') && (n < 7 || (l[6].at is timestamp && l[6].type.matches('phone|video|onsite|technical|other') && (n < 8 || (l[7].at is timestamp && l[7].type.matches('phone|video|onsite|technical|other') && (n < 9 || (l[8].at is timestamp && l[8].type.matches('phone|video|onsite|technical|other') && (n < 10 || (l[9].at is timestamp && l[9].type.matches('phone|video|onsite|technical|other') && (n < 11 || (l[10].at is timestamp && l[10].type.matches('phone|video|onsite|technical|other') && (n < 12 || (l[11].at is timestamp && l[11].type.matches('phone|video|onsite|technical|other') && (n < 13 || (l[12].at is timestamp && l[12].type.matches('phone|video|onsite|technical|other') && (n < 14 || (l[13].at is timestamp && l[13].type.matches('phone|video|onsite|technical|other') && (n < 15 || (l[14].at is timestamp && l[14].type.matches('phone|video|onsite|technical|other') && (n < 16 || (l[15].at is timestamp && l[15].type.matches('phone|video|onsite|technical|other') && (n < 17 || (l[16].at is timestamp && l[16].type.matches('phone|video|onsite|technical|other') && (n < 18 || (l[17].at is timestamp && l[17].type.matches('phone|video|onsite|technical|other') && (n < 19 || (l[18].at is timestamp && l[18].type.matches('phone|video|onsite|technical|other') && (n < 20 || (l[19].at is timestamp && l[19].type.matches('phone|video|onsite|technical|other')))))))))))))))))))))))))))))))))))))))));
+      }
+
+      function validFromDiscover(arg) {
+        let f = arg;
+        return f == null
+          || (f is map && f.keys().hasOnly(['roleKey', 'fitScore']) && reqStr(f.roleKey, 64) && f.fitScore is int);
+      }
+      // Everything except the interviews list (validated separately, only when it can have changed).
+      function validJobFields(arg) {
+        let d = arg;
+        return d.keys().hasOnly(['company', 'title', 'location', 'url', 'status', 'priority', 'notes', 'salary',
+                                 'source', 'sourceSite', 'description', 'deadlineAt', 'appliedAt', 'followedUpAt',
+                                 'history', 'interviews', 'fromDiscover', 'createdAt', 'updatedAt'])
+          && reqStr(d.company, 200) && reqStr(d.title, 200) && str(d.location, 200) && str(d.url, 2000)
+          && jobStatus(d.status) && d.priority in ['high', 'medium', 'low']
+          && str(d.notes, 5000) && str(d.salary, 100)
+          && d.source in ['manual', 'extension', 'discover'] && str(d.sourceSite, 200)
+          && str(d.description, 30000)
+          && tsOrNull(d.deadlineAt) && tsOrNull(d.appliedAt) && tsOrNull(d.followedUpAt)
+          && d.history is list && d.history.size() >= 1 && d.history.size() <= 50
+          && validFromDiscover(d.fromDiscover);
+      }
+      function validJobCreate(arg) {
+        let d = arg;
+        return validJobFields(d) && validInterviews(d.interviews)
+          && d.history.size() == 1
+          && d.history[0].keys().hasOnly(['status', 'at'])
+          && d.history[0].status == d.status
+          && nowish(d.history[0].at)
+          && (d.status != 'applied' || d.appliedAt == request.time)
+          && d.createdAt == request.time
+          && d.updatedAt == request.time;
+      }
+      function validJobText(nArg, ch) {
+        let n = nArg;
+        return (!ch.hasAny(['company']) || reqStr(n.company, 200))
+          && (!ch.hasAny(['title']) || reqStr(n.title, 200))
+          && (!ch.hasAny(['location']) || str(n.location, 200))
+          && (!ch.hasAny(['url']) || str(n.url, 2000))
+          && (!ch.hasAny(['priority']) || n.priority in ['high', 'medium', 'low'])
+          && (!ch.hasAny(['notes']) || str(n.notes, 5000))
+          && (!ch.hasAny(['salary']) || str(n.salary, 100))
+          && (!ch.hasAny(['sourceSite']) || str(n.sourceSite, 200))
+          && (!ch.hasAny(['description']) || str(n.description, 30000));
+      }
+      // Updates validate only the fields a write changes (plus the key set and history), which keeps
+      // every valid write inside Firestore's 1000-expression rules budget.
+      function validJobUpdate(nArg, oArg) {
+        let n = nArg;
+        let o = oArg;
+        let ch = n.diff(o).affectedKeys();
+        let h = n.history;
+        // source and createdAt are immutable; any unknown key shows up in ch and is rejected.
+        return ch.hasOnly(['company', 'title', 'location', 'url', 'status', 'priority', 'notes', 'salary',
+                           'sourceSite', 'description', 'deadlineAt', 'appliedAt', 'followedUpAt',
+                           'history', 'interviews', 'fromDiscover', 'updatedAt'])
+          && (!ch.hasAny(['company', 'title', 'location', 'url', 'priority', 'notes', 'salary', 'sourceSite',
+                          'description']) || validJobText(n, ch))
+          && (!ch.hasAny(['status']) || jobStatus(n.status))
+          && (!ch.hasAny(['deadlineAt', 'appliedAt', 'followedUpAt'])
+              || (tsOrNull(n.deadlineAt) && tsOrNull(n.appliedAt) && tsOrNull(n.followedUpAt)))
+          && (!ch.hasAny(['fromDiscover']) || validFromDiscover(n.fromDiscover))
+          && (!ch.hasAny(['interviews']) || validInterviews(n.interviews))
+          && h is list && h.size() >= 1 && h.size() <= 50
+          && n.updatedAt == request.time
+          && (
+            // status unchanged: history untouched
+            (n.status == o.status && h == o.history)
+            ||
+            // status changed: append exactly one matching entry
+            (n.status != o.status
+              && h.size() == o.history.size() + 1
+              && h[0:o.history.size()] == o.history
+              && h[h.size() - 1].keys().hasOnly(['status', 'at'])
+              && h[h.size() - 1].status == n.status
+              && nowish(h[h.size() - 1].at))
+          );
+      }
+
+      match /jobs/{jobId} {
+        allow read, delete: if isOwner(uid) || isAdmin();
+        allow create: if (isOwner(uid) || isAdmin()) && validJobCreate(request.resource.data);
+        allow update: if (isOwner(uid) || isAdmin()) && validJobUpdate(request.resource.data, resource.data);
+      }
+
+      // ── Contacts ──────────────────────────────────────────────────────────
+      function validContact(d) {
+        return d.keys().hasOnly(['name', 'role', 'company', 'email', 'linkedinUrl', 'strength', 'lastContactedAt',
+                                 'checkInEveryDays', 'jobIds', 'interactions', 'notes', 'createdAt', 'updatedAt'])
+          && reqStr(d.name, 200) && str(d.role, 200) && str(d.company, 200) && str(d.email, 200)
+          && str(d.linkedinUrl, 300) && (d.linkedinUrl == '' || d.linkedinUrl.matches('https://.*'))
+          && d.strength in ['hot', 'warm', 'cold']
+          && tsOrNull(d.lastContactedAt)
+          && (d.checkInEveryDays == null
+              || (d.checkInEveryDays is int && d.checkInEveryDays >= 7 && d.checkInEveryDays <= 365))
+          && d.jobIds is list && d.jobIds.size() <= 50
+          && d.interactions is list && d.interactions.size() <= 100
+          && str(d.notes, 5000);
+      }
+      match /contacts/{contactId} {
+        allow read, delete: if isOwner(uid) || isAdmin();
+        allow create: if (isOwner(uid) || isAdmin()) && validContact(request.resource.data)
+          && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
+        allow update: if (isOwner(uid) || isAdmin()) && validContact(request.resource.data)
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.updatedAt == request.time;
+      }
+
+      // ── Notifications to this user ────────────────────────────────────────
+      match /notifications/{id} {
+        allow read: if isOwner(uid) || isAdmin();
+        allow update: if isOwner(uid) && changed().hasOnly(['read']) && request.resource.data.read is bool;
+        allow delete: if isOwner(uid) || isAdmin();
+        allow create: if isAdmin()
+          && request.resource.data.keys().hasOnly(['message', 'type', 'read', 'createdAt'])
+          && reqStr(request.resource.data.message, 1000)
+          && request.resource.data.type in ['info', 'success', 'warning']
+          && request.resource.data.read == false
+          && request.resource.data.createdAt == request.time;
+      }
+
+      // ── "Add a careers page" requests (answered by the collector) ─────────
+      match /feedRequests/{id} {
+        allow read: if isOwner(uid) || isAdmin();
+        allow delete: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && request.resource.data.keys().hasOnly(['company', 'url', 'status', 'createdAt'])
+          && str(request.resource.data.company, 80) && reqStr(request.resource.data.url, 500)
+          && request.resource.data.status == 'pending'
+          && request.resource.data.createdAt == request.time;
+      }
+
+      // ── Discover ──────────────────────────────────────────────────────────
+      function validSettings(d) {
+        return d.keys().hasOnly(['enabled', 'tracks', 'graduation', 'terms', 'needsSponsorship', 'locations',
+                                 'roleFamilies', 'includeKeywords', 'excludeKeywords', 'companies', 'minScore',
+                                 'alerts', 'updatedAt'])
+          && d.enabled is bool
+          && d.tracks is list && d.tracks.size() <= 2 && d.tracks.hasOnly(['intern', 'newgrad'])
+          && d.graduation is string && (d.graduation == '' || d.graduation.matches('20[0-9]{2}-(0[1-9]|1[0-2])'))
+          && d.terms is map && d.terms.keys().hasOnly(['available', 'partTime'])
+          && d.terms.available is list && d.terms.available.size() <= 12
+          && d.terms.partTime is list && d.terms.partTime.size() <= 12
+          && d.needsSponsorship is bool
+          && d.locations is map && d.locations.keys().hasOnly(['preferred', 'remoteOk'])
+          && d.locations.preferred is list && d.locations.preferred.size() <= 50 && d.locations.remoteOk is bool
+          && d.roleFamilies is list && d.roleFamilies.size() <= 20
+          && d.includeKeywords is list && d.includeKeywords.size() <= 50
+          && d.excludeKeywords is list && d.excludeKeywords.size() <= 50
+          && d.companies is map && d.companies.keys().hasOnly(['warm', 'target', 'hidden'])
+          && d.companies.warm is list && d.companies.warm.size() <= 100
+          && d.companies.target is list && d.companies.target.size() <= 100
+          && d.companies.hidden is list && d.companies.hidden.size() <= 100
+          && d.minScore is int && d.minScore >= 40 && d.minScore <= 90
+          && d.alerts is map && d.alerts.keys().hasOnly(['webhook', 'minScore']) && d.alerts.webhook is string
+          && (d.alerts.webhook == ''
+              || d.alerts.webhook.matches('https://((ptb|canary)[.])?discord(app)?[.]com/api/webhooks/[0-9]+/[A-Za-z0-9_-]+')
+              || d.alerts.webhook.matches('https://ntfy[.]sh/[A-Za-z0-9_-]{1,64}'))
+          && d.alerts.minScore is int && d.alerts.minScore >= 40 && d.alerts.minScore <= 100
+          && d.updatedAt == request.time;
+      }
+      match /discover/settings {
+        allow read: if isOwner(uid) || isAdmin();
+        allow create, update: if isOwner(uid) && validSettings(request.resource.data);
+        allow delete: if isOwner(uid);
+      }
+      match /discover/feed {
+        allow read: if isOwner(uid) || isAdmin();
+        allow delete: if isOwner(uid);
+      }
+      // One entry changes per write. Entry values are validated by the collector
+      // (rules cannot extract the single changed key from a map).
+      match /discover/triage {
+        allow read: if isOwner(uid) || isAdmin();
+        allow delete: if isOwner(uid);
+        allow create: if isOwner(uid)
+          && request.resource.data.keys().hasOnly(['cards', 'updatedAt'])
+          && request.resource.data.cards is map && request.resource.data.cards.size() <= 1
+          && request.resource.data.updatedAt == request.time;
+        allow update: if isOwner(uid)
+          && request.resource.data.keys().hasOnly(['cards', 'updatedAt'])
+          && request.resource.data.cards is map && request.resource.data.cards.size() <= 2000
+          && request.resource.data.cards.diff(resource.data.cards).affectedKeys().size() <= 1
+          && request.resource.data.updatedAt == request.time;
+      }
     }
 
-    // ── Applications (web app and Chrome extension) ──────────────────────────
-
-    function validJobStatus(s) {
-      // "Wishlist" is the old name for "Saved"; older extension versions still send it.
-      return s in ['Saved', 'Applied', 'Interviewing', 'Offer', 'Rejected', 'Wishlist'];
-    }
-    function jobFields() {
-      return ['company', 'title', 'location', 'link', 'dateApplied', 'priority', 'status', 'notes',
-              'documents', 'userId', 'createdAt', 'discoveryId', 'fitScore', 'followedUpAt'];
-    }
-
-    match /jobs/{jobId} {
-      allow read, delete: if owns(resource.data) || isAdmin();
-      allow create: if (owns(request.resource.data) || isAdmin())
-                    && request.resource.data.keys().hasOnly(jobFields())
-                    && validJobStatus(request.resource.data.status);
-      allow update: if (owns(resource.data) || isAdmin())
-                    && request.resource.data.userId == resource.data.userId
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(jobFields())
-                    && validJobStatus(request.resource.data.status);
-    }
-
-    match /contacts/{contactId} {
-      allow read, delete: if owns(resource.data) || isAdmin();
-      allow create: if owns(request.resource.data) || isAdmin();
-      allow update: if (owns(resource.data) || isAdmin())
-                    && request.resource.data.userId == resource.data.userId;
-    }
-
-    // ── Admin portal ─────────────────────────────────────────────────────────
-
-    // Broadcasts: everyone reads the global ones and their own; only admins send.
-    match /notifications/{id} {
-      allow read: if (signedIn() && resource.data.targetUserId in ['GLOBAL', request.auth.uid]) || isAdmin();
-      allow create: if isAdmin()
-                    && request.resource.data.keys().hasOnly(['message', 'targetUserId', 'type', 'createdAt']);
-      allow update, delete: if isAdmin();
-    }
-
-    match /admin_logs/{id} {
-      allow read, create: if isAdmin();
-      allow update, delete: if false;
-    }
-
-    match /vitals/{id} {
+    // Admin reads across every user's jobs (counts, "today by hour").
+    match /{path=**}/jobs/{jobId} {
       allow read: if isAdmin();
-      allow write: if false;
     }
 
-    // ── Discover ─────────────────────────────────────────────────────────────
-
-    // One card per role per user. Users may only triage their own cards.
-    match /discoveries/{id} {
-      allow read: if owns(resource.data) || isAdmin();
-      allow update: if owns(resource.data)
-                    && request.resource.data.diff(resource.data).affectedKeys()
-                         .hasOnly(['status', 'jobId', 'statusChangedAt'])
-                    && request.resource.data.status in ['new', 'saved', 'dismissed']
-                    && (!('jobId' in request.resource.data) || request.resource.data.jobId is string)
-                    && request.resource.data.statusChangedAt == request.time;
-      allow create, delete: if false;
+    // ── Shared, collector-written ───────────────────────────────────────────
+    match /feeds/{feedId} {
+      allow read: if signedIn();
+      allow delete: if isAdmin() && resource.data.origin == 'user';
     }
-
-    // What each user wants Discover to find. Sizes mirror the collector's caps; the
-    // collector re-validates every field it reads.
-    function validDiscoveryProfile(d) {
-      return d.keys().hasOnly(['enabled', 'tracks', 'graduation', 'terms', 'needsSponsorship',
-                               'locations', 'roleFamilies', 'includeKeywords', 'excludeKeywords',
-                               'companies', 'minScore', 'notify', 'updatedAt'])
-        && d.enabled is bool
-        && d.tracks is list && d.tracks.size() <= 2 && d.tracks.hasOnly(['intern', 'newgrad'])
-        && d.graduation is string && (d.graduation == '' || d.graduation.matches('20[0-9]{2}-(0[1-9]|1[0-2])'))
-        && d.terms is map && d.terms.keys().hasOnly(['available', 'partTime'])
-        && d.terms.available is list && d.terms.available.size() <= 12
-        && d.terms.partTime is list && d.terms.partTime.size() <= 12
-        && d.needsSponsorship is bool
-        && d.locations is map && d.locations.keys().hasOnly(['preferred', 'remoteOk'])
-        && d.locations.preferred is list && d.locations.preferred.size() <= 50
-        && d.locations.remoteOk is bool
-        && d.roleFamilies is list && d.roleFamilies.size() <= 20
-        && d.includeKeywords is list && d.includeKeywords.size() <= 50
-        && d.excludeKeywords is list && d.excludeKeywords.size() <= 50
-        && d.companies is map && d.companies.keys().hasOnly(['warm', 'target', 'blocked'])
-        && d.companies.warm is list && d.companies.warm.size() <= 100
-        && d.companies.target is list && d.companies.target.size() <= 100
-        && d.companies.blocked is list && d.companies.blocked.size() <= 100
-        && d.minScore is int && d.minScore >= 40 && d.minScore <= 90
-        && d.notify is map && d.notify.keys().hasOnly(['webhook', 'minScore'])
-        && d.notify.webhook is string
-        && (d.notify.webhook == ''
-            || d.notify.webhook.matches('https://((ptb|canary)[.])?discord(app)?[.]com/api/webhooks/[0-9]+/[A-Za-z0-9_-]+')
-            || d.notify.webhook.matches('https://ntfy[.]sh/[A-Za-z0-9_-]{1,64}'))
-        && d.notify.minScore is int && d.notify.minScore >= 40 && d.notify.minScore <= 100
-        && d.updatedAt == request.time;
-    }
-    match /discoveryProfiles/{uid} {
-      allow read: if (signedIn() && request.auth.uid == uid) || isAdmin();
-      allow create, update: if signedIn() && request.auth.uid == uid
-                            && validDiscoveryProfile(request.resource.data);
-      allow delete: if signedIn() && request.auth.uid == uid;
-    }
-
-    // "Add a careers page": users file a request; the collector validates and answers it.
-    match /feedRequests/{id} {
-      allow read: if owns(resource.data) || isAdmin();
-      allow create: if owns(request.resource.data)
-                    && request.resource.data.keys().hasOnly(['userId', 'company', 'url', 'createdAt', 'status'])
-                    && request.resource.data.status == 'pending'
-                    && request.resource.data.company is string && request.resource.data.company.size() <= 80
-                    && request.resource.data.url is string && request.resource.data.url.size() <= 500
-                    && request.resource.data.createdAt == request.time;
-      allow update, delete: if false;
-    }
-
-    // Shared, collector-written. Admins may remove a feed from the admin portal.
-    match /companyFeeds/{feedId} {
+    match /broadcasts/{id} {
       allow read: if signedIn();
       allow delete: if isAdmin();
-      allow create, update: if false;
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly(['message', 'type', 'createdBy', 'createdAt'])
+        && reqStr(request.resource.data.message, 1000)
+        && request.resource.data.type in ['info', 'success', 'warning']
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time;
     }
-    match /collectorMeta/{docId} {
+    match /adminLogs/{id} {
+      allow read: if isAdmin();
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly(['action', 'actorUid', 'actorEmail', 'target', 'outcome', 'createdAt'])
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.outcome in ['success', 'blocked', 'error']
+        && request.resource.data.createdAt == request.time;
+    }
+    match /system/discover {
       allow read: if signedIn();
-      allow write: if false;
     }
-
-    // Per-user run summaries; `_global` (run health) is admin-only.
-    match /collectorRuns/{uid} {
-      allow read: if (signedIn() && request.auth.uid == uid) || isAdmin();
-      allow write: if false;
+    match /system/health {
+      allow read: if isAdmin();
     }
   }
 }
