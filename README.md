@@ -1,87 +1,109 @@
-# SaveTheJob
+# Offerward
 
-SaveTheJob is a comprehensive job application tracking tool designed to streamline your job search process. It consists of two main components: a Chrome Extension for easily scraping job postings directly from popular job boards, and a React-based web dashboard for managing your application pipeline, network, and analytics.
+Offerward is a job-search workspace for early-career candidates. A Chrome extension saves postings from careers pages into your account, a React dashboard tracks them through a pipeline alongside your network and analytics, and a collector service finds and scores matching roles for your Discover page. Everything is stored in Firebase (Auth, Firestore, Hosting) and protected by Firestore security rules.
 
 ## Features
 
-### Chrome Extension
-- **One-Click Job Scraping**: Automatically extract job titles, company names, and locations from job postings.
-- **Supported Platforms**: Currently supports scraping from LinkedIn, Indeed, and Handshake.
-- **Seamless Integration**: Saves scraped job details directly to your SaveTheJob account via Firebase.
-- **Google Authentication**: Easy sign-in using your Google account.
+- **Pipeline:** a drag-and-drop board of your applications. Each status change is recorded, and applications waiting on a reply get follow-up reminders. Interview tracking is coming.
+- **Network:** your contacts, with how warm each one is and when you last spoke. Logging individual interactions is coming.
+- **Analytics:** charts of your search progress.
+- **Discover:** roles found by the collector, scored against your own settings (Tune matches), with a cap of 300 cards. You can save or dismiss each one.
+- **Extension:** saves the job you are viewing to your pipeline in one click, signed in with your Google account. It runs on these sites (from `manifest.json`): LinkedIn, Indeed, Glassdoor, Monster, ZipRecruiter, Handshake (handshake.com, joinhandshake.com), Workday (workday.com, myworkdayjobs.com, myworkdaysite.com), Greenhouse, Lever (including jobs.eu.lever.co), BambooHR, Ashby, SmartRecruiters and iCIMS.
 
-### Web Dashboard
-- **Application Pipeline**: Visualize and manage your job applications using a drag-and-drop Kanban board (powered by `@hello-pangea/dnd`).
-- **Network Management**: Keep track of your professional contacts and interactions.
-- **Analytics**: Gain insights into your job search progress with interactive charts (powered by `recharts`).
-- **Secure Authentication**: User authentication and data storage handled securely by Firebase.
+## Repository layout
 
-## Tech Stack
+| Path | What is in it |
+| --- | --- |
+| `Source Code/website` | React 19 + TypeScript + Vite + Tailwind dashboard |
+| `Source Code/extension` | Manifest V3 Chrome extension |
+| `Source Code/collector` | Python job collector for Discover (see its README) |
+| `firestore.rules`, `firestore.indexes.json`, `firebase.json` | Firestore rules, indexes and Firebase config |
+| `tests/` | Rules tests (`tests/rules`) and the extension commit test (`tests/extension`) |
+| `docs/` | Roadmap, backlog, owner checklist, specs and plans |
 
-### Extension
-- Manifest V3
-- Chrome Extensions API (`activeTab`, `scripting`, `storage`, `identity`)
-- Firebase (Auth, Firestore)
+## Getting started
 
-### Website
-- **Frontend Framework**: React 19
-- **Language**: TypeScript
-- **Build Tool**: Vite
-- **Styling**: Tailwind CSS v4
-- **Routing**: React Router v7
-- **Icons**: Lucide React
-- **Backend/BaaS**: Firebase (Authentication, Firestore, Hosting)
+Needs Node.js. For the tests you also need the Firebase CLI and Java (for the Firestore emulator), and Python 3 for the collector.
 
-## Project Structure
-
-The project is organized as a monorepo with two main directories:
-
-```
-SaveTheJob/
-├── Source Code/
-│   ├── extension/      # Chrome Extension source code
-│   └── website/        # React Web Dashboard source code
-└── README.md
+```bash
+cd "Source Code/website"
+npm ci
 ```
 
-## Getting Started
+Create `Source Code/website/.env.local` with your Firebase web config and site settings:
 
-### Prerequisites
-- Node.js installed on your machine.
-- A Firebase project set up with Authentication (Google & Email/Password) and Firestore enabled.
+```
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
+VITE_FIREBASE_MEASUREMENT_ID=
+VITE_ADMIN_UIDS=      # comma-separated Firebase Auth UIDs allowed into the admin portal
+VITE_APP_URL=         # the site's public URL
+VITE_CONTACT_EMAIL=   # shown in the privacy policy
+```
 
-### Setting up the Web Dashboard
+Then start the dev server:
 
-1. Navigate to the website directory:
-   ```bash
-   cd "Source Code/website"
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
+```bash
+npm run dev
+```
 
-### Setting up the Chrome Extension
+To try the extension, open `chrome://extensions/`, turn on Developer mode, choose **Load unpacked** and select `Source Code/extension`.
 
-1. Open Google Chrome and navigate to `chrome://extensions/`.
-2. Enable **Developer mode** in the top right corner.
-3. Click **Load unpacked** and select the `Source Code/extension` directory.
-4. The SaveTheJob extension should now appear in your browser toolbar.
+## Tests
 
-## Deployment
+Website (from `Source Code/website`):
 
-The web dashboard is configured to be deployed using Firebase Hosting.
+```bash
+npm run lint
+npm test
+npx tsc -b
+```
 
-1. Ensure you have the Firebase CLI installed: `npm install -g firebase-tools`
-2. Login to Firebase: `firebase login`
-3. Build the website: `cd "Source Code/website" && npm run build`
-4. Deploy the site from `Source Code/website`: `firebase deploy --only hosting`
-5. Deploy the Firestore security rules and indexes from the repo root: `firebase deploy --only firestore`
+Firestore rules (from `tests/rules`; runs against the emulator with project `demo-offerward`, never a live project):
 
-The Firebase web config is public by design, so `firestore.rules` is what protects user data.
-Admins are listed by Firebase Auth UID in `firestore.rules` (`isAdmin`) and in `VITE_ADMIN_UIDS`
-in `Source Code/website/.env.local`; keep the two in sync.
+```bash
+npm ci   # first time only
+npm test
+```
+
+Extension commit test, which checks that what the extension writes is accepted by the rules. From `tests/rules`, with the emulator running (`firebase emulators:start --only firestore --project demo-offerward`):
+
+```bash
+node --test ../extension/commit.test.mjs
+```
+
+Collector (from `Source Code/collector`, with the virtualenv set up by `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt -r requirements-dev.txt`):
+
+```bash
+.venv/bin/python -m pytest -q                  # unit tests
+.venv/bin/python -m pytest -m emulator -q      # needs the emulator: FIRESTORE_EMULATOR_HOST=127.0.0.1:8086
+```
+
+## Deploy
+
+Deploys go to the live Firebase project, so only run them on purpose.
+
+- **Rules and indexes**, from the repo root: `firebase deploy --only firestore`
+- **Website**, from `Source Code/website`: `npm run build && firebase deploy --only hosting`
+- **Extension:** zip the contents of `Source Code/extension` into `dist/offerward-extension-<version>.zip` (the zip root holds `manifest.json`) and upload it in the Chrome Web Store developer dashboard.
+- **Collector:** follow `Source Code/collector/deploy/PROXMOX-SETUP.md`.
+
+## Data model
+
+The Firestore structure, field names and limits are defined in [`docs/superpowers/specs/2026-10-14-firestore-restructure-design.md`](docs/superpowers/specs/2026-10-14-firestore-restructure-design.md).
+
+## Roadmap
+
+See [`docs/roadmap.md`](docs/roadmap.md). Parked features are in [`docs/backlog.md`](docs/backlog.md), and things only the owner can do are in [`docs/owner-checklist.md`](docs/owner-checklist.md).
+
+## Admins
+
+Admins are listed by Firebase Auth UID in `isAdmin` in `firestore.rules` and in `VITE_ADMIN_UIDS` in `Source Code/website/.env.local`. Keep the two in sync: the rules decide what an admin can do, and the env var only decides who sees the admin screens.
+
+## Security
+
+The Firebase web config is public by design, so `firestore.rules` is the security boundary: every user can only reach their own `users/{uid}` data. Never commit service-account keys or other secrets (the collector's key lives outside the repo, for example in `~/.config/traction/`).

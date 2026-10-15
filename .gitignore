@@ -27,3 +27,12 @@ dist-ssr
 service-account*.json
 *-service-account*.json
 traction-37-*.json
+tests/rules/node_modules/
+tests/rules/firestore-debug.log
+
+# Build and deploy artifacts
+.firebase/
+Source Code/website/.firebase/
+dist/
+extension.zip
+tests/rules/node_modules/
