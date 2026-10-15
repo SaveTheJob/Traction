@@ -1,17 +1,16 @@
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+/* eslint-disable @typescript-eslint/no-explicit-any -- catch clauses and third-party config objects have no useful static type here */
+import { addDoc, serverTimestamp } from "firebase/firestore";
 import { AlertTriangle, Radio, Send } from "lucide-react";
 import React, { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { recordAdminLog } from "../../lib/adminLogger";
-import { db } from "../../lib/firebase";
+import { refs, type NoticeType } from "../../lib/db";
 
 const BroadcastControl: React.FC = () => {
   const { user } = useAuth();
   const [message, setMessage] = useState("");
   const [targetUid, setTargetUid] = useState("");
-  const [type, setType] = useState<
-    "info" | "warning" | "error" | "success" | "update"
-  >("info");
+  const [type, setType] = useState<NoticeType>("info");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
 
@@ -19,18 +18,26 @@ const BroadcastControl: React.FC = () => {
     if (!message.trim()) return;
     setLoading(true);
     try {
-      await addDoc(collection(db, "notifications"), {
-        message: message.trim(),
-        targetUserId: targetUid.trim() || "GLOBAL",
-        type: type,
-        createdAt: serverTimestamp(),
-      });
+      const target = targetUid.trim();
+      if (target) {
+        await addDoc(refs.notifications(target), {
+          message: message.trim(),
+          type,
+          read: false,
+          createdAt: serverTimestamp(),
+        });
+      } else {
+        await addDoc(refs.broadcasts(), {
+          message: message.trim(),
+          type,
+          createdBy: user?.uid,
+          createdAt: serverTimestamp(),
+        });
+      }
 
       recordAdminLog(
         targetUid.trim() ? "DIRECT_BROADCAST" : "GLOBAL_BROADCAST",
-        user?.email || "Unknown",
-        targetUid.trim() || "ALL_USERS",
-        "SUCCESS",
+        targetUid.trim() || "all",
       );
 
       setStatus("Transmission Successful");
@@ -77,6 +84,7 @@ const BroadcastControl: React.FC = () => {
               placeholder="Type your broadcast message here..."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
+              maxLength={1000}
               className="w-full px-4 py-3.5 bg-black/20 border border-white/10 rounded-2xl text-sm font-medium text-white outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/30 transition-all h-32 resize-none placeholder:text-slate-300"
             />
           </div>
@@ -114,16 +122,16 @@ const BroadcastControl: React.FC = () => {
                       activeBg: "bg-amber-500/10 border-amber-500/20",
                     },
                     {
-                      key: "error",
-                      label: "Critical",
-                      color: "text-red-400",
-                      activeBg: "bg-red-500/10 border-red-500/20",
+                      key: "success",
+                      label: "Success",
+                      color: "text-emerald-400",
+                      activeBg: "bg-emerald-500/10 border-emerald-500/20",
                     },
                   ] as const
                 ).map((p) => (
                   <button
                     key={p.key}
-                    onClick={() => setType(p.key as any)}
+                    onClick={() => setType(p.key)}
                     className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all ${
                       type === p.key
                         ? `${p.activeBg} ${p.color} shadow-sm border`
@@ -171,16 +179,15 @@ const BroadcastControl: React.FC = () => {
               <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
               <p className="text-xs text-slate-300 font-medium leading-relaxed">
                 To target a specific user, enter their{" "}
-                <strong className="text-slate-200">email address or UID</strong>{" "}
+                <strong className="text-slate-200">UID</strong>{" "}
                 in the Target field.
               </p>
             </div>
             <div className="flex items-start gap-2.5">
               <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 shrink-0" />
               <p className="text-xs text-slate-300 font-medium leading-relaxed">
-                Use <strong className="text-slate-200">Critical</strong>{" "}
-                priority sparingly — it triggers prominent alerts on the user's
-                screen.
+                Use <strong className="text-slate-200">Warning</strong>{" "}
+                priority sparingly — it marks the notice as needing attention.
               </p>
             </div>
           </div>
@@ -202,9 +209,9 @@ const BroadcastControl: React.FC = () => {
               </span>
             </div>
             <div className="flex items-center gap-3 text-xs font-medium">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
               <span className="text-slate-300">
-                <strong>Critical</strong> — Urgent system alerts
+                <strong>Success</strong> — Good news and completed work
               </span>
             </div>
           </div>

@@ -4,7 +4,6 @@ import {
   Check,
   CheckCircle,
   Clock,
-  ExternalLink,
   Info,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
@@ -60,21 +59,16 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
         return <CheckCircle className="w-4 h-4 text-emerald-500" />;
       case "warning":
         return <AlertTriangle className="w-4 h-4 text-amber-500" />;
-      case "error":
-        return <AlertTriangle className="w-4 h-4 text-rose-500" />;
-      case "update":
-        return <Bell className="w-4 h-4 text-blue-500" />;
       default:
         return <Info className="w-4 h-4 text-blue-500" />;
     }
   };
 
-  const getTimeAgo = (timestamp: any) => {
-    if (!timestamp) return "Just now";
-    const date = timestamp.toDate
-      ? timestamp.toDate()
-      : new Date(timestamp.seconds * 1000);
-    const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+  const getTimeAgo = (date: Date) => {
+    const seconds = Math.max(
+      0,
+      Math.floor((new Date().getTime() - date.getTime()) / 1000),
+    );
     if (seconds < 60) return `${seconds}s ago`;
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
     if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
@@ -176,7 +170,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                 <div
                   key={n.id}
                   onClick={() => (isSelectionMode ? null : markAsRead(n.id))}
-                  className={`p-4 flex gap-4 transition-all hover:bg-black/10 cursor-pointer relative group ${!n.isRead ? "bg-blue-500/5" : ""}`}
+                  className={`p-4 flex gap-4 transition-all hover:bg-black/10 cursor-pointer relative group ${!n.read ? "bg-blue-500/5" : ""}`}
                 >
                   {isSelectionMode && (
                     <div
@@ -193,18 +187,18 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                     </div>
                   )}
                   <div
-                    className={`w-10 h-10 rounded-xl border border-white/5 flex items-center justify-center shrink-0 shadow-sm ${!n.isRead ? "bg-blue-500/10" : "bg-slate-800"}`}
+                    className={`w-10 h-10 rounded-xl border border-white/5 flex items-center justify-center shrink-0 shadow-sm ${!n.read ? "bg-blue-500/10" : "bg-slate-800"}`}
                   >
                     {getIcon(n.type)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start gap-2">
                       <p
-                        className={`text-[13px] leading-relaxed transition-colors ${!n.isRead ? "text-white font-bold" : "text-slate-300 font-medium"}`}
+                        className={`text-[13px] leading-relaxed transition-colors ${!n.read ? "text-white font-bold" : "text-slate-300 font-medium"}`}
                       >
                         {n.message}
                       </p>
-                      {!n.isRead && !isSelectionMode && (
+                      {!n.read && !isSelectionMode && (
                         <div className="w-2 h-2 rounded-full bg-blue-500 shrink-0 mt-1.5 shadow-lg shadow-blue-500/50" />
                       )}
                     </div>
@@ -213,18 +207,6 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                         <Clock className="w-2.5 h-2.5" />
                         {getTimeAgo(n.createdAt)}
                       </span>
-                      {n.link && (
-                        <a
-                          href={n.link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[9px] font-black text-blue-500 hover:text-blue-400 uppercase tracking-widest flex items-center gap-1 group-hover:underline"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {n.link.text}
-                          <ExternalLink className="w-2.5 h-2.5" />
-                        </a>
-                      )}
                     </div>
                   </div>
                 </div>

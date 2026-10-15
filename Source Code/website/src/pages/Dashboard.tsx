@@ -6,23 +6,28 @@ import {
   FileSpreadsheet,
   FileText,
   Filter,
-  Folder,
   Plus,
   Search,
   Trash2,
   UserCheck,
 } from "lucide-react";
+import { format } from "date-fns";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useJobs } from "../context/JobContext";
+import type { Job, JobStatus } from "../lib/db";
+import { JOB_STATUSES, JOB_STATUS_LABEL } from "../lib/db";
 import { exportToExcel, exportToPDF } from "../utils/export";
 
 import ConfirmDialog from "../components/ConfirmDialog";
 import CustomSelect from "../components/CustomSelect";
 import StatusBadge from "../components/StatusBadge";
+/** The date shown and sorted in the "Added" column. */
+const addedAt = (j: Job) => j.appliedAt ?? j.createdAt;
+
 export default function Dashboard() {
-  const { jobs, openModal, deleteJob, openVault } = useJobs();
-  const { user } = useAuth();
+  const { jobs, openModal, deleteJob } = useJobs();
+  const { user, account } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("All");
@@ -51,14 +56,14 @@ export default function Dashboard() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const totalApplications = jobs.filter((j) => j.status !== "Saved").length;
+  const totalApplications = jobs.filter((j) => j.status !== "saved").length;
   const interviewingNumber = jobs.filter(
-    (j) => j.status === "Interviewing",
+    (j) => j.status === "interviewing",
   ).length;
-  const offerNumber = jobs.filter((j) => j.status === "Offer").length;
-  const rejectedNumber = jobs.filter((j) => j.status === "Rejected").length;
-  const savedNumber = jobs.filter((j) => j.status === "Saved").length;
-  const appliedNumber = jobs.filter((j) => j.status === "Applied").length;
+  const offerNumber = jobs.filter((j) => j.status === "offer").length;
+  const rejectedNumber = jobs.filter((j) => j.status === "rejected").length;
+  const savedNumber = jobs.filter((j) => j.status === "saved").length;
+  const appliedNumber = jobs.filter((j) => j.status === "applied").length;
   const interviewCount = interviewingNumber + offerNumber;
 
   const metrics = [
@@ -105,13 +110,7 @@ export default function Dashboard() {
     return matchesSearch && matchesStatus;
   });
 
-  const statusOrder: Record<string, number> = {
-    Saved: 0,
-    Applied: 1,
-    Interviewing: 2,
-    Offer: 3,
-    Rejected: 4,
-  };
+  const statusOrder = (s: JobStatus) => JOB_STATUSES.indexOf(s);
 
   const toggleSort = (key: typeof sortKey) => {
     if (sortKey === key) {
@@ -130,10 +129,10 @@ export default function Dashboard() {
       if (sortKey === "company") {
         cmp = a.company.localeCompare(b.company);
       } else if (sortKey === "status") {
-        cmp = (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99);
+        cmp = statusOrder(a.status) - statusOrder(b.status);
       } else if (sortKey === "dateApplied") {
-        cmp =
-          new Date(a.dateApplied).getTime() - new Date(b.dateApplied).getTime();
+        cmp = addedAt(a)?.getTime() ?? 0;
+        cmp -= addedAt(b)?.getTime() ?? 0;
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
@@ -172,15 +171,14 @@ export default function Dashboard() {
   };
 
   const handleBulkDelete = () => {
-    selectedIds.forEach((id) => deleteJob(id));
+    void Promise.all([...selectedIds].map((id) => deleteJob(id)));
     setSelectedIds(new Set());
     setConfirmBulkDelete(false);
     setSelectMode(false);
   };
 
-  const firstName = user?.displayName
-    ? user.displayName.split(" ")[0]
-    : "there";
+  const firstName =
+    account?.firstName || user?.displayName?.split(" ")[0] || "there";
 
   const handleExportPDF = () => {
     setShowExportMenu(false);
@@ -398,11 +396,7 @@ export default function Dashboard() {
                 variant="glass"
                 options={[
                   { value: "All", label: "ALL STATUS" },
-                  { value: "Saved", label: "SAVED" },
-                  { value: "Applied", label: "APPLIED" },
-                  { value: "Interviewing", label: "INTERVIEWING" },
-                  { value: "Offer", label: "OFFER" },
-                  { value: "Rejected", label: "REJECTED" },
+                  ...JOB_STATUSES.map((s) => ({ value: s, label: JOB_STATUS_LABEL[s].toUpperCase() })),
                 ]}
                 className="w-36 sm:w-44 lg:w-56 text-[10px] sm:text-[11px] font-black tracking-widest uppercase"
               />
@@ -481,9 +475,9 @@ export default function Dashboard() {
               </thead>
               <tbody className="divide-y divide-slate-700/50">
                 {displayJobs.length > 0 ? (
-                  displayJobs.map((activity, idx) => (
+                  displayJobs.map((activity) => (
                     <tr
-                      key={idx}
+                      key={activity.id}
                       className={`hover:bg-white/10 transition-colors group relative ${selectMode && selectedIds.has(activity.id) ? "bg-blue-500/5 ring-1 ring-inset ring-blue-500/20" : ""}`}
                     >
                       {/* Per-row checkbox — only shown in selectMode */}
@@ -504,9 +498,9 @@ export default function Dashboard() {
                           </div>
                           <div className="min-w-0">
                             <p className="text-[13px] sm:text-[15px] font-bold text-slate-100 group-hover:text-blue-400 transition-colors tracking-tight truncate">
-                              {activity.link ? (
+                              {activity.url ? (
                                 <a
-                                  href={activity.link}
+                                  href={activity.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="hover:underline"
@@ -533,18 +527,11 @@ export default function Dashboard() {
                       </td>
                       <td className="px-3 sm:px-6 py-3 sm:py-5 whitespace-nowrap hidden sm:table-cell">
                         <p className="text-[13px] sm:text-[14px] text-slate-300 font-medium">
-                          {activity.dateApplied}
+                          {addedAt(activity) ? format(addedAt(activity)!, "MMM d, yyyy") : "—"}
                         </p>
                       </td>
                       <td className="px-4 pr-6 sm:pr-8 py-3 sm:py-5 whitespace-nowrap text-right w-[1%] align-middle">
                         <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity duration-150">
-                          <button
-                            onClick={() => openVault(activity.id)}
-                            className="p-1.5 text-slate-300 hover:text-amber-400 hover:bg-amber-400/10 rounded-full transition-colors"
-                            title="Documents Vault"
-                          >
-                            <Folder className="w-4 h-4" />
-                          </button>
                           <button
                             onClick={() => openModal(activity.id)}
                             className="p-1.5 text-slate-300 hover:text-blue-600 hover:bg-blue-900/30 rounded-full transition-colors"

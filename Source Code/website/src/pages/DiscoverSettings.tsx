@@ -1,20 +1,9 @@
 /**
- * Discover > Tune matches: edits the user's `discoveryProfiles/{uid}` doc, which the
+ * Discover > Tune matches: edits the user's `discover/settings` doc, which the
  * collector reads on its next run. Also files "Add a careers page" feed requests.
  */
 
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  onSnapshot,
-  query,
-  serverTimestamp,
-  where,
-  type Timestamp,
-} from "firebase/firestore";
+import { addDoc, onSnapshot, orderBy, query, serverTimestamp } from "firebase/firestore";
 import {
   ArrowLeft,
   BellRing,
@@ -37,10 +26,12 @@ import { Link, useSearchParams } from "react-router-dom";
 import ChipInput from "../components/ChipInput";
 import type { ToastMessage } from "../components/Toast";
 import ToastContainer from "../components/Toast";
-import { useCollectorMeta, useDiscoveryProfile } from "../hooks/useDiscoveryProfile";
-import type { DiscoveryProfile, Track } from "../lib/discover";
+import { useDiscoverFeed, useDiscoverSettings, useSystemDiscover } from "../hooks/useDiscover";
+import { APP_NAME } from "../lib/app";
+import { refs, toDate } from "../lib/db";
+import type { DiscoverSettings as Settings, Track } from "../lib/discover";
 import {
-  DEFAULT_PROFILE,
+  DEFAULT_SETTINGS,
   LIMITS,
   PRESETS,
   REFRESH_TIMES,
@@ -50,7 +41,6 @@ import {
   upcomingTerms,
   validWebhook,
 } from "../lib/discover";
-import { db } from "../lib/firebase";
 
 interface FeedRequest {
   id: string;
@@ -58,7 +48,7 @@ interface FeedRequest {
   url: string;
   status: "pending" | "added" | "rejected";
   reason?: string;
-  createdAt?: Timestamp | null;
+  createdAt: Date | null;
 }
 
 const inputCls =
@@ -106,13 +96,14 @@ function Pill({ on, onClick, children, disabled }: { on: boolean; onClick: () =>
 }
 
 export default function DiscoverSettings() {
-  const { uid, profile, loading, canEdit, save } = useDiscoveryProfile();
-  const { families } = useCollectorMeta();
+  const { uid, settings: profile, loading, canEdit, save, remove } = useDiscoverSettings();
+  const { feed } = useDiscoverFeed();
+  const { families } = useSystemDiscover();
   const [params, setParams] = useSearchParams();
-  const [draft, setDraft] = useState<DiscoveryProfile | null>(null);
+  const [draft, setDraft] = useState<Settings | null>(null);
   const [saving, setSaving] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
-  const [companyNames, setCompanyNames] = useState<string[]>([]);
+  const [feedNames, setFeedNames] = useState<string[]>([]);
   const [requests, setRequests] = useState<FeedRequest[]>([]);
   const [feedUrl, setFeedUrl] = useState("");
   const [feedCompany, setFeedCompany] = useState("");
@@ -125,45 +116,49 @@ export default function DiscoverSettings() {
   // Start from the saved profile (or defaults), then apply ?preset= from onboarding once.
   useEffect(() => {
     if (loading || draft) return;
-    let start = profile ?? DEFAULT_PROFILE;
+    let start = profile ?? DEFAULT_SETTINGS;
     const preset = PRESETS.find((p) => p.id === params.get("preset"));
     if (preset) {
       start = applyPreset(start, preset);
       setParams({}, { replace: true });
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets state when the subscription or seed key changes; intentional
     setDraft(start);
   }, [loading, profile, draft, params, setParams]);
 
   // Company autocomplete: shared feeds plus companies already in this user's matches.
-  useEffect(() => {
-    if (!uid) return;
-    (async () => {
-      const names = new Set<string>();
-      try {
-        (await getDocs(collection(db, "companyFeeds"))).forEach((d) => {
-          const c = d.data().company;
-          if (typeof c === "string") names.add(c);
-        });
-        (await getDocs(query(collection(db, "discoveries"), where("userId", "==", uid)))).forEach((d) => {
-          const c = d.data().company;
-          if (typeof c === "string") names.add(c);
-        });
-      } catch (e) {
-        console.error("company suggestions:", e);
-      }
-      setCompanyNames([...names].sort((a, b) => a.localeCompare(b)));
-    })();
-  }, [uid]);
+  useEffect(
+    () =>
+      onSnapshot(
+        refs.feeds(),
+        (snap) =>
+          setFeedNames(snap.docs.map((d) => d.data().company).filter((c): c is string => typeof c === "string")),
+        (e) => console.error("company suggestions:", e),
+      ),
+    [],
+  );
+  const companyNames = useMemo(
+    () => [...new Set([...feedNames, ...(feed?.cards ?? []).map((c) => c.company)])].sort((a, b) => a.localeCompare(b)),
+    [feedNames, feed],
+  );
 
   useEffect(() => {
     if (!uid) return;
     return onSnapshot(
-      query(collection(db, "feedRequests"), where("userId", "==", uid)),
+      query(refs.feedRequests(uid), orderBy("createdAt", "desc")),
       (snap) =>
         setRequests(
-          snap.docs
-            .map((d) => ({ id: d.id, ...d.data() }) as FeedRequest)
-            .sort((a, b) => (b.createdAt?.toMillis() ?? Infinity) - (a.createdAt?.toMillis() ?? Infinity)),
+          snap.docs.map((d) => {
+            const r = d.data();
+            return {
+              id: d.id,
+              company: typeof r.company === "string" ? r.company : "",
+              url: typeof r.url === "string" ? r.url : "",
+              status: r.status === "added" || r.status === "rejected" ? r.status : "pending",
+              reason: typeof r.reason === "string" ? r.reason : undefined,
+              createdAt: toDate(r.createdAt),
+            } satisfies FeedRequest;
+          }),
         ),
       (err) => console.error("feedRequests listener:", err),
     );
@@ -183,9 +178,9 @@ export default function DiscoverSettings() {
     );
   }
 
-  const set = (patch: Partial<DiscoveryProfile>) => setDraft((d) => (d ? { ...d, ...patch } : d));
+  const set = (patch: Partial<Settings>) => setDraft((d) => (d ? { ...d, ...patch } : d));
   const toggleIn = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
-  const webhookOk = validWebhook(draft.notify.webhook.trim());
+  const webhookOk = validWebhook(draft.alerts.webhook.trim());
 
   const handleGraduation = (value: string) => {
     const hadNoTerms = !draft.terms.available.length && !draft.terms.partTime.length;
@@ -203,7 +198,7 @@ export default function DiscoverSettings() {
     }
     setSaving(true);
     try {
-      await save({ ...draft, notify: { ...draft.notify, webhook: draft.notify.webhook.trim() } });
+      await save({ ...draft, alerts: { ...draft.alerts, webhook: draft.alerts.webhook.trim() } });
       addToast(`Saved. Changes apply on the next refresh (${REFRESH_TIMES}).`);
     } catch (e) {
       console.error(e);
@@ -215,11 +210,11 @@ export default function DiscoverSettings() {
 
   const handleDelete = async () => {
     if (!uid || !profile) return;
-    if (!window.confirm("Delete your Discover settings? Your matches are removed on the next refresh. Jobs you saved to your pipeline stay.")) return;
+    if (!window.confirm("Delete your Discover data? Your settings, matches and careers-page requests are removed. Jobs you saved to your pipeline stay.")) return;
     try {
-      await deleteDoc(doc(db, "discoveryProfiles", uid));
-      setDraft(DEFAULT_PROFILE);
-      addToast("Deleted. Your Discover matches are removed on the next refresh.");
+      await remove();
+      setDraft(DEFAULT_SETTINGS);
+      addToast("Deleted.");
     } catch (e) {
       console.error(e);
       addToast("Couldn't delete your settings. Try again.", "error");
@@ -239,8 +234,8 @@ export default function DiscoverSettings() {
       return;
     }
     try {
-      await addDoc(collection(db, "feedRequests"), {
-        userId: uid,
+      if (!uid) return;
+      await addDoc(refs.feedRequests(uid), {
         company: feedCompany.trim().slice(0, LIMITS.text),
         url: url.slice(0, 500),
         status: "pending",
@@ -425,7 +420,7 @@ export default function DiscoverSettings() {
           </Field>
           <p className="text-xs text-slate-300 -mt-2">
             This only controls screening: with "Yes", roles that require U.S. citizenship or rule out sponsorship are
-            ranked down or hidden. With "No", those requirements are shown as notes. Traction stores only this yes/no
+            ranked down or hidden. With "No", those requirements are shown as notes. {APP_NAME} stores only this yes/no
             answer, never your visa type or status.
           </p>
         </Section>
@@ -439,14 +434,14 @@ export default function DiscoverSettings() {
               <ChipInput values={draft.companies.target} onChange={(v) => set({ companies: { ...draft.companies, target: v } })} placeholder="Add a company" suggestions={companyNames} max={LIMITS.companies} />
             </Field>
             <Field label="Hidden" hint="Never shown.">
-              <ChipInput values={draft.companies.blocked} onChange={(v) => set({ companies: { ...draft.companies, blocked: v } })} placeholder="Add a company" suggestions={companyNames} max={LIMITS.companies} />
+              <ChipInput values={draft.companies.hidden} onChange={(v) => set({ companies: { ...draft.companies, hidden: v } })} placeholder="Add a company" suggestions={companyNames} max={LIMITS.companies} />
             </Field>
           </div>
 
           <div className="pt-4 border-t border-white/5">
             <Field
               label="Add a careers page"
-              hint="Paste a Workday, Greenhouse, Lever, Ashby or SmartRecruiters link. Once it checks out, every Traction user gets roles from it."
+              hint={`Paste a Workday, Greenhouse, Lever, Ashby or SmartRecruiters link. Once it checks out, every ${APP_NAME} user gets roles from it.`}
             >
               <div className="flex flex-col sm:flex-row gap-2">
                 <input
@@ -515,14 +510,14 @@ export default function DiscoverSettings() {
                 className="w-full accent-blue-500"
               />
             </Field>
-            <Field label={`Alert me at ${draft.notify.minScore}+`} hint="New roles at or above this score go to your alert link.">
+            <Field label={`Alert me at ${draft.alerts.minScore}+`} hint="New roles at or above this score go to your alert link.">
               <input
                 type="range"
                 min={40}
                 max={100}
                 step={5}
-                value={draft.notify.minScore}
-                onChange={(e) => set({ notify: { ...draft.notify, minScore: Number(e.target.value) } })}
+                value={draft.alerts.minScore}
+                onChange={(e) => set({ alerts: { ...draft.alerts, minScore: Number(e.target.value) } })}
                 className="w-full accent-blue-500"
               />
             </Field>
@@ -530,8 +525,8 @@ export default function DiscoverSettings() {
           <Field label="Alert link (optional)" hint="A Discord webhook URL or an ntfy.sh topic URL, like https://ntfy.sh/your-topic.">
             <input
               type="url"
-              value={draft.notify.webhook}
-              onChange={(e) => set({ notify: { ...draft.notify, webhook: e.target.value } })}
+              value={draft.alerts.webhook}
+              onChange={(e) => set({ alerts: { ...draft.alerts, webhook: e.target.value } })}
               placeholder="https://discord.com/api/webhooks/..."
               maxLength={300}
               className={`${inputCls} ${webhookOk ? "" : "ring-2 ring-amber-400/40"}`}
@@ -542,8 +537,8 @@ export default function DiscoverSettings() {
         {canEdit && profile && (
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-1">
             <p className="text-xs text-slate-400 flex-1">
-              Deleting removes these settings now and your Discover matches and careers-page requests on the next
-              refresh. Jobs you saved to your pipeline stay.
+              Deleting removes your settings, Discover matches and careers-page requests now. Jobs you saved to your
+              pipeline stay.
             </p>
             <button
               type="button"

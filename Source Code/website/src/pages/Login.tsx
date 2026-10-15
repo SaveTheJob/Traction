@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- catch clauses and third-party config objects have no useful static type here */
 import {
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
@@ -10,9 +11,10 @@ import {
   Mail,
 } from "lucide-react";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import GoogleAuthButton from "../components/GoogleAuthButton";
 import Logo from "../components/Logo";
+import { APP_NAME } from "../lib/app";
 import { auth } from "../lib/firebase";
 
 export default function Login() {
@@ -23,6 +25,8 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const deleted = searchParams.get("deleted") === "1";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,7 +84,7 @@ export default function Login() {
           </h2>
           <p className="mt-2 text-sm font-medium text-slate-300">
             Track your job applications with{" "}
-            <span className="text-blue-400 font-bold">SaveTheJob</span>
+            <span className="text-blue-400 font-bold">{APP_NAME}</span>
           </p>
         </div>
 
@@ -107,6 +111,11 @@ export default function Login() {
             {error && (
               <div className="p-4 text-xs font-bold text-red-600 bg-red-500/10 rounded-2xl border border-red-500/20 flex items-start gap-2 animate-in fade-in zoom-in">
                 <span>{error}</span>
+              </div>
+            )}
+            {deleted && (
+              <div className="p-4 text-xs font-bold text-white bg-green-500/20 rounded-2xl border border-green-500/30 flex items-start gap-2 shadow-lg">
+                <span>Your account and all its data were deleted.</span>
               </div>
             )}
             {resetSent && (

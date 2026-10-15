@@ -1,26 +1,20 @@
+/* eslint-disable react-refresh/only-export-components -- context file intentionally exports its provider and consumer hook together */
 import type { User } from "firebase/auth";
 import {
   signOut as firebaseSignOut,
   updatePassword as firebaseUpdatePassword,
   onAuthStateChanged,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { getDoc, onSnapshot, setDoc } from "firebase/firestore";
 import type { ReactNode } from "react";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { recordAdminLog } from "../lib/adminLogger";
-import { auth, db } from "../lib/firebase";
+import { ensureVerifiedToken } from "../lib/authToken";
+import { accountFromDoc, newAccountDoc, refs } from "../lib/db";
+import type { Account } from "../lib/db";
+import { auth } from "../lib/firebase";
 
-export interface UserProfile {
-  uid: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  dob?: string;
-  plan: "Free" | "Pro";
-  status: "Active" | "Suspended" | "Pending";
-  createdAt?: any;
-  onboardingCompleted?: boolean;
-}
+export type { Account };
 
 // Firebase Auth UIDs that may open the admin portal. This only shows the portal;
 // firestore.rules (isAdmin) is what actually grants access, so keep the two in sync.
@@ -33,117 +27,115 @@ const ADMIN_UIDS = new Set(
 
 interface AuthContextType {
   user: User | null;
-  userProfile: UserProfile | null;
-  impersonatedUser: UserProfile | null;
+  account: Account | null;
+  impersonatedUser: Account | null;
   isAdmin: boolean;
   loading: boolean;
+  /** Password sign-up whose email link hasn't been opened yet. */
+  needsVerification: boolean;
   signOut: () => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
-  impersonateUser: (user: UserProfile | null) => void;
+  impersonateUser: (user: Account | null) => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  userProfile: null,
+  account: null,
   impersonatedUser: null,
   isAdmin: false,
   loading: true,
+  needsVerification: false,
   signOut: async () => {},
   updatePassword: async () => {},
   impersonateUser: () => {},
+  refreshUser: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [impersonatedUser, setImpersonatedUser] = useState<UserProfile | null>(
-    null,
-  );
+  const [account, setAccount] = useState<Account | null>(null);
+  const [impersonatedUser, setImpersonatedUser] = useState<Account | null>(null);
   const [loading, setLoading] = useState(true);
+  // emailVerified as of the last time the ID token was known to match it. reload() flips
+  // user.emailVerified in place before the token is refreshed, so the app reads this instead.
+  const [emailVerified, setEmailVerified] = useState(false);
+  const unsubAccount = useRef<(() => void) | null>(null);
+  // Bumped on every auth change, so an older callback still awaiting knows it was superseded.
+  const authGen = useRef(0);
 
   const isAdmin = !!user && ADMIN_UIDS.has(user.uid);
+  const needsVerification =
+    !!user && !emailVerified && user.providerData.some((p) => p.providerId === "password");
 
-  const impersonateUser = (target: UserProfile | null) => {
+  const impersonateUser = (target: Account | null) => {
     if (!isAdmin) return;
     setImpersonatedUser(target);
     if (target) {
-      recordAdminLog("GOD_MODE_ENTRY", user?.email || "Unknown", target.email);
+      recordAdminLog("GOD_MODE_ENTRY", target.email || target.uid);
     }
   };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
+      const gen = ++authGen.current;
+      unsubAccount.current?.();
+      unsubAccount.current = null;
 
-      if (currentUser) {
-        // Fetch or create profile
-        const userDocRef = doc(db, "users", currentUser.uid);
-        const userDoc = await getDoc(userDocRef);
-
-        if (!userDoc.exists()) {
-          // Try to split displayName into first and last name
-          let firstName = "";
-          let lastName = "";
-          if (currentUser.displayName) {
-            const parts = currentUser.displayName.split(" ");
-            firstName = parts[0] || "";
-            lastName = parts.slice(1).join(" ") || "";
-          }
-
-          const newProfile: UserProfile = {
-            uid: currentUser.uid,
-            email: currentUser.email || "",
-            firstName,
-            lastName,
-            plan: "Pro",
-            status: "Active",
-            onboardingCompleted: false, // New users ALWAYS go through onboarding
-          };
-          await setDoc(userDocRef, newProfile);
-          setUserProfile(newProfile);
-        } else {
-          const data = userDoc.data() as Omit<UserProfile, "uid">;
-          const uid = userDoc.id;
-          const updates: Partial<UserProfile> = {};
-
-          // Backfill names if missing but available in auth
-          if ((!data.firstName || !data.lastName) && currentUser.displayName) {
-            const parts = currentUser.displayName.split(" ");
-            if (!data.firstName) {
-              updates.firstName = parts[0] || "";
-            }
-            if (!data.lastName) {
-              updates.lastName = parts.slice(1).join(" ") || "";
-            }
-          }
-
-          // Determine onboarding status
-          // For existing users who predate the onboarding feature,
-          // default to true (completed) so they don't get forced into onboarding.
-          // Only users explicitly marked false (new registrations) go through onboarding.
-          if (
-            data.onboardingCompleted === undefined ||
-            data.onboardingCompleted === null
-          ) {
-            // Legacy user without the field — treat as completed
-            updates.onboardingCompleted = true;
-          }
-
-          if (Object.keys(updates).length > 0) {
-            await updateDoc(userDocRef, updates);
-            setUserProfile({ ...data, ...updates, uid } as UserProfile);
-          } else {
-            setUserProfile({ ...data, uid } as UserProfile);
-          }
-        }
-      } else {
-        setUserProfile(null);
+      if (!currentUser) {
+        setUser(null);
+        setEmailVerified(false);
+        setAccount(null);
+        setLoading(false);
+        return;
       }
 
-      setLoading(false);
+      // A later sign-in or sign-out replaced this user while we were awaiting.
+      const uid = currentUser.uid;
+      const stale = () => gen !== authGen.current || auth.currentUser?.uid !== uid;
+
+      // On load Firebase reloads the user, so emailVerified can be true while the cached token
+      // still says false. Refresh it before anything subscribes, or the rules deny every read.
+      try {
+        await ensureVerifiedToken(currentUser);
+      } catch (err) {
+        console.error("Error refreshing the ID token:", err);
+      }
+      if (stale()) return;
+      setEmailVerified(currentUser.emailVerified);
+      setUser(currentUser);
+
+      try {
+        // The account doc may be created before the email is verified.
+        const ref = refs.user(uid);
+        if (!(await getDoc(ref)).exists()) {
+          if (stale()) return;
+          await setDoc(ref, newAccountDoc(currentUser));
+        }
+        if (stale()) return;
+        // Live, so `onboarded` flips without a reload. A missing doc (mid account deletion)
+        // keeps the last value rather than unmounting the page that is deleting it.
+        unsubAccount.current = onSnapshot(
+          ref,
+          (snap) => {
+            if (snap.exists()) setAccount(accountFromDoc(snap.id, snap.data()));
+            setLoading(false);
+          },
+          (err) => {
+            console.error("Error loading account:", err);
+            setLoading(false);
+          },
+        );
+      } catch (err) {
+        console.error("Error loading account:", err);
+        if (!stale()) setLoading(false);
+      }
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      unsubAccount.current?.();
+    };
   }, []);
 
   const signOut = async () => {
@@ -160,17 +152,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await firebaseUpdatePassword(auth.currentUser, newPassword);
   };
 
+  /**
+   * Re-reads emailVerified and, once it is true, makes sure the ID token's email_verified claim
+   * matches. The re-render then flips needsVerification, which starts the data listeners.
+   */
+  const refreshUser = async () => {
+    const current = auth.currentUser;
+    if (!current) return;
+    await current.reload();
+    await ensureVerifiedToken(current);
+    if (auth.currentUser === current) setEmailVerified(current.emailVerified);
+  };
+
   return (
     <AuthContext.Provider
       value={{
         user,
-        userProfile,
+        account,
         impersonatedUser,
         isAdmin,
         loading,
+        needsVerification,
         signOut,
         updatePassword,
         impersonateUser,
+        refreshUser,
       }}
     >
       {!loading && children}

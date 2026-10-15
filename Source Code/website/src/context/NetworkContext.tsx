@@ -1,42 +1,20 @@
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  query,
-  serverTimestamp,
-  updateDoc,
-  where,
-} from "firebase/firestore";
+/* eslint-disable react-refresh/only-export-components -- context file intentionally exports its provider and consumer hook together */
+import { addDoc, deleteDoc, onSnapshot, orderBy, query, updateDoc } from "firebase/firestore";
 import type { ReactNode } from "react";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import type { ToastMessage } from "../components/Toast";
+import ToastContainer from "../components/Toast";
 import { useEffectiveUserId } from "../hooks/useEffectiveUserId";
-import { db } from "../lib/firebase";
-import { useAuth } from "./AuthContext";
-
-export type ContactStatus = "Warm" | "Cold" | "Hot";
-
-export interface Contact {
-  id: string;
-  name: string;
-  role: string;
-  company: string;
-  email: string;
-  lastContacted: string;
-  status: ContactStatus;
-  notes?: string;
-  userId?: string;
-  createdAt?: any;
-}
-
-export type ContactDataPayload = Omit<Contact, "id" | "userId" | "createdAt">;
+import type { Contact, ContactInput } from "../lib/db";
+import { contactFromDoc, contactUpdate, newContactDoc, refs } from "../lib/db";
 
 interface NetworkContextType {
   contacts: Contact[];
-  addContact: (contact: ContactDataPayload) => void;
-  updateContact: (id: string, contactData: ContactDataPayload) => void;
-  deleteContact: (id: string) => void;
+  /** Throws on failure so the caller can show the error next to the form. */
+  addContact: (input: ContactInput) => Promise<void>;
+  /** Throws on failure so the caller can show the error next to the form. */
+  updateContact: (id: string, input: ContactInput) => Promise<void>;
+  deleteContact: (id: string) => Promise<void>;
   isNetworkModalOpen: boolean;
   editingContactId: string | null;
   openNetworkModal: (contactId?: string) => void;
@@ -46,69 +24,64 @@ interface NetworkContextType {
 const NetworkContext = createContext<NetworkContextType | undefined>(undefined);
 
 export function NetworkProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
-  const effectiveUserId = useEffectiveUserId();
+  const uid = useEffectiveUserId();
   const [isNetworkModalOpen, setIsNetworkModalOpen] = useState(false);
   const [editingContactId, setEditingContactId] = useState<string | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  // Callbacks read the latest list without re-subscribing on every snapshot.
+  const contactsRef = useRef<Contact[]>([]);
+  useEffect(() => {
+    contactsRef.current = contacts;
+  }, [contacts]);
+
+  const toastError = useCallback((message: string) => {
+    setToasts((prev) => [...prev, { id: `${Date.now()}-${Math.random()}`, message, type: "error" }]);
+  }, []);
 
   useEffect(() => {
-    if (!effectiveUserId) {
+    if (!uid) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- resets state when the subscription or seed key changes; intentional
       setContacts([]);
       return;
     }
-
-    const q = query(
-      collection(db, "contacts"),
-      where("userId", "==", effectiveUserId),
+    return onSnapshot(
+      query(refs.contacts(uid), orderBy("createdAt", "desc")),
+      (snap) => setContacts(snap.docs.map((d) => contactFromDoc(d.id, d.data()))),
+      (e) => console.error("Error listening to contacts: ", e),
     );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const contactsData: Contact[] = [];
-      snapshot.forEach((document) => {
-        contactsData.push({ id: document.id, ...document.data() } as Contact);
-      });
-      // Sort by creation time if available, putting newest at the top
-      contactsData.sort((a, b) => {
-        if (!a.createdAt || !b.createdAt) return 0;
-        return b.createdAt.toMillis() - a.createdAt.toMillis();
-      });
-      setContacts(contactsData);
-    });
+  }, [uid]);
 
-    return unsubscribe;
-  }, [effectiveUserId]);
-
-  const addContact = async (contactData: ContactDataPayload) => {
-    if (!user) return;
-    const newContact = {
-      ...contactData,
-      userId: effectiveUserId,
-      createdAt: serverTimestamp(),
-    };
+  const addContact = async (input: ContactInput) => {
+    if (!uid) return;
     try {
-      await addDoc(collection(db, "contacts"), newContact);
-    } catch (error) {
-      console.error("Error adding contact: ", error);
+      await addDoc(refs.contacts(uid), newContactDoc(input));
+    } catch (e) {
+      console.error("Error adding contact: ", e);
+      throw e;
     }
   };
 
-  const updateContact = async (id: string, contactData: ContactDataPayload) => {
-    if (!user) return;
+  const updateContact = async (id: string, input: ContactInput) => {
+    if (!uid) return;
+    const current = contactsRef.current.find((c) => c.id === id);
+    if (!current) throw new Error("Contact not found");
     try {
-      const contactRef = doc(db, "contacts", id);
-      await updateDoc(contactRef, contactData);
-    } catch (error) {
-      console.error("Error updating contact: ", error);
+      await updateDoc(refs.contact(uid, id), contactUpdate(current, input));
+    } catch (e) {
+      console.error("Error updating contact: ", e);
+      throw e;
     }
   };
 
   const deleteContact = async (id: string) => {
-    if (!user) return;
+    if (!uid) return;
     try {
-      const contactRef = doc(db, "contacts", id);
-      await deleteDoc(contactRef);
-    } catch (error) {
-      console.error("Error deleting contact: ", error);
+      await deleteDoc(refs.contact(uid, id));
+    } catch (e) {
+      console.error("Error deleting contact: ", e);
+      toastError("Couldn't delete. Try again.");
     }
   };
 
@@ -136,6 +109,7 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
+      <ToastContainer toasts={toasts} onDismiss={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))} />
     </NetworkContext.Provider>
   );
 }

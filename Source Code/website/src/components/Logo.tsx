@@ -61,8 +61,8 @@ export default function Logo({
             fill="#e2e8f0"
             letterSpacing="-1"
           >
-            SaveThe
-            <tspan fill="url(#themeGrad)">Job</tspan>
+            Offer
+            <tspan fill="url(#themeGrad)">ward</tspan>
           </text>
         )}
       </svg>

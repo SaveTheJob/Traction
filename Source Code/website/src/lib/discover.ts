@@ -1,12 +1,14 @@
 /**
- * Discover profile model shared by the Discover page, Tune matches and onboarding.
- * Mirrors `discoveryProfiles/{uid}` (see Source Code/collector/collector/profile.py
- * and the rules in firestore.rules, which enforce the same limits).
+ * Discover model shared by the Discover page, Tune matches and onboarding.
+ * Mirrors `users/{uid}/discover/{settings,feed,triage}` (see the rules in
+ * firestore.rules, which enforce the same limits on settings).
  */
+
+import { toDate } from "./db";
 
 export type Track = "intern" | "newgrad";
 
-export interface DiscoveryProfile {
+export interface DiscoverSettings {
   enabled: boolean;
   tracks: Track[];
   /** "YYYY-MM" or "" */
@@ -18,14 +20,107 @@ export interface DiscoveryProfile {
   roleFamilies: string[];
   includeKeywords: string[];
   excludeKeywords: string[];
-  companies: { warm: string[]; target: string[]; blocked: string[] };
+  companies: { warm: string[]; target: string[]; hidden: string[] };
   minScore: number;
-  notify: { webhook: string; minScore: number };
+  alerts: { webhook: string; minScore: number };
 }
 
 export interface RoleFamily {
   id: string;
   label: string;
+}
+
+export type Tier = "core" | "strong" | "ok";
+
+/** One role in `discover/feed.cards`, written by the collector. */
+export interface DiscoverCard {
+  roleKey: string;
+  company: string;
+  title: string;
+  location: string;
+  url: string;
+  track: Track;
+  terms: string[];
+  postedAt: Date | null;
+  firstSeenAt: Date | null;
+  score: number;
+  tier: Tier;
+  reasons: string[];
+  flags: { citizen: boolean; exportControl: boolean; noSponsor: boolean; sponsorFriendly: boolean; screened: boolean };
+  snippets: string[];
+  gradWindow: string;
+  closed: boolean;
+}
+
+export interface DiscoverFeed {
+  refreshedAt: Date | null;
+  totalMatches: number;
+  cap: number;
+  failedSources: number;
+  cards: DiscoverCard[];
+}
+
+export interface TriageEntry {
+  status: "saved" | "dismissed";
+  jobId?: string;
+  at: Date | null;
+}
+
+export type CardStatus = "new" | "saved" | "dismissed";
+export type CardView = DiscoverCard & { status: CardStatus; jobId?: string };
+
+/** A card merged with the user's triage mark; untouched cards are "new". */
+export function cardView(card: DiscoverCard, triage: Record<string, TriageEntry>): CardView {
+  const t = triage[card.roleKey];
+  return { ...card, status: t?.status ?? "new", ...(t?.jobId ? { jobId: t.jobId } : {}) };
+}
+
+const str = (v: unknown) => (typeof v === "string" ? v : "");
+const strs = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
+const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
+
+function cardFromRaw(r: Record<string, unknown>): DiscoverCard | null {
+  if (typeof r.roleKey !== "string" || !r.roleKey) return null;
+  const f = (r.flags ?? {}) as Record<string, unknown>;
+  return {
+    roleKey: r.roleKey,
+    company: str(r.company),
+    title: str(r.title),
+    location: str(r.location),
+    url: str(r.url),
+    track: r.track === "newgrad" ? "newgrad" : "intern",
+    terms: strs(r.terms),
+    postedAt: toDate(r.postedAt),
+    firstSeenAt: toDate(r.firstSeenAt),
+    score: num(r.score),
+    tier: r.tier === "core" || r.tier === "strong" ? r.tier : "ok",
+    reasons: strs(r.reasons),
+    flags: {
+      citizen: f.citizen === true,
+      exportControl: f.exportControl === true,
+      noSponsor: f.noSponsor === true,
+      sponsorFriendly: f.sponsorFriendly === true,
+      screened: f.screened === true,
+    },
+    snippets: strs(r.snippets),
+    gradWindow: str(r.gradWindow),
+    closed: r.closed === true,
+  };
+}
+
+/** Read `discover/feed` data; malformed cards are skipped. */
+export function feedFromDoc(d: Record<string, unknown> | undefined): DiscoverFeed | null {
+  if (!d) return null;
+  const cards = Array.isArray(d.cards)
+    ? d.cards.map((c) => cardFromRaw((c ?? {}) as Record<string, unknown>)).filter((c): c is DiscoverCard => !!c)
+    : [];
+  return {
+    refreshedAt: toDate(d.refreshedAt),
+    totalMatches: num(d.totalMatches),
+    cap: num(d.cap),
+    failedSources: num(d.failedSources),
+    cards,
+  };
 }
 
 export const LIMITS = {
@@ -40,7 +135,7 @@ export const LIMITS = {
 /** When the collector refreshes (its systemd timer runs on Phoenix time). */
 export const REFRESH_TIMES = "6:40 and 14:40 Phoenix time";
 
-/** Used until the collector has published `collectorMeta/roleFamilies`. */
+/** Used until the collector has published `system/discover`. */
 export const FALLBACK_FAMILIES: RoleFamily[] = [
   { id: "embedded", label: "Embedded & firmware" },
   { id: "hardware", label: "Hardware, silicon & test" },
@@ -54,7 +149,7 @@ export const FALLBACK_FAMILIES: RoleFamily[] = [
   { id: "quant", label: "Quant & trading" },
 ];
 
-export const DEFAULT_PROFILE: DiscoveryProfile = {
+export const DEFAULT_SETTINGS: DiscoverSettings = {
   enabled: true,
   tracks: ["intern", "newgrad"],
   graduation: "",
@@ -64,9 +159,9 @@ export const DEFAULT_PROFILE: DiscoveryProfile = {
   roleFamilies: [],
   includeKeywords: [],
   excludeKeywords: [],
-  companies: { warm: [], target: [], blocked: [] },
+  companies: { warm: [], target: [], hidden: [] },
   minScore: 60,
-  notify: { webhook: "", minScore: 70 },
+  alerts: { webhook: "", minScore: 70 },
 };
 
 export interface Preset {
@@ -108,7 +203,7 @@ export const PRESETS: Preset[] = [
   },
 ];
 
-export function applyPreset(p: DiscoveryProfile, preset: Preset): DiscoveryProfile {
+export function applyPreset(p: DiscoverSettings, preset: Preset): DiscoverSettings {
   return { ...p, tracks: [...preset.tracks], roleFamilies: [...preset.roleFamilies] };
 }
 
@@ -123,13 +218,13 @@ const strList = (v: unknown, cap: number): string[] =>
 const clamp = (v: unknown, lo: number, hi: number, d: number) =>
   typeof v === "number" && Number.isFinite(v) ? Math.max(lo, Math.min(hi, Math.round(v))) : d;
 
-/** Fill in defaults and clamp a stored profile so the UI can rely on every field. */
-export function normalizeProfile(raw: Record<string, unknown> | undefined): DiscoveryProfile {
+/** Fill in defaults and clamp stored settings so the UI can rely on every field. */
+export function normalizeSettings(raw: Record<string, unknown> | undefined): DiscoverSettings {
   const d = raw ?? {};
   const terms = (d.terms ?? {}) as Record<string, unknown>;
   const locs = (d.locations ?? {}) as Record<string, unknown>;
   const cos = (d.companies ?? {}) as Record<string, unknown>;
-  const notify = (d.notify ?? {}) as Record<string, unknown>;
+  const alerts = (d.alerts ?? {}) as Record<string, unknown>;
   const tracks = strList(d.tracks, 2).filter((t): t is Track => t === "intern" || t === "newgrad");
   const grad = typeof d.graduation === "string" && /^20\d\d-(0[1-9]|1[0-2])$/.test(d.graduation) ? d.graduation : "";
   return {
@@ -148,12 +243,12 @@ export function normalizeProfile(raw: Record<string, unknown> | undefined): Disc
     companies: {
       warm: strList(cos.warm, LIMITS.companies),
       target: strList(cos.target, LIMITS.companies),
-      blocked: strList(cos.blocked, LIMITS.companies),
+      hidden: strList(cos.hidden, LIMITS.companies),
     },
     minScore: clamp(d.minScore, 40, 90, 60),
-    notify: {
-      webhook: typeof notify.webhook === "string" ? notify.webhook : "",
-      minScore: clamp(notify.minScore, 40, 100, 70),
+    alerts: {
+      webhook: typeof alerts.webhook === "string" && validWebhook(alerts.webhook) ? alerts.webhook : "",
+      minScore: clamp(alerts.minScore, 40, 100, 70),
     },
   };
 }
@@ -213,7 +308,7 @@ export function upcomingTerms(graduation: string, now = new Date()): string[] {
 
 /** Sensible defaults once a graduation month is known: summers before it are internship terms,
  * the final semester is part-time. */
-export function suggestedTerms(graduation: string, now = new Date()): DiscoveryProfile["terms"] {
+export function suggestedTerms(graduation: string, now = new Date()): DiscoverSettings["terms"] {
   const terms = upcomingTerms(graduation, now);
   const summers = terms.filter((t) => t.startsWith("Summer"));
   const last = terms[terms.length - 1];

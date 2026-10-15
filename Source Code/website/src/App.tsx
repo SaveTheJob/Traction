@@ -27,7 +27,6 @@ import { NotificationProvider } from "./context/NotificationContext";
 import { ThemeProvider, useTheme } from "./context/ThemeContext";
 
 import { ProtectedRoute, PublicRoute } from "./components/AuthRoutes";
-import DocumentVaultModal from "./components/DocumentVaultModal";
 import Layout from "./components/Layout";
 import NewApplicationModal from "./components/NewApplicationModal";
 import NewContactModal from "./components/NewContactModal";
@@ -43,8 +42,9 @@ const Network = React.lazy(() => import("./pages/Network"));
 const Pipeline = React.lazy(() => import("./pages/Pipeline"));
 const PrivacyPolicy = React.lazy(() => import("./pages/PrivacyPolicy"));
 const Signup = React.lazy(() => import("./pages/Signup"));
+const NotFound = React.lazy(() => import("./pages/NotFound"));
 const Onboarding = React.lazy(() => import("./pages/Onboarding"));
-const ResumeBuilder = React.lazy(() => import("./pages/ResumeBuilder"));
+const VerifyEmail = React.lazy(() => import("./pages/VerifyEmail"));
 
 // AppBackground — renders the wallpaper as a real fixed DOM node.
 // A CSS variable on <body> won't composite with backdrop-filter in
@@ -95,6 +95,7 @@ function AppBackground() {
       backgroundConfig.value !== currentBg.value ||
       backgroundConfig.type !== currentBg.type
     ) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- resets state when the subscription or seed key changes; intentional
       setPendingBg(backgroundConfig);
       setIsTransitioning(true);
 
@@ -150,7 +151,7 @@ function AppBackground() {
 // AppRoutes — handles routing, auth guards, and onboarding redirects
 
 function AppRoutes() {
-  const { userProfile, loading, user } = useAuth();
+  const { account, loading, user, needsVerification } = useAuth();
   const location = useLocation();
 
   const isPublicRoute = ["/login", "/signup", "/privacy-policy"].includes(
@@ -158,7 +159,7 @@ function AppRoutes() {
   );
 
   // Show loading spinner while auth is resolving
-  if (!isPublicRoute && !loading && user && !userProfile) {
+  if (!isPublicRoute && !loading && user && !account) {
     return (
       <div
         className="min-h-screen flex items-center justify-center"
@@ -169,25 +170,25 @@ function AppRoutes() {
     );
   }
 
-  // Redirect to onboarding if profile not yet completed
+  // Password sign-ups must open the emailed link before anything else
   if (
     !loading &&
-    userProfile &&
-    !userProfile.onboardingCompleted
+    needsVerification &&
+    location.pathname !== "/verify-email" &&
+    !isPublicRoute
   ) {
+    return <Navigate to="/verify-email" replace />;
+  }
+
+  // Redirect to onboarding if profile not yet completed
+  if (!loading && account && !account.onboarded && !needsVerification) {
     if (location.pathname !== "/onboarding") {
       return <Navigate to="/onboarding" replace />;
     }
   }
 
-  // Prevent accessing onboarding once completed
-  if (
-    !loading &&
-    userProfile?.onboardingCompleted &&
-    location.pathname === "/onboarding"
-  ) {
-    return <Navigate to="/" replace />;
-  }
+  // Onboarding redirects finished accounts away itself, so its last step can save
+  // `onboarded` and then navigate to where the user chose.
 
   return (
     <div style={{ position: "relative", zIndex: 1 }}>
@@ -217,6 +218,14 @@ function AppRoutes() {
           />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route
+            path="/verify-email"
+            element={
+              <ProtectedRoute>
+                <VerifyEmail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/onboarding"
             element={
               <ProtectedRoute>
@@ -243,12 +252,8 @@ function AppRoutes() {
             <Route path="account" element={<Account />} />
             <Route path="network" element={<Network />} />
             <Route path="analytics" element={<Analytics />} />
-            <Route path="resume" element={<ResumeBuilder />} />
             <Route path="admin/*" element={<AdminPortal />} />
-            <Route
-              path="*"
-              element={<div className="p-8 text-white">Page not found</div>}
-            />
+            <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
       </React.Suspense>
@@ -256,7 +261,6 @@ function AppRoutes() {
       {/* Global modals — rendered outside Layout but inside auth providers */}
       <NewApplicationModal />
       <NewContactModal />
-      <DocumentVaultModal />
     </div>
   );
 }

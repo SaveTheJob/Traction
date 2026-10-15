@@ -1,5 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { APP_NAME, APP_URL, CONTACT_EMAIL } from "../lib/app";
 
 export default function PrivacyPolicy() {
   const navigate = useNavigate();
@@ -21,11 +22,11 @@ export default function PrivacyPolicy() {
       <article className="max-w-[800px] mx-auto w-full px-5 py-8 text-slate-300 text-[15px] leading-relaxed [&_h1]:text-slate-100 [&_h1]:text-[26px] [&_h1]:font-bold [&_h1]:mb-1 [&_h2]:text-slate-100 [&_h2]:text-[19px] [&_h2]:font-bold [&_h2]:mt-10 [&_h2]:pb-2 [&_h2]:border-b [&_h2]:border-white/10 [&_h3]:text-slate-100 [&_h3]:text-[17px] [&_h3]:font-bold [&_h3]:mt-6 [&_a]:text-blue-400 hover:[&_a]:underline [&_ul]:pl-5 [&_ol]:pl-5 [&_p]:mb-4 [&_li]:mb-1">
         <h1>PRIVACY POLICY</h1>
         <p className="text-slate-300 text-[15px] mt-0 mb-8">
-          <strong>Last updated October 14, 2026</strong>
+          <strong>Last updated October 15, 2026</strong>
         </p>
 
         <p>
-          This Privacy Notice for SaveTheJob ("<strong>we</strong>," "
+          This Privacy Notice for {APP_NAME} ("<strong>we</strong>," "
           <strong>us</strong>," or "<strong>our</strong>"), describes how and
           why we might access, collect, store, use, and/or share ("
           <strong>process</strong>") your personal information when you use our
@@ -35,16 +36,16 @@ export default function PrivacyPolicy() {
           <li>
             Visit our website at{" "}
             <a
-              href="https://traction-37.web.app"
+              href={APP_URL}
               target="_blank"
               rel="noopener noreferrer"
             >
-              https://traction-37.web.app
+              {APP_URL}
             </a>{" "}
             or any website of ours that links to this Privacy Notice
           </li>
           <li>
-            Use SaveTheJob. SaveTheJob is a comprehensive job application
+            Use {APP_NAME}. {APP_NAME} is a comprehensive job application
             tracking tool designed to streamline your job search process.
           </li>
           <li>
@@ -59,7 +60,7 @@ export default function PrivacyPolicy() {
           is processed. If you do not agree with our policies and practices,
           please do not use our Services. If you still have any questions or
           concerns, please contact us at{" "}
-          <a href="mailto:contact@yugthapar.com">contact@yugthapar.com</a>.
+          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
         </p>
 
         {/* ─── SUMMARY ─── */}
@@ -138,11 +139,11 @@ export default function PrivacyPolicy() {
           <strong>How do you exercise your rights?</strong> The easiest way to
           exercise your rights is by visiting{" "}
           <a
-            href="https://traction-37.web.app/account"
+            href={`${APP_URL}/account`}
             target="_blank"
             rel="noopener noreferrer"
           >
-            https://traction-37.web.app/account
+            {`${APP_URL}/account`}
           </a>
           , or by contacting us. We will consider and act upon any request in
           accordance with applicable data protection laws.
@@ -363,11 +364,14 @@ export default function PrivacyPolicy() {
         </p>
         <p>
           You can change your Discover settings at any time, or delete them from
-          Discover &gt; Tune matches. When you delete them, we remove your
-          settings immediately and your matches, careers-page requests, and run
-          history on the next refresh. Jobs you saved to your pipeline stay in
-          your account. Matches you dismiss, and matches whose postings close,
-          are deleted automatically after 30 days.
+          Discover &gt; Tune matches. When you delete them, we immediately
+          remove your settings, your matches, the matches you saved or
+          dismissed, and your careers-page requests; our server drops its
+          working copy of your matches on its next refresh. Jobs you saved to
+          your pipeline stay in your account. Matches you dismiss are hidden
+          from your feed after 30 days, and we remember the dismissal for 180
+          days so the role does not come back, then delete it. Matches whose
+          postings close leave your feed within 30 days.
         </p>
 
         {/* ─── 2. HOW DO WE PROCESS ─── */}
@@ -669,7 +673,7 @@ export default function PrivacyPolicy() {
           measures to promptly delete such data from our records. If you become
           aware of any data we may have collected from children under age 18,
           please contact us at{" "}
-          <a href="mailto:contact@yugthapar.com">contact@yugthapar.com</a>.
+          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
         </p>
 
         {/* ─── 9. PRIVACY RIGHTS ─── */}
@@ -781,7 +785,7 @@ export default function PrivacyPolicy() {
         <p>
           If you have questions or comments about your privacy rights, you may
           email us at{" "}
-          <a href="mailto:contact@yugthapar.com">contact@yugthapar.com</a>.
+          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
         </p>
 
         {/* ─── 10. DNT ─── */}
@@ -1076,15 +1080,19 @@ export default function PrivacyPolicy() {
         <p>
           To exercise these rights, you can contact us by visiting{" "}
           <a
-            href="https://traction-37.web.app/account"
+            href={`${APP_URL}/account`}
             target="_blank"
             rel="noopener noreferrer"
           >
-            https://traction-37.web.app/account
+            {`${APP_URL}/account`}
           </a>
           , by emailing us at{" "}
-          <a href="mailto:contact@yugthapar.com">contact@yugthapar.com</a>, or
+          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>, or
           by referring to the contact details at the bottom of this document.
+        </p>
+        <p>
+          The Account page lets you export all your data as JSON and delete your
+          account and all its data.
         </p>
         <p>
           Under certain US state data protection laws, you can designate an
@@ -1116,7 +1124,7 @@ export default function PrivacyPolicy() {
         <p>
           Under certain US state data protection laws, if we decline to take
           action regarding your request, you may appeal our decision by emailing
-          us at <a href="mailto:contact@yugthapar.com">contact@yugthapar.com</a>
+          us at <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
           . We will inform you in writing of any action taken or not taken in
           response to the appeal, including a written explanation of the reasons
           for the decisions. If your appeal is denied, you may submit a
@@ -1160,11 +1168,11 @@ export default function PrivacyPolicy() {
         <h2 id="contact">13. HOW CAN YOU CONTACT US ABOUT THIS NOTICE?</h2>
         <p>
           If you have questions or comments about this notice, you may email us
-          at <a href="mailto:contact@yugthapar.com">contact@yugthapar.com</a> or
+          at <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> or
           contact us by post at:
         </p>
         <p>
-          SaveTheJob
+          {APP_NAME}
           <br />
           University Dr
           <br />
@@ -1188,11 +1196,11 @@ export default function PrivacyPolicy() {
           circumstances by applicable law. To request to review, update, or
           delete your personal information, please visit:{" "}
           <a
-            href="https://traction-37.web.app/account"
+            href={`${APP_URL}/account`}
             target="_blank"
             rel="noopener noreferrer"
           >
-            https://traction-37.web.app/account
+            {`${APP_URL}/account`}
           </a>
           .
         </p>

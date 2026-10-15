@@ -1,5 +1,4 @@
 import {
-  collection,
   limit,
   onSnapshot,
   orderBy,
@@ -7,8 +6,17 @@ import {
 } from "firebase/firestore";
 import { History, Lock, ShieldAlert } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import type { AdminLog } from "../../lib/adminLogger";
-import { db } from "../../lib/firebase";
+import type { AdminAction, AdminOutcome } from "../../lib/adminLogger";
+import { refs, toDate } from "../../lib/db";
+
+interface AdminLog {
+  id: string;
+  action: AdminAction;
+  actorEmail: string;
+  target: string;
+  outcome: AdminOutcome;
+  createdAt: Date | null;
+}
 
 const SecurityPulse: React.FC = () => {
   const [logs, setLogs] = useState<AdminLog[]>([]);
@@ -16,25 +24,33 @@ const SecurityPulse: React.FC = () => {
 
   useEffect(() => {
     const q = query(
-      collection(db, "admin_logs"),
+      refs.adminLogs(),
       orderBy("createdAt", "desc"),
       limit(20),
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const newLogs = snapshot.docs.map(
-        (doc) => ({ id: doc.id, ...doc.data() }) as any,
+      setLogs(
+        snapshot.docs.map((d) => {
+          const x = d.data();
+          return {
+            id: d.id,
+            action: x.action,
+            actorEmail: String(x.actorEmail ?? ""),
+            target: String(x.target ?? ""),
+            outcome: x.outcome,
+            createdAt: toDate(x.createdAt),
+          } as AdminLog;
+        }),
       );
-      setLogs(newLogs);
       setLoading(false);
-    });
+    }, () => setLoading(false));
 
     return () => unsubscribe();
   }, []);
 
-  const getTimeAgo = (timestamp: any) => {
-    if (!timestamp) return "Just now";
-    const date = timestamp.toDate();
+  const getTimeAgo = (date: Date | null) => {
+    if (!date) return "Just now";
     const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
     if (seconds < 60) return `${seconds}s ago`;
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
@@ -60,16 +76,16 @@ const SecurityPulse: React.FC = () => {
             </p>
           </div>
         ) : (
-          logs.map((log, i) => (
+          logs.map((log) => (
             <div
-              key={log.createdAt?.seconds || i}
+              key={log.id}
               className="p-5 flex items-center justify-between hover:bg-black/10 transition-colors group animate-in slide-in-from-top-4 duration-300"
             >
               <div className="flex items-center gap-4">
                 <div
-                  className={`p-3 rounded-xl ${log.status === "SUCCESS" ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"}`}
+                  className={`p-3 rounded-xl ${log.outcome === "success" ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"}`}
                 >
-                  {log.status === "SUCCESS" ? (
+                  {log.outcome === "success" ? (
                     <Lock className="w-4 h-4" />
                   ) : (
                     <ShieldAlert className="w-4 h-4" />
@@ -77,10 +93,10 @@ const SecurityPulse: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-xs font-black text-white tracking-widest uppercase">
-                    {log.action.replace(/_/g, " ")}
+                    {String(log.action).replace(/_/g, " ")}
                   </p>
                   <p className="text-[9px] font-bold text-slate-300 tracking-widest uppercase mt-0.5">
-                    EXERCISED BY: {log.user} • ON: {log.target}
+                    EXERCISED BY: {log.actorEmail} • ON: {log.target}
                   </p>
                 </div>
               </div>
@@ -89,9 +105,9 @@ const SecurityPulse: React.FC = () => {
                   {getTimeAgo(log.createdAt)}
                 </p>
                 <span
-                  className={`text-[8px] font-black px-2 py-0.5 rounded-full border ${log.status === "SUCCESS" ? "border-emerald-500/20 text-emerald-500" : "border-rose-500/20 text-rose-500"} uppercase tracking-widest mt-1 inline-block`}
+                  className={`text-[8px] font-black px-2 py-0.5 rounded-full border ${log.outcome === "success" ? "border-emerald-500/20 text-emerald-500" : "border-rose-500/20 text-rose-500"} uppercase tracking-widest mt-1 inline-block`}
                 >
-                  {log.status}
+                  {log.outcome}
                 </span>
               </div>
             </div>

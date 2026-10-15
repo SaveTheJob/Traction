@@ -1,9 +1,11 @@
-import { createUserWithEmailAndPassword } from "firebase/auth";
+/* eslint-disable @typescript-eslint/no-explicit-any -- catch clauses and third-party config objects have no useful static type here */
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import GoogleAuthButton from "../components/GoogleAuthButton";
 import Logo from "../components/Logo";
+import { APP_NAME, APP_URL } from "../lib/app";
 import { auth } from "../lib/firebase";
 export default function Signup() {
   const [email, setEmail] = useState("");
@@ -27,8 +29,9 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      navigate("/");
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      await sendEmailVerification(cred.user, { url: APP_URL });
+      navigate("/verify-email");
     } catch (err: any) {
       console.error(err);
       if (err.code === "auth/email-already-in-use") {
@@ -59,7 +62,7 @@ export default function Signup() {
           </h2>
           <p className="mt-2 text-sm font-medium text-slate-300">
             Create your{" "}
-            <span className="text-blue-400 font-bold">SaveTheJob</span> account
+            <span className="text-blue-400 font-bold">{APP_NAME}</span> account
             today
           </p>
         </div>

@@ -1,68 +1,95 @@
 import { formatDistanceToNowStrict } from "date-fns";
-import { collection, deleteDoc, doc, onSnapshot, type Timestamp } from "firebase/firestore";
+import { deleteDoc, onSnapshot } from "firebase/firestore";
 import { Compass, Rss, Trash2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { db } from "../../lib/firebase";
+import { recordAdminLog } from "../../lib/adminLogger";
+import { refs, toDate } from "../../lib/db";
 
-interface GlobalRun {
-  lastRunAt?: Timestamp | null;
+interface LastRun {
+  at: Date | null;
   durationSec?: number;
   rawPostings?: number;
   uniqueRoles?: number;
-  screened?: number;
   usersServed?: number;
-  sourcesOk?: number;
+  writes?: number;
   failedSources?: Record<string, string>;
-  firestoreWrites?: number;
-  firestoreReads?: number;
-  feedRequests?: Record<string, number>;
 }
 
 interface Feed {
   id: string;
-  company?: string;
-  ats?: string;
-  origin?: "config" | "user";
-  status?: "ok" | "failed" | "pending";
-  lastError?: string;
-  lastCheckedAt?: Timestamp | null;
-  earlyCareerCount?: number;
+  company: string;
+  ats: string;
+  origin: "config" | "user";
+  status: "ok" | "failing" | "checking";
+  lastError: string;
+  updatedAt: Date | null;
+  earlyCareerCount: number | null;
 }
 
-const ago = (ts?: Timestamp | null) => {
+const ago = (d?: Date | null) => {
   try {
-    return ts ? formatDistanceToNowStrict(ts.toDate(), { addSuffix: true }) : "never";
+    return d ? formatDistanceToNowStrict(d, { addSuffix: true }) : "never";
   } catch {
     return "never";
   }
 };
 
+const num = (v: unknown) => (typeof v === "number" ? v : undefined);
+
 const statusCls: Record<string, string> = {
   ok: "bg-emerald-500/15 text-emerald-300",
-  failed: "bg-red-500/15 text-red-300",
-  pending: "bg-white/10 text-slate-300",
+  failing: "bg-red-500/15 text-red-300",
+  checking: "bg-white/10 text-slate-300",
 };
 
-/** Discover collector health (`collectorRuns/_global`) and the shared company feeds. */
+/** Discover collector health (`system/health`) and the shared company feeds. */
 const CollectorHealth: React.FC = () => {
-  const [run, setRun] = useState<GlobalRun | null>(null);
+  const [run, setRun] = useState<LastRun | null>(null);
   const [feeds, setFeeds] = useState<Feed[]>([]);
   const [error, setError] = useState("");
   const [removing, setRemoving] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubRun = onSnapshot(
-      doc(db, "collectorRuns", "_global"),
-      (snap) => setRun(snap.exists() ? (snap.data() as GlobalRun) : null),
+      refs.systemHealth(),
+      (snap) => {
+        const r = snap.data()?.lastRun;
+        setRun(
+          r
+            ? {
+                at: toDate(r.at),
+                durationSec: num(r.durationSec),
+                rawPostings: num(r.rawPostings),
+                uniqueRoles: num(r.uniqueRoles),
+                usersServed: num(r.usersServed),
+                writes: num(r.writes),
+                failedSources:
+                  r.failedSources && typeof r.failedSources === "object" ? r.failedSources : {},
+              }
+            : null,
+        );
+      },
       (e) => setError(e.message),
     );
     const unsubFeeds = onSnapshot(
-      collection(db, "companyFeeds"),
+      refs.feeds(),
       (snap) =>
         setFeeds(
           snap.docs
-            .map((d) => ({ id: d.id, ...d.data() }) as Feed)
-            .sort((a, b) => (a.status === "failed" ? -1 : 0) - (b.status === "failed" ? -1 : 0) || (a.company ?? "").localeCompare(b.company ?? "")),
+            .map((d): Feed => {
+              const x = d.data();
+              return {
+                id: d.id,
+                company: typeof x.company === "string" ? x.company : d.id,
+                ats: typeof x.ats === "string" ? x.ats : "",
+                origin: x.origin === "user" ? "user" : "config",
+                status: x.status === "failing" || x.status === "checking" ? x.status : "ok",
+                lastError: typeof x.lastError === "string" ? x.lastError : "",
+                updatedAt: toDate(x.updatedAt),
+                earlyCareerCount: num(x.earlyCareerCount) ?? null,
+              };
+            })
+            .sort((a, b) => (a.status === "failing" ? -1 : 0) - (b.status === "failing" ? -1 : 0) || a.company.localeCompare(b.company)),
         ),
       (e) => setError(e.message),
     );
@@ -73,11 +100,13 @@ const CollectorHealth: React.FC = () => {
   }, []);
 
   const remove = async (f: Feed) => {
-    if (!window.confirm(`Stop collecting from ${f.company ?? f.id} for everyone?`)) return;
+    if (!window.confirm(`Stop collecting from ${f.company} for everyone?`)) return;
     setRemoving(f.id);
     try {
-      await deleteDoc(doc(db, "companyFeeds", f.id));
+      await deleteDoc(refs.feed(f.id));
+      recordAdminLog("FEED_REMOVED", f.id);
     } catch (e) {
+      recordAdminLog("FEED_REMOVED", f.id, "error");
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setRemoving(null);
@@ -86,11 +115,11 @@ const CollectorHealth: React.FC = () => {
 
   const failed = Object.entries(run?.failedSources ?? {});
   const tiles = [
-    { label: "Last run", val: ago(run?.lastRunAt) },
+    { label: "Last run", val: ago(run?.at) },
     { label: "Duration", val: run?.durationSec != null ? `${Math.round(run.durationSec)}s` : "-" },
     { label: "Users served", val: run?.usersServed ?? "-" },
     { label: "Roles found", val: run?.uniqueRoles?.toLocaleString() ?? "-" },
-    { label: "Writes", val: run?.firestoreWrites?.toLocaleString() ?? "-" },
+    { label: "Writes", val: run?.writes?.toLocaleString() ?? "-" },
     { label: "Failed sources", val: failed.length },
   ];
 
@@ -130,7 +159,7 @@ const CollectorHealth: React.FC = () => {
                 <th className="py-2 pr-3">Board</th>
                 <th className="py-2 pr-3">Status</th>
                 <th className="py-2 pr-3">Early-career</th>
-                <th className="py-2 pr-3">Checked</th>
+                <th className="py-2 pr-3">Updated</th>
                 <th className="py-2 pr-3">Last error</th>
                 <th className="py-2" />
               </tr>
@@ -138,29 +167,29 @@ const CollectorHealth: React.FC = () => {
             <tbody className="divide-y divide-white/5">
               {feeds.map((f) => (
                 <tr key={f.id} className="text-slate-200">
-                  <td className="py-2 pr-3 font-bold text-white">{f.company ?? f.id}</td>
+                  <td className="py-2 pr-3 font-bold text-white">{f.company}</td>
                   <td className="py-2 pr-3">
                     {f.ats}
                     {f.origin === "config" && <span className="ml-1.5 text-[10px] text-slate-400">(config)</span>}
                   </td>
                   <td className="py-2 pr-3">
-                    <span className={`px-2 py-0.5 rounded-full font-bold ${statusCls[f.status ?? "pending"] ?? statusCls.pending}`}>
-                      {f.status ?? "pending"}
+                    <span className={`px-2 py-0.5 rounded-full font-bold ${statusCls[f.status] ?? statusCls.checking}`}>
+                      {f.status}
                     </span>
                   </td>
                   <td className="py-2 pr-3">{f.earlyCareerCount ?? "-"}</td>
-                  <td className="py-2 pr-3 whitespace-nowrap">{ago(f.lastCheckedAt)}</td>
+                  <td className="py-2 pr-3 whitespace-nowrap">{ago(f.updatedAt)}</td>
                   <td className="py-2 pr-3 text-slate-400 max-w-[280px] truncate" title={f.lastError}>
                     {f.lastError || ""}
                   </td>
                   <td className="py-2 text-right">
-                    {f.origin !== "config" && (
+                    {f.origin === "user" && (
                       <button
                         onClick={() => remove(f)}
                         disabled={removing === f.id}
                         className="p-1.5 rounded-lg text-slate-300 hover:text-red-300 hover:bg-red-500/10 disabled:opacity-50"
                         title="Remove feed"
-                        aria-label={`Remove ${f.company ?? f.id}`}
+                        aria-label={`Remove ${f.company}`}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

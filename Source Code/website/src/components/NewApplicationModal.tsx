@@ -1,67 +1,63 @@
-import { AlertTriangle, X } from "lucide-react";
-import { useEffect, useState } from "react";
-import type { Priority, Status } from "../context/JobContext";
+import { X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useJobs } from "../context/JobContext";
+import { jobsErrorMessage } from "../lib/errors";
+import type { JobStatus, Priority } from "../lib/db";
+import { JOB_STATUSES, JOB_STATUS_LABEL, PRIORITY_LABEL } from "../lib/db";
 import CustomSelect from "./CustomSelect";
+import type { JobForm } from "./jobForm";
+import { EMPTY_FORM, formFromJob } from "./jobForm";
 
 export default function NewApplicationModal() {
-  const {
-    jobs,
-    isModalOpen,
-    closeModal,
-    addJob,
-    updateJob,
-    editingJobId,
-    limitError,
-    clearLimitError,
-  } = useJobs();
+  const { jobs, isModalOpen, closeModal, createJob, updateJob, editingJobId } = useJobs();
 
-  // Form state
-  const [company, setCompany] = useState("");
-  const [title, setTitle] = useState("");
-  const [location, setLocation] = useState("");
-  const [link, setLink] = useState("");
-  const [status, setStatus] = useState<Status>("Applied");
-  const [priority, setPriority] = useState<Priority>("Medium");
-  const [notes, setNotes] = useState("");
+  // The form is seeded once per open. Later snapshots (another tab, the
+  // extension) must not overwrite what the user is typing, so the effect reads
+  // the job list through a ref instead of depending on it.
+  const jobsRef = useRef(jobs);
+  useEffect(() => {
+    jobsRef.current = jobs;
+  }, [jobs]);
+
+  const [form, setForm] = useState<JobForm>(EMPTY_FORM);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const set = <K extends keyof JobForm>(key: K, value: JobForm[K]) =>
+    setForm((f) => ({ ...f, [key]: value }));
 
   useEffect(() => {
-    if (isModalOpen && editingJobId) {
-      const jobToEdit = jobs.find((j) => j.id === editingJobId);
-      if (jobToEdit) {
-        setCompany(jobToEdit.company);
-        setTitle(jobToEdit.title);
-        setLocation(jobToEdit.location || "");
-        setLink(jobToEdit.link || "");
-        setStatus(jobToEdit.status);
-        setPriority(jobToEdit.priority);
-        setNotes(jobToEdit.notes || "");
-      }
-    } else if (isModalOpen && !editingJobId) {
-      setCompany("");
-      setTitle("");
-      setLocation("");
-      setLink("");
-      setStatus("Applied");
-      setPriority("Medium");
-      setNotes("");
-    }
-    if (isModalOpen) clearLimitError();
-  }, [isModalOpen, editingJobId, jobs, clearLimitError]);
+    if (!isModalOpen) return;
+    const jobToEdit = editingJobId ? jobsRef.current.find((j) => j.id === editingJobId) : undefined;
+    setForm(jobToEdit ? formFromJob(jobToEdit) : EMPTY_FORM);
+    setError("");
+    setSaving(false);
+  }, [isModalOpen, editingJobId]);
 
   if (!isModalOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!company || !title || !location) return;
-
-    const jobData = { company, title, location, link, status, priority, notes };
-    if (editingJobId) {
-      updateJob(editingJobId, jobData);
-      closeModal();
-    } else {
-      const success = await addJob(jobData);
-      if (success) closeModal();
+    if (saving) return;
+    // The rules reject empty names, so catch it here with a message.
+    if (!form.company.trim() || !form.title.trim()) {
+      setError("Company and job title are required.");
+      return;
+    }
+    setError("");
+    setSaving(true);
+    try {
+      if (editingJobId) {
+        await updateJob(editingJobId, form);
+        closeModal();
+      } else if ((await createJob(form)) !== null) {
+        closeModal();
+      } else {
+        setError(jobsErrorMessage(null));
+      }
+    } catch (err) {
+      setError(jobsErrorMessage(err));
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -82,12 +78,6 @@ export default function NewApplicationModal() {
           </button>
         </div>
         <div className="p-4 sm:p-6 overflow-y-auto">
-          {limitError && (
-            <div className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-red-900/20 border border-red-800 text-red-300 text-sm font-medium">
-              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-              {limitError}
-            </div>
-          )}
           <form
             id="global-add-job-form"
             className="space-y-4"
@@ -98,9 +88,8 @@ export default function NewApplicationModal() {
                 Company Name
               </label>
               <input
-                required
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
+                value={form.company}
+                onChange={(e) => set("company", e.target.value)}
                 type="text"
                 placeholder="e.g. Google"
                 className="w-full px-3 py-2 border border-slate-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-700 text-white placeholder-slate-500"
@@ -111,9 +100,8 @@ export default function NewApplicationModal() {
                 Location
               </label>
               <input
-                required
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
+                value={form.location}
+                onChange={(e) => set("location", e.target.value)}
                 type="text"
                 placeholder="e.g. San Francisco, CA or Remote"
                 className="w-full px-3 py-2 border border-slate-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-700 text-white placeholder-slate-500"
@@ -124,9 +112,8 @@ export default function NewApplicationModal() {
                 Job Title
               </label>
               <input
-                required
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                value={form.title}
+                onChange={(e) => set("title", e.target.value)}
                 type="text"
                 placeholder="e.g. Software Engineer"
                 className="w-full px-3 py-2 border border-slate-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-700 text-white placeholder-slate-500"
@@ -137,8 +124,8 @@ export default function NewApplicationModal() {
                 Job Link
               </label>
               <input
-                value={link}
-                onChange={(e) => setLink(e.target.value)}
+                value={form.url}
+                onChange={(e) => set("url", e.target.value)}
                 type="url"
                 placeholder="https://..."
                 className="w-full px-3 py-2 border border-slate-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-700 text-white placeholder-slate-500"
@@ -150,17 +137,11 @@ export default function NewApplicationModal() {
                   Status
                 </label>
                 <CustomSelect
-                  value={status}
-                  onChange={(val) => setStatus(val as Status)}
+                  value={form.status}
+                  onChange={(val) => set("status", val as JobStatus)}
                   variant="solid"
                   className="text-sm font-medium"
-                  options={[
-                    { value: "Saved", label: "Saved" },
-                    { value: "Applied", label: "Applied" },
-                    { value: "Interviewing", label: "Interviewing" },
-                    { value: "Offer", label: "Offer" },
-                    { value: "Rejected", label: "Rejected" },
-                  ]}
+                  options={JOB_STATUSES.map((value) => ({ value, label: JOB_STATUS_LABEL[value] }))}
                 />
               </div>
               <div>
@@ -168,15 +149,11 @@ export default function NewApplicationModal() {
                   Priority
                 </label>
                 <CustomSelect
-                  value={priority}
-                  onChange={(val) => setPriority(val as Priority)}
+                  value={form.priority}
+                  onChange={(val) => set("priority", val as Priority)}
                   variant="solid"
                   className="text-sm font-medium"
-                  options={[
-                    { value: "High", label: "High" },
-                    { value: "Medium", label: "Medium" },
-                    { value: "Low", label: "Low" },
-                  ]}
+                  options={(Object.keys(PRIORITY_LABEL) as Priority[]).map((value) => ({ value, label: PRIORITY_LABEL[value] }))}
                 />
               </div>
             </div>
@@ -185,13 +162,18 @@ export default function NewApplicationModal() {
                 Notes
               </label>
               <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                value={form.notes}
+                onChange={(e) => set("notes", e.target.value)}
                 rows={3}
                 placeholder="Any details..."
                 className="w-full px-3 py-2 border border-slate-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none bg-slate-700 text-white placeholder-slate-500"
               ></textarea>
             </div>
+            {error && (
+              <p role="alert" className="text-sm font-medium text-red-400">
+                {error}
+              </p>
+            )}
           </form>
         </div>
         <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-slate-700 flex items-center justify-end gap-3 bg-slate-800/50">
@@ -205,7 +187,8 @@ export default function NewApplicationModal() {
           <button
             type="submit"
             form="global-add-job-form"
-            className="px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 rounded-2xl transition-all shadow-sm cursor-pointer"
+            disabled={saving}
+            className="disabled:opacity-60 px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 rounded-2xl transition-all shadow-sm cursor-pointer"
           >
             {isEditing ? "Save Changes" : "Save Application"}
           </button>

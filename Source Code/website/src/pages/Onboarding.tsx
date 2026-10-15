@@ -1,22 +1,25 @@
-import { doc, updateDoc } from "firebase/firestore";
+import { serverTimestamp, updateDoc } from "firebase/firestore";
 import { AlertTriangle, ArrowRight, Calendar, Compass, User } from "lucide-react";
 import { useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { PRESETS } from "../lib/discover";
-import { db } from "../lib/firebase";
-import { formatDobInput, isValidDob } from "../utils/dob";
+import { refs } from "../lib/db";
 
 export default function Onboarding() {
-  const { user, userProfile } = useAuth();
+  const { user, account } = useAuth();
   const { backgroundConfig } = useTheme();
-  const [firstName, setFirstName] = useState(userProfile?.firstName || "");
-  const [lastName, setLastName] = useState(userProfile?.lastName || "");
-  const [dob, setDob] = useState(userProfile?.dob || "");
+  const navigate = useNavigate();
+  const [firstName, setFirstName] = useState(account?.firstName || "");
+  const [lastName, setLastName] = useState(account?.lastName || "");
+  const [dob, setDob] = useState(account?.birthDate || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
   // Step 2 is optional: pick a Discover preset or skip to the dashboard.
   const [step, setStep] = useState<"profile" | "discover">("profile");
+  // Set while step 2 saves `onboarded`, so the live account doc doesn't bounce us to "/" first.
+  const [finishing, setFinishing] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,20 +28,19 @@ export default function Onboarding() {
       setFormError("Please fill in all fields.");
       return;
     }
-    if (!isValidDob(dob)) {
-      setFormError("Please enter a valid Date of Birth (MM/DD/YYYY).");
+    if (dob > new Date().toISOString().slice(0, 10)) {
+      setFormError("Please enter a valid Date of Birth.");
       return;
     }
     setFormError("");
 
     setIsSubmitting(true);
     try {
-      const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, {
-        firstName,
-        lastName,
-        dob,
-        onboardingCompleted: true,
+      await updateDoc(refs.user(user.uid), {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        birthDate: dob,
+        updatedAt: serverTimestamp(),
       });
       setStep("discover");
       setIsSubmitting(false);
@@ -49,9 +51,22 @@ export default function Onboarding() {
     }
   };
 
-  const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDob(formatDobInput(e.target.value));
+  // Step 2 (a preset or Skip) is what completes onboarding.
+  const finish = async (target: string) => {
+    if (!user) return;
+    setFinishing(true);
+    setFormError("");
+    try {
+      await updateDoc(refs.user(user.uid), { onboarded: true, updatedAt: serverTimestamp() });
+      navigate(target, { replace: true });
+    } catch (error) {
+      console.error("Error finishing onboarding:", error);
+      setFormError("Could not finish setup. Please try again.");
+      setFinishing(false);
+    }
   };
+
+  if (account?.onboarded && !finishing) return <Navigate to="/" replace />;
 
   return (
     <div
@@ -82,7 +97,7 @@ export default function Onboarding() {
               Profile Setup
             </h1>
             <p className="text-slate-300 mt-1 text-xs font-medium">
-              Welcome to SaveTheJob. Let's get your account activated.
+              Welcome to Offerward. Let's get your account activated.
             </p>
           </div>
         </div>
@@ -99,14 +114,20 @@ export default function Onboarding() {
                 fine-tune it next.
               </p>
             </div>
+            {formError && (
+              <div className="p-3 rounded-2xl text-xs font-bold bg-red-500/10 border border-red-500/20 text-red-500 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                {formError}
+              </div>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {PRESETS.map((p) => (
                 <button
                   key={p.id}
                   type="button"
-                  // Full reload so the app picks up the completed profile
-                  onClick={() => (window.location.href = `/discover/settings?preset=${p.id}`)}
-                  className="text-left rounded-2xl p-4 border bg-black/20 border-white/5 hover:bg-white/5 transition-all"
+                  disabled={finishing}
+                  onClick={() => finish(`/discover/settings?preset=${p.id}`)}
+                  className="text-left rounded-2xl p-4 border bg-black/20 border-white/5 hover:bg-white/5 transition-all disabled:opacity-50"
                 >
                   <p className="text-sm font-bold text-white">{p.label}</p>
                   <p className="text-xs text-slate-300 mt-1">{p.description}</p>
@@ -115,8 +136,9 @@ export default function Onboarding() {
             </div>
             <button
               type="button"
-              onClick={() => (window.location.href = "/")}
-              className="w-full text-sm font-bold text-slate-200 hover:text-white py-3 rounded-2xl hover:bg-white/5 transition-all flex items-center justify-center gap-2"
+              disabled={finishing}
+              onClick={() => finish("/")}
+              className="w-full text-sm font-bold text-slate-200 hover:text-white py-3 rounded-2xl hover:bg-white/5 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
               Skip for now
               <ArrowRight className="w-4 h-4" />
@@ -174,12 +196,11 @@ export default function Onboarding() {
                   <Calendar className="w-3.5 h-3.5" /> Date of Birth
                 </label>
                 <input
-                  type="text"
+                  type="date"
                   required
-                  placeholder="MM/DD/YYYY"
-                  maxLength={10}
+                  max={new Date().toISOString().slice(0, 10)}
                   value={dob}
-                  onChange={handleDobChange}
+                  onChange={(e) => setDob(e.target.value)}
                   className="w-full px-4 py-2.5 bg-black/20 border border-white/5 rounded-2xl text-sm font-medium text-white focus:ring-2 focus:ring-blue-500/30 outline-none transition-all color-scheme-dark"
                 />
               </div>

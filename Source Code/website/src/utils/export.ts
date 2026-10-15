@@ -1,4 +1,13 @@
-import type { Job } from "../context/JobContext";
+/* eslint-disable @typescript-eslint/no-explicit-any -- catch clauses and third-party config objects have no useful static type here */
+import { format } from "date-fns";
+import type { Job } from "../lib/db";
+import { APP_NAME } from "../lib/app";
+import { JOB_STATUS_LABEL } from "../lib/db";
+
+const addedDate = (j: Job) => {
+  const d = j.appliedAt ?? j.createdAt;
+  return d ? format(d, "MMM d, yyyy") : "—";
+};
 
 export interface ExportOptions {
   jobs: Job[];
@@ -41,7 +50,7 @@ export async function exportToPDF(opts: ExportOptions) {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
-  doc.text("SaveTheJob — Application Report", 14, 12);
+  doc.text(`${APP_NAME} — Application Report`, 14, 12);
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.text(`Generated for ${userName} · ${today}`, 14, 19);
@@ -52,7 +61,7 @@ export async function exportToPDF(opts: ExportOptions) {
     { label: "Saved", value: savedNumber },
     {
       label: "Applied",
-      value: jobs.filter((j) => j.status === "Applied").length,
+      value: jobs.filter((j) => j.status === "applied").length,
     },
     { label: "Interviewing", value: interviewingNumber },
     { label: "Offers", value: offerNumber },
@@ -100,10 +109,10 @@ export async function exportToPDF(opts: ExportOptions) {
         idx + 1,
         job.company,
         job.title,
-        job.status,
-        job.location ?? "—",
-        job.dateApplied ?? "—",
-        job.link ?? "—",
+        JOB_STATUS_LABEL[job.status],
+        job.location || "—",
+        addedDate(job),
+        job.url || "—",
       ]),
     headStyles: {
       fillColor: [14, 88, 163],
@@ -127,14 +136,14 @@ export async function exportToPDF(opts: ExportOptions) {
     doc.setFontSize(7.5);
     doc.setTextColor(148, 163, 184);
     doc.text(
-      `SaveTheJob · Page ${i} of ${pageCount}`,
+      `${APP_NAME} · Page ${i} of ${pageCount}`,
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 5,
       { align: "center" },
     );
   }
 
-  doc.save(`SaveTheJob_Applications_${today.replace(/ /g, "_")}.pdf`);
+  doc.save(`${APP_NAME}_Applications_${today.replace(/ /g, "_")}.pdf`);
 }
 
 export async function exportToExcel(opts: ExportOptions) {
@@ -150,7 +159,7 @@ export async function exportToExcel(opts: ExportOptions) {
 
   const ExcelJS = await import("exceljs");
   const wb = new ExcelJS.Workbook();
-  wb.creator = "SaveTheJob";
+  wb.creator = APP_NAME;
   wb.created = new Date();
 
   const today = new Date().toLocaleDateString("en-US", {
@@ -170,11 +179,11 @@ export async function exportToExcel(opts: ExportOptions) {
   const TEXT_LIGHT = "FFE0E7FF";
 
   const statusColors: Record<string, { bg: string; fg: string }> = {
-    Applied: { bg: "FFDBEAFE", fg: "FF1E40AF" },
-    Interviewing: { bg: "FFFEF9C3", fg: "FF713F12" },
-    Offer: { bg: "FFDCFCE7", fg: "FF14532D" },
-    Saved: { bg: "FFF3E8FF", fg: "FF581C87" },
-    Rejected: { bg: "FFFEE2E2", fg: "FF7F1D1D" },
+    applied: { bg: "FFDBEAFE", fg: "FF1E40AF" },
+    interviewing: { bg: "FFFEF9C3", fg: "FF713F12" },
+    offer: { bg: "FFDCFCE7", fg: "FF14532D" },
+    saved: { bg: "FFF3E8FF", fg: "FF581C87" },
+    rejected: { bg: "FFFEE2E2", fg: "FF7F1D1D" },
   };
 
   const border: any = {
@@ -208,7 +217,7 @@ export async function exportToExcel(opts: ExportOptions) {
   // Row 1: Blue banner
   ws.mergeCells("A1:G1");
   const r1 = ws.getCell("A1");
-  r1.value = "SaveTheJob — Application Report";
+  r1.value = `${APP_NAME} — Application Report`;
   r1.fill = { type: "pattern", pattern: "solid", fgColor: { argb: BLUE } };
   r1.font = { bold: true, size: 18, color: { argb: WHITE }, name: "Calibri" };
   r1.alignment = { vertical: "middle", horizontal: "left", indent: 1 };
@@ -236,7 +245,7 @@ export async function exportToExcel(opts: ExportOptions) {
     { label: "Saved", value: savedNumber, highlight: false },
     {
       label: "Applied",
-      value: jobs.filter((j) => j.status === "Applied").length,
+      value: jobs.filter((j) => j.status === "applied").length,
       highlight: false,
     },
     { label: "Interviewing", value: interviewingNumber, highlight: false },
@@ -345,9 +354,9 @@ export async function exportToExcel(opts: ExportOptions) {
       job.company,
       job.title,
       job.status,
-      job.location ?? "—",
-      job.dateApplied ?? "—",
-      job.link ?? "",
+      job.location || "—",
+      addedDate(job),
+      job.url,
     ];
 
     rowData.forEach((val, colIdx) => {
@@ -355,7 +364,7 @@ export async function exportToExcel(opts: ExportOptions) {
 
       if (colIdx === 3) {
         const sc = statusColors[val as string];
-        cell.value = val;
+        cell.value = JOB_STATUS_LABEL[val as Job["status"]];
         cell.fill = {
           type: "pattern",
           pattern: "solid",
@@ -411,7 +420,7 @@ export async function exportToExcel(opts: ExportOptions) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `SaveTheJob_Applications_${todayFile}.xlsx`;
+  a.download = `${APP_NAME}_Applications_${todayFile}.xlsx`;
   a.click();
   URL.revokeObjectURL(url);
 }

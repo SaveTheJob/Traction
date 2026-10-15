@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- context file intentionally exports its provider and consumer hook together */
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 interface BackgroundConfig {
@@ -40,7 +41,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           type: "color",
           glassOpacity: 15,
         };
-      } catch (e) {
+      } catch {
         return {
           value: DEFAULT_WALLPAPER,
           type: "color",

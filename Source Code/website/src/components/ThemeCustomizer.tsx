@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- catch clauses and third-party config objects have no useful static type here */
 import { Image as ImageIcon, RotateCcw, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTheme } from "../context/ThemeContext";
+import { APP_NAME } from "../lib/app";
 import type { ToastMessage } from "./Toast";
 import ToastContainer from "./Toast";
 
@@ -61,7 +63,7 @@ export default function ThemeCustomizer() {
           const compressedBase64 = canvas.toDataURL("image/jpeg", 0.8);
           try {
             setThemeConfig({ value: compressedBase64, type: "image" });
-          } catch (err) {
+          } catch {
             addToast(
               "Image is too large to save! Please choose a smaller image.",
               "error",
@@ -254,7 +256,7 @@ export default function ThemeCustomizer() {
               </button>
             )}
             <h2 className="text-[18px] font-medium text-white tracking-wide">
-              {currentView === "appearance" ? "Customise SaveTheJob" : "Themes"}
+              {currentView === "appearance" ? `Customise ${APP_NAME}` : "Themes"}
             </h2>
           </div>
           <button

@@ -5,33 +5,34 @@ import { useCallback, useMemo, useState } from "react";
 import ConfirmDialog from "../components/ConfirmDialog";
 import CustomSelect from "../components/CustomSelect";
 import PipelineCard from "../components/PipelineCard";
-import type { Priority, Status } from "../context/JobContext";
 import { useJobs } from "../context/JobContext";
+import type { JobStatus, Priority } from "../lib/db";
+import { JOB_STATUS_LABEL, PRIORITY_LABEL } from "../lib/db";
 
-const COLUMNS: { id: Status; label: string; color: string }[] = [
+const COLUMNS: { id: JobStatus; label: string; color: string }[] = [
   {
-    id: "Saved",
-    label: "Saved",
+    id: "saved",
+    label: JOB_STATUS_LABEL.saved,
     color: "premium-glass-heavy text-slate-300",
   },
   {
-    id: "Applied",
-    label: "Applied",
+    id: "applied",
+    label: JOB_STATUS_LABEL.applied,
     color: "premium-glass-heavy text-blue-300",
   },
   {
-    id: "Interviewing",
-    label: "Interviewing",
+    id: "interviewing",
+    label: JOB_STATUS_LABEL.interviewing,
     color: "premium-glass-heavy text-purple-300",
   },
   {
-    id: "Offer",
-    label: "Offer",
+    id: "offer",
+    label: JOB_STATUS_LABEL.offer,
     color: "premium-glass-heavy text-emerald-300",
   },
   {
-    id: "Rejected",
-    label: "Rejected",
+    id: "rejected",
+    label: JOB_STATUS_LABEL.rejected,
     color: "premium-glass-heavy text-red-300",
   },
 ];
@@ -52,7 +53,7 @@ export default function Pipeline() {
       )
         return;
 
-      updateJobStatus(draggableId, destination.droppableId as Status);
+      updateJobStatus(draggableId, destination.droppableId as JobStatus);
     },
     [updateJobStatus],
   );
@@ -110,9 +111,9 @@ export default function Pipeline() {
             variant="glass"
             options={[
               { value: "All", label: "All Priorities" },
-              { value: "High", label: "High Priority" },
-              { value: "Medium", label: "Medium Priority" },
-              { value: "Low", label: "Low Priority" },
+              { value: "high", label: `${PRIORITY_LABEL.high} Priority` },
+              { value: "medium", label: `${PRIORITY_LABEL.medium} Priority` },
+              { value: "low", label: `${PRIORITY_LABEL.low} Priority` },
             ]}
             className="w-40 sm:w-44 text-sm font-medium"
           />

@@ -1,15 +1,17 @@
 import {
   collection,
-  doc,
+  collectionGroup,
+  getCountFromServer,
   getDoc,
-  onSnapshot,
+  getDocs,
   orderBy,
   query,
   Timestamp,
   where,
 } from "firebase/firestore";
-import { Activity, Cpu, Database, Globe, ShieldAlert } from "lucide-react";
+import { Activity, Database, Globe, Timer, UserX } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { refs, toDate } from "../../lib/db";
 import { db } from "../../lib/firebase";
 import CollectorHealth from "./CollectorHealth";
 
@@ -18,129 +20,113 @@ interface HourlyBucket {
   count: number;
 }
 
+const REFRESH_MS = 60_000;
+
 const SystemVitals: React.FC = () => {
   const [stats, setStats] = useState({
     users: 0,
     apps: 0,
     suspended: 0,
-    latency: 0,
+    latency: null as number | null,
     loading: true,
   });
+  const [error, setError] = useState("");
   const [hourlyData, setHourlyData] = useState<HourlyBucket[]>([]);
 
   useEffect(() => {
-    // Live listeners for counts
-    const unsubUsers = onSnapshot(collection(db, "users"), (snapshot) => {
-      const users = snapshot.size;
-      const suspendedCount = snapshot.docs.filter(
-        (d) => d.data().status === "Suspended",
-      ).length;
-      setStats((prev) => ({
-        ...prev,
-        users,
-        suspended: suspendedCount,
-        loading: false,
-      }));
-    });
+    let cancelled = false;
 
-    const unsubApps = onSnapshot(collection(db, "jobs"), (snapshot) => {
-      setStats((prev) => ({ ...prev, apps: snapshot.size }));
-    });
-
-    // Real-time hourly application activity for today
-    const now = new Date();
-    const startOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-    );
-    const startTimestamp = Timestamp.fromDate(startOfDay);
-
-    const jobsQuery = query(
-      collection(db, "jobs"),
-      where("createdAt", ">=", startTimestamp),
-      orderBy("createdAt", "asc"),
-    );
-
-    const unsubHourly = onSnapshot(jobsQuery, (snapshot) => {
-      const buckets: number[] = new Array(24).fill(0);
-      snapshot.docs.forEach((d) => {
-        const data = d.data();
-        if (data.createdAt?.toDate) {
-          const hour = data.createdAt.toDate().getHours();
-          buckets[hour]++;
-        }
-      });
-      const currentHour = new Date().getHours();
-      // Show hours 0..currentHour (at minimum 12 bars for visual balance)
-      const barCount = Math.max(currentHour + 1, 12);
-      setHourlyData(
-        buckets.slice(0, barCount).map((count, hour) => ({ hour, count })),
-      );
-    });
-
-    // Latency pulse
-    const interval = setInterval(async () => {
-      const start = performance.now();
+    // Count queries cost one read per 1,000 docs, so poll instead of listening.
+    const refresh = async () => {
       try {
-        await getDoc(doc(db, "vitals", "health"));
-      } catch {
-        // Ignore — we just want the round-trip time
-      }
-      const end = performance.now();
-      setStats((prev) => ({ ...prev, latency: Math.floor(end - start) }));
-    }, 5000);
+        const start = performance.now();
+        await getDoc(refs.systemHealth());
+        const latency = Math.round(performance.now() - start);
 
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const [users, apps, suspended, today] = await Promise.all([
+          getCountFromServer(collection(db, "users")),
+          getCountFromServer(collectionGroup(db, "jobs")),
+          getCountFromServer(
+            query(collection(db, "users"), where("status", "==", "suspended")),
+          ),
+          getDocs(
+            query(
+              collectionGroup(db, "jobs"),
+              where("createdAt", ">=", Timestamp.fromDate(startOfDay)),
+              orderBy("createdAt"),
+            ),
+          ),
+        ]);
+        if (cancelled) return;
+
+        const buckets: number[] = new Array(24).fill(0);
+        today.docs.forEach((d) => {
+          const at = toDate(d.data().createdAt);
+          if (at) buckets[at.getHours()]++;
+        });
+        // Show hours 0..currentHour (at least 12 bars for visual balance)
+        const barCount = Math.max(new Date().getHours() + 1, 12);
+        setHourlyData(
+          buckets.slice(0, barCount).map((count, hour) => ({ hour, count })),
+        );
+        setStats({
+          users: users.data().count,
+          apps: apps.data().count,
+          suspended: suspended.data().count,
+          latency,
+          loading: false,
+        });
+        setError("");
+      } catch (e) {
+        if (cancelled) return;
+        setError(e instanceof Error ? e.message : String(e));
+        setStats((prev) => ({ ...prev, loading: false }));
+      }
+    };
+
+    refresh();
+    const interval = setInterval(refresh, REFRESH_MS);
     return () => {
-      unsubUsers();
-      unsubApps();
-      unsubHourly();
+      cancelled = true;
       clearInterval(interval);
     };
   }, []);
-
-  const getHealthPercent = () => {
-    if (stats.latency === 0) return "99.9%";
-    if (stats.latency < 150) return "99.9%";
-    if (stats.latency < 400) return "98.5%";
-    if (stats.latency < 1000) return "94.2%";
-    return "82.1%";
-  };
-
-  const getThreatLevel = () => {
-    if (stats.suspended === 0) return "Minimal";
-    if (stats.suspended < 5) return "Elevated";
-    return "Critical";
-  };
 
   const maxCount = Math.max(...hourlyData.map((b) => b.count), 1);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {error && (
+        <p className="md:col-span-2 lg:col-span-4 text-xs text-red-300">
+          {error}
+        </p>
+      )}
       {[
         {
-          label: "Total Ingress Users",
-          val: stats.loading ? "..." : stats.users,
+          label: "Users",
+          val: stats.loading ? "..." : stats.users.toLocaleString(),
           icon: Globe,
           color: "blue",
         },
         {
-          label: "Asset Clusters",
-          val: stats.loading ? "..." : stats.apps,
+          label: "Applications",
+          val: stats.loading ? "..." : stats.apps.toLocaleString(),
           icon: Database,
           color: "indigo",
         },
         {
-          label: "Engine Health",
-          val: getHealthPercent(),
-          icon: Cpu,
-          color: stats.latency > 600 ? "rose" : "emerald",
+          label: "Suspended",
+          val: stats.loading ? "..." : stats.suspended.toLocaleString(),
+          icon: UserX,
+          color: stats.suspended > 0 ? "amber" : "emerald",
         },
         {
-          label: "Threat Level",
-          val: getThreatLevel(),
-          icon: ShieldAlert,
-          color: stats.suspended > 0 ? "amber" : "emerald",
+          label: "Firestore latency",
+          val: stats.latency == null ? "..." : `${stats.latency} ms`,
+          icon: Timer,
+          color: "emerald",
         },
       ].map((v) => (
         <div
@@ -156,17 +142,12 @@ const SystemVitals: React.FC = () => {
           <p className="text-2xl font-black text-white uppercase tracking-tighter">
             {v.val}
           </p>
-          <div className="mt-4 w-full h-1 bg-white/5 rounded-full overflow-hidden">
-            <div
-              className={`h-full bg-${v.color}-500 transition-all duration-1000 ${stats.loading ? "w-0" : "w-[80%]"} ${v.label === "Engine Health" ? "animate-pulse" : ""}`}
-            />
-          </div>
         </div>
       ))}
       <div className="md:col-span-2 lg:col-span-4 premium-glass p-8 rounded-3xl border border-white/5 shadow-2xl">
         <h3 className="text-sm font-black text-white uppercase tracking-widest mb-6 flex items-center gap-2">
-          <Activity className="w-4 h-4 text-emerald-500" /> Infrastructure
-          Analytics
+          <Activity className="w-4 h-4 text-emerald-500" /> Applications
+          added
           <span className="text-[9px] font-bold text-slate-400 ml-2 normal-case tracking-normal">
             (Today's application activity by hour)
           </span>

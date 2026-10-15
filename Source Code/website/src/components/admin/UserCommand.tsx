@@ -1,31 +1,32 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- catch clauses and third-party config objects have no useful static type here */
 import {
   collection,
-  doc,
   getDoc,
   getDocs,
   limit,
   query,
+  serverTimestamp,
   updateDoc,
   where,
 } from "firebase/firestore";
 import { Edit2, Fingerprint, LogIn, Save, Search, User, X } from "lucide-react";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { UserProfile } from "../../context/AuthContext";
 import { useAuth } from "../../context/AuthContext";
 import { recordAdminLog } from "../../lib/adminLogger";
+import { type Account, type AccountStatus, accountFromDoc, refs } from "../../lib/db";
 import { db } from "../../lib/firebase";
 
 const UserCommand: React.FC = () => {
-  const { impersonateUser, user } = useAuth();
+  const { impersonateUser } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchDOB, setSearchDOB] = useState("");
   const [searchLastName, setSearchLastName] = useState("");
   const [searchMode, setSearchMode] = useState<"email" | "name">("email");
-  const [targetUser, setTargetUser] = useState<UserProfile | null>(null);
+  const [targetUser, setTargetUser] = useState<Account | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState<Partial<UserProfile>>({});
+  const [editStatus, setEditStatus] = useState<AccountStatus>("active");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -48,16 +49,14 @@ const UserCommand: React.FC = () => {
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
           const d = querySnapshot.docs[0];
-          setTargetUser({ uid: d.id, ...d.data() } as UserProfile);
+          setTargetUser(accountFromDoc(d.id, d.data()));
         } else {
-          const userDoc = await getDoc(doc(db, "users", queryStr));
-          if (userDoc.exists()) {
-            setTargetUser({
-              uid: userDoc.id,
-              ...userDoc.data(),
-            } as UserProfile);
+          // Not an email on file: try it as a UID.
+          const userDoc = queryStr.includes("/") ? null : await getDoc(refs.user(queryStr));
+          if (userDoc?.exists()) {
+            setTargetUser(accountFromDoc(userDoc.id, userDoc.data()));
           } else {
-            setError("No user found with this email address.");
+            setError("No user found with this email address or UID.");
           }
         }
       } else {
@@ -65,12 +64,12 @@ const UserCommand: React.FC = () => {
           collection(db, "users"),
           where("firstName", "==", searchQuery.trim()),
           where("lastName", "==", searchLastName.trim()),
-          where("dob", "==", searchDOB),
+          where("birthDate", "==", searchDOB),
         );
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
           const d = querySnapshot.docs[0];
-          setTargetUser({ uid: d.id, ...d.data() } as UserProfile);
+          setTargetUser(accountFromDoc(d.id, d.data()));
         } else {
           setError("No user found matching these details.");
         }
@@ -86,21 +85,19 @@ const UserCommand: React.FC = () => {
     if (!targetUser) return;
     setLoading(true);
     try {
-      await updateDoc(doc(db, "users", targetUser.uid), editData);
-
-      const adminId = user?.email || "Unknown";
-      if (editData.plan && editData.plan !== targetUser.plan) {
-        recordAdminLog("PLAN_UPGRADE", adminId, targetUser.email, "SUCCESS");
+      // Rules allow admins to change exactly status + updatedAt.
+      await updateDoc(refs.user(targetUser.uid), {
+        status: editStatus,
+        updatedAt: serverTimestamp(),
+      });
+      if (editStatus !== targetUser.status) {
+        recordAdminLog("STATUS_CHANGE", `${targetUser.uid}:${editStatus}`);
       }
-      if (editData.status && editData.status !== targetUser.status) {
-        recordAdminLog("USER_SUSPENSION", adminId, targetUser.email, "SUCCESS");
-      }
-      recordAdminLog("USER_UPDATE", adminId, targetUser.email, "SUCCESS");
-
-      setTargetUser({ ...targetUser, ...editData } as UserProfile);
+      setTargetUser({ ...targetUser, status: editStatus });
       setIsEditing(false);
-      setMessage("Profile updated successfully.");
+      setMessage("Status updated.");
     } catch (err: any) {
+      recordAdminLog("STATUS_CHANGE", `${targetUser.uid}:${editStatus}`, "error");
       setError("Update failed: " + err.message);
     } finally {
       setLoading(false);
@@ -139,8 +136,8 @@ const UserCommand: React.FC = () => {
                   Email Address
                 </label>
                 <input
-                  type="email"
-                  placeholder="user@example.com"
+                  type="text"
+                  placeholder="user@example.com or UID"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -264,7 +261,7 @@ const UserCommand: React.FC = () => {
                     </button>
                     <button
                       onClick={() => {
-                        setEditData(targetUser);
+                        setEditStatus(targetUser.status);
                         setIsEditing(true);
                       }}
                       className="p-3 bg-blue-600 text-white rounded-xl shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 px-6 font-black text-xs uppercase tracking-widest"
@@ -279,53 +276,24 @@ const UserCommand: React.FC = () => {
               <div className="space-y-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                    Plan Authorization
-                  </label>
-                  <div className="premium-glass p-5 rounded-2xl border border-white/5 flex items-center justify-between">
-                    <span className="text-xs font-black uppercase tracking-widest text-white">
-                      {targetUser.plan}
-                    </span>
-                    {isEditing && (
-                      <select
-                        value={editData.plan}
-                        onChange={(e) =>
-                          setEditData({
-                            ...editData,
-                            plan: e.target.value as any,
-                          })
-                        }
-                        className="bg-black/40 border border-white/20 rounded-xl px-2 py-1 text-[10px] font-black uppercase outline-none"
-                      >
-                        <option value="Free">Free</option>
-                        <option value="Pro">Pro</option>
-                      </select>
-                    )}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
                     Access Status
                   </label>
                   <div className="premium-glass p-5 rounded-2xl border border-white/5 flex items-center justify-between">
                     <span
-                      className={`text-xs font-black uppercase tracking-widest ${targetUser.status === "Suspended" ? "text-rose-500" : "text-emerald-500"}`}
+                      className={`text-xs font-black uppercase tracking-widest ${targetUser.status === "suspended" ? "text-rose-500" : "text-emerald-500"}`}
                     >
                       {targetUser.status}
                     </span>
                     {isEditing && (
                       <select
-                        value={editData.status}
+                        value={editStatus}
                         onChange={(e) =>
-                          setEditData({
-                            ...editData,
-                            status: e.target.value as any,
-                          })
+                          setEditStatus(e.target.value as AccountStatus)
                         }
                         className="bg-black/40 border border-white/20 rounded-xl px-2 py-1 text-[10px] font-black uppercase outline-none"
                       >
-                        <option value="Active">Active</option>
-                        <option value="Suspended">Suspended</option>
-                        <option value="Pending">Pending</option>
+                        <option value="active">Active</option>
+                        <option value="suspended">Suspended</option>
                       </select>
                     )}
                   </div>
@@ -347,9 +315,7 @@ const UserCommand: React.FC = () => {
                       SYNCED:{" "}
                       <span className="text-xs font-bold text-white ml-2 uppercase opacity-80">
                         {targetUser.createdAt
-                          ? new Date(
-                              targetUser.createdAt.seconds * 1000,
-                            ).toLocaleDateString()
+                          ? targetUser.createdAt.toLocaleDateString()
                           : "LEGACY"}
                       </span>
                     </p>

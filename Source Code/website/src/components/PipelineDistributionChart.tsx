@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- catch clauses and third-party config objects have no useful static type here */
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
 const COLORS = ["#4f46e5", "#10b981", "#f59e0b", "#ef4444", "#6b7280"];

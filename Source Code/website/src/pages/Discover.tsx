@@ -1,23 +1,14 @@
 /**
- * Discover: roles found and scored by the Traction collector.
+ * Discover: roles found and scored by the Offerward collector.
  *
- * The collector (Source Code/collector, runs on a server on a timer) writes
- * one `discoveries` doc per matching role for this user. This page lets the
- * user triage them: save to the pipeline, open the posting, or dismiss.
+ * The collector (Source Code/collector, runs on a server on a timer) writes one
+ * `discover/feed` doc holding every card for this user. The user's marks live in
+ * `discover/triage`. This page lets the user triage the cards: save to the
+ * pipeline, open the posting, or dismiss.
  * It also surfaces "Applied" jobs that are due a follow-up.
  */
 
 import { formatDistanceToNowStrict } from "date-fns";
-import type { Timestamp } from "firebase/firestore";
-import {
-  collection,
-  doc,
-  onSnapshot,
-  query,
-  serverTimestamp,
-  updateDoc,
-  where,
-} from "firebase/firestore";
 import {
   AlertTriangle,
   BellRing,
@@ -46,71 +37,21 @@ import { Link } from "react-router-dom";
 import CustomSelect from "../components/CustomSelect";
 import type { ToastMessage } from "../components/Toast";
 import ToastContainer from "../components/Toast";
-import type { Job, Priority } from "../context/JobContext";
-import { useAuth } from "../context/AuthContext";
 import { useJobs } from "../context/JobContext";
-import { useCollectorMeta, useDiscoveryProfile } from "../hooks/useDiscoveryProfile";
-import { REFRESH_TIMES, literalMatcher, locationMatcher } from "../lib/discover";
-import { db } from "../lib/firebase";
-
-// ── Types ───────────────────────────────────────────────────────────────────
-
-type Track = "intern" | "newgrad";
-type DiscoveryStatus = "new" | "saved" | "dismissed";
-
-interface Discovery {
-  id: string;
-  userId: string;
-  company: string;
-  title: string;
-  location: string;
-  url: string;
-  track: Track;
-  terms: string[];
-  category: string;
-  sources: string[];
-  fitScore: number;
-  fitReasons: string[];
-  flags: {
-    citizen: boolean;
-    exportControl: boolean;
-    noSponsor: boolean;
-    sponsorFriendly: boolean;
-    screened: boolean;
-  };
-  flagSnippets: string[];
-  gradWindow: string;
-  postedAt?: Timestamp | null;
-  firstSeenAt?: Timestamp | null;
-  /** Shown in "To review" (open, above the user's bar, within their plan's cap) */
-  active: boolean;
-  /** The posting itself has closed (older docs only have `active`) */
-  closed?: boolean;
-  /** Which tier of the user's role families matched: "core" | "strong" | "ok" */
-  roleTier?: string;
-  status: DiscoveryStatus;
-  jobId?: string;
-}
-
-interface CollectorRun {
-  lastRunAt?: Timestamp | null;
-  rawPostings?: number;
-  uniqueRoles?: number;
-  matches?: number;
-  live?: number;
-  cap?: number;
-  sourceErrors?: Record<string, string>;
-}
+import { useDiscoverFeed, useDiscoverSettings, useSystemDiscover, useTriage } from "../hooks/useDiscover";
+import type { Job, Priority } from "../lib/db";
+import type { CardStatus, CardView, Track } from "../lib/discover";
+import { REFRESH_TIMES, cardView, literalMatcher, locationMatcher } from "../lib/discover";
 
 const PAGE_SIZE = 40;
 const FOLLOW_UP_DAYS = 7;
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-function ago(ts?: Timestamp | null): string {
-  if (!ts) return "";
+function ago(at?: Date | null): string {
+  if (!at) return "";
   try {
-    return formatDistanceToNowStrict(ts.toDate(), { addSuffix: true });
+    return formatDistanceToNowStrict(at, { addSuffix: true });
   } catch {
     return "";
   }
@@ -123,25 +64,19 @@ function scoreStyle(score: number): string {
 }
 
 function priorityFor(score: number): Priority {
-  if (score >= 80) return "High";
-  if (score >= 70) return "Medium";
-  return "Low";
+  if (score >= 80) return "high";
+  if (score >= 70) return "medium";
+  return "low";
 }
 
-function daysSince(dateApplied: string): number | null {
-  const t = Date.parse(dateApplied);
-  if (Number.isNaN(t)) return null;
-  return Math.floor((Date.now() - t) / 86_400_000);
-}
-
-function isClosed(d: Discovery): boolean {
-  return d.closed ?? !d.active;
+function daysSince(appliedAt: Date | null): number | null {
+  if (!appliedAt) return null;
+  return Math.floor((Date.now() - appliedAt.getTime()) / 86_400_000);
 }
 
 /** A top-tier match for the role families or keywords the user picked. */
-function isFocus(d: Discovery): boolean {
-  if (d.roleTier) return d.roleTier === "core";
-  return d.fitReasons.some((r) => r.startsWith("Core role match") || r.startsWith("Matches your keyword"));
+function isFocus(d: CardView): boolean {
+  return d.tier === "core";
 }
 
 // ── Small pieces ────────────────────────────────────────────────────────────
@@ -185,7 +120,7 @@ const INFO_BADGE = "bg-sky-500/15 text-sky-200 border-sky-400/25";
 
 /** Work-authorization badges. For users who need sponsorship they're warnings; for
  * everyone else they're informational notes and sponsorship-only badges are hidden. */
-function FlagBadges({ d, sponsorMode }: { d: Discovery; sponsorMode: boolean }) {
+function FlagBadges({ d, sponsorMode }: { d: CardView; sponsorMode: boolean }) {
   const badges: { label: string; cls: string; icon: React.ReactNode }[] = [];
   if (d.flags.citizen)
     badges.push({
@@ -222,7 +157,7 @@ function FlagBadges({ d, sponsorMode }: { d: Discovery; sponsorMode: boolean }) 
       {badges.map((b) => (
         <span
           key={b.label}
-          title={d.flagSnippets.join("\n\n") || undefined}
+          title={d.snippets.join("\n\n") || undefined}
           className={`inline-flex items-center gap-1 text-[11px] font-semibold rounded-full px-2.5 py-1 border ${b.cls}`}
         >
           {b.icon}
@@ -233,7 +168,7 @@ function FlagBadges({ d, sponsorMode }: { d: Discovery; sponsorMode: boolean }) 
   );
 }
 
-function DiscoveryCard({
+function RoleCard({
   d,
   isNew,
   sponsorMode,
@@ -243,28 +178,28 @@ function DiscoveryCard({
   onHideCompany,
   busy,
 }: {
-  d: Discovery;
+  d: CardView;
   isNew: boolean;
   sponsorMode: boolean;
-  onSave: (d: Discovery) => void;
-  onDismiss: (d: Discovery) => void;
-  onRestore: (d: Discovery) => void;
-  /** Absent when the viewer can't edit the profile (admin viewing as a user) */
-  onHideCompany?: (d: Discovery) => void;
+  onSave: (d: CardView) => void;
+  onDismiss: (d: CardView) => void;
+  onRestore: (d: CardView) => void;
+  /** Absent when the viewer can't edit the settings (admin viewing as a user) */
+  onHideCompany?: (d: CardView) => void;
   busy: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const reasons = open ? d.fitReasons : d.fitReasons.slice(0, 3);
+  const reasons = open ? d.reasons : d.reasons.slice(0, 3);
   const posted = ago(d.postedAt);
 
   return (
     <div className="premium-glass border border-white/5 rounded-2xl p-4 flex flex-col gap-3 relative overflow-hidden">
       <div className="flex items-start gap-3">
         <div
-          className={`shrink-0 w-12 h-12 rounded-xl border flex flex-col items-center justify-center ${scoreStyle(d.fitScore)}`}
+          className={`shrink-0 w-12 h-12 rounded-xl border flex flex-col items-center justify-center ${scoreStyle(d.score)}`}
           title="Fit score (0 to 100)"
         >
-          <span className="text-lg font-extrabold leading-none">{d.fitScore}</span>
+          <span className="text-lg font-extrabold leading-none">{d.score}</span>
           <span className="text-[9px] font-bold tracking-widest opacity-80">FIT</span>
         </div>
         <div className="min-w-0 flex-1">
@@ -275,7 +210,7 @@ function DiscoveryCard({
                 NEW
               </span>
             )}
-            {isClosed(d) && (
+            {d.closed && (
               <span className="text-[10px] font-extrabold tracking-widest px-1.5 py-0.5 rounded-md bg-white/10 text-slate-300">
                 CLOSED
               </span>
@@ -312,7 +247,7 @@ function DiscoveryCard({
           </li>
         ))}
       </ul>
-      {(d.fitReasons.length > 3 || d.flagSnippets.length > 0 || d.gradWindow) && (
+      {(d.reasons.length > 3 || d.snippets.length > 0 || d.gradWindow) && (
         <button
           onClick={() => setOpen((o) => !o)}
           className="self-start text-[12px] font-semibold text-blue-300 hover:text-blue-200 flex items-center gap-1"
@@ -321,9 +256,9 @@ function DiscoveryCard({
           {open ? "Less" : "Details"}
         </button>
       )}
-      {open && (d.flagSnippets.length > 0 || d.gradWindow) && (
+      {open && (d.snippets.length > 0 || d.gradWindow) && (
         <div className="text-[12px] text-slate-300 bg-black/20 rounded-xl p-3 space-y-2 border border-white/5">
-          {d.flagSnippets.map((s) => (
+          {d.snippets.map((s) => (
             <p key={s} className="italic">"{s}"</p>
           ))}
           {d.gradWindow && (
@@ -401,17 +336,14 @@ function DiscoveryCard({
 // ── Page ────────────────────────────────────────────────────────────────────
 
 export default function Discover() {
-  const { uid, profile, loading: profileLoading, canEdit, save: saveProfile } = useDiscoveryProfile();
-  const { inviteOnly } = useCollectorMeta();
-  const { userProfile, impersonatedUser } = useAuth();
-  const isPro = (impersonatedUser ?? userProfile)?.plan === "Pro";
-  const { jobs, createJob, markFollowedUp, openModal, limitError, clearLimitError } = useJobs();
+  const { uid, settings: profile, loading: profileLoading, canEdit, save: saveProfile } = useDiscoverSettings();
+  const { feed, loading: feedLoading } = useDiscoverFeed();
+  const { triage, setStatus: setTriage } = useTriage();
+  const { inviteOnly } = useSystemDiscover();
+  const { jobs, createJob, markFollowedUp, openModal } = useJobs();
 
-  const [items, setItems] = useState<Discovery[]>([]);
-  const [loaded, setLoaded] = useState(false);
-  const [run, setRun] = useState<CollectorRun | null>(null);
   const [track, setTrack] = useState<Track>("intern");
-  const [view, setView] = useState<DiscoveryStatus>("new");
+  const [view, setView] = useState<CardStatus>("new");
   const [search, setSearch] = useState("");
   const [hideRedFlags, setHideRedFlags] = useState(true);
   const [locOnly, setLocOnly] = useState(false);
@@ -448,52 +380,23 @@ export default function Discover() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  useEffect(() => {
-    if (limitError) {
-      addToast(limitError, "warning");
-      clearLimitError();
-    }
-  }, [limitError, addToast, clearLimitError]);
-
-  // Live data
-  useEffect(() => {
-    if (!uid) return;
-    const q = query(collection(db, "discoveries"), where("userId", "==", uid));
-    const unsub = onSnapshot(
-      q,
-      (snap) => {
-        setItems(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Discovery));
-        setLoaded(true);
-      },
-      (err) => {
-        console.error("discoveries listener:", err);
-        setLoaded(true);
-      },
-    );
-    const unsubRun = onSnapshot(
-      doc(db, "collectorRuns", uid),
-      (snap) => setRun(snap.exists() ? (snap.data() as CollectorRun) : null),
-      () => setRun(null),
-    );
-    return () => {
-      unsub();
-      unsubRun();
-    };
-  }, [uid]);
+  const items = useMemo(() => (feed?.cards ?? []).map((c) => cardView(c, triage)), [feed, triage]);
+  const loaded = !feedLoading;
 
   // Reset paging when filters change
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- resets state when the subscription or seed key changes; intentional
   useEffect(() => setLimit(PAGE_SIZE), [track, view, search, hideRedFlags, locOnly, focusOnly, sort]);
 
   const isNewSinceVisit = useCallback(
-    (d: Discovery) => !!d.firstSeenAt && d.firstSeenAt.toMillis() > lastVisit,
+    (d: CardView) => !!d.firstSeenAt && d.firstSeenAt.getTime() > lastVisit,
     [lastVisit],
   );
 
   const followUps = useMemo(
     () =>
       jobs
-        .filter((j: Job) => j.status === "Applied" && !j.followedUpAt)
-        .map((j) => ({ job: j, days: daysSince(j.dateApplied) }))
+        .filter((j: Job) => j.status === "applied" && !j.followedUpAt)
+        .map((j) => ({ job: j, days: daysSince(j.appliedAt) }))
         .filter((x): x is { job: Job; days: number } => x.days !== null && x.days >= FOLLOW_UP_DAYS)
         .sort((a, b) => b.days - a.days),
     [jobs],
@@ -502,18 +405,17 @@ export default function Discover() {
   const sponsorMode = profile?.needsSponsorship ?? false;
   const inMyLocations = useMemo(() => locationMatcher(profile?.locations.preferred ?? []), [profile]);
   // Cards from a company hidden since the last refresh disappear right away.
-  const blockedRx = useMemo(() => literalMatcher(profile?.companies.blocked ?? []), [profile]);
+  const hiddenRx = useMemo(() => literalMatcher(profile?.companies.hidden ?? []), [profile]);
   const visible = useMemo(
-    () => items.filter((d) => !blockedRx || d.status === "saved" || !blockedRx.test(d.company)),
-    [items, blockedRx],
+    () => items.filter((d) => !hiddenRx || d.status === "saved" || !hiddenRx.test(d.company)),
+    [items, hiddenRx],
   );
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
     const list = visible.filter((d) => {
       if (d.track !== track) return false;
-      if ((d.status || "new") !== view) return false;
-      if (view === "new" && !d.active) return false;
+      if (d.status !== view) return false;
       if (sponsorMode && hideRedFlags && view === "new") {
         if (d.flags?.citizen) return false;
         if (d.track === "newgrad" && d.flags?.noSponsor) return false;
@@ -525,19 +427,19 @@ export default function Discover() {
     });
     list.sort((a, b) =>
       sort === "fit"
-        ? b.fitScore - a.fitScore || (b.postedAt?.toMillis() ?? 0) - (a.postedAt?.toMillis() ?? 0)
-        : (b.postedAt?.toMillis() ?? b.firstSeenAt?.toMillis() ?? 0) -
-          (a.postedAt?.toMillis() ?? a.firstSeenAt?.toMillis() ?? 0),
+        ? b.score - a.score || (b.postedAt?.getTime() ?? 0) - (a.postedAt?.getTime() ?? 0)
+        : (b.postedAt?.getTime() ?? b.firstSeenAt?.getTime() ?? 0) -
+          (a.postedAt?.getTime() ?? a.firstSeenAt?.getTime() ?? 0),
     );
     return list;
   }, [visible, track, view, search, sponsorMode, hideRedFlags, locOnly, inMyLocations, focusOnly, sort]);
 
   const stats = useMemo(() => {
-    const live = visible.filter((d) => d.active && (d.status || "new") === "new");
-    const ok = (d: Discovery) => !sponsorMode || !d.flags?.citizen;
+    const live = visible.filter((d) => !d.closed && d.status === "new");
+    const ok = (d: CardView) => !sponsorMode || !d.flags?.citizen;
     return {
       newSinceVisit: live.filter(isNewSinceVisit).length,
-      highFit: live.filter((d) => d.fitScore >= 80 && ok(d)).length,
+      highFit: live.filter((d) => d.score >= 80 && ok(d)).length,
       inLocations: live.filter((d) => inMyLocations(d.location || "") && ok(d)).length,
       saved: visible.filter((d) => d.status === "saved").length,
     };
@@ -545,44 +447,39 @@ export default function Discover() {
 
   const counts = useMemo(() => {
     const c: Record<Track, number> = { intern: 0, newgrad: 0 };
-    for (const d of visible) if (d.active && (d.status || "new") === "new") c[d.track]++;
+    for (const d of visible) if (!d.closed && d.status === "new") c[d.track]++;
     return c;
   }, [visible]);
 
   // Actions
-  const setStatus = async (d: Discovery, status: DiscoveryStatus, extra: Record<string, unknown> = {}) => {
-    await updateDoc(doc(db, "discoveries", d.id), { status, ...extra, statusChangedAt: serverTimestamp() });
-  };
-
-  const handleSave = async (d: Discovery) => {
-    setBusyId(d.id);
+  const handleSave = async (d: CardView) => {
+    setBusyId(d.roleKey);
     try {
-      // A job already linked to this discovery means an earlier save got as far
+      // A job already linked to this role means an earlier save got as far
       // as creating it; reuse it instead of adding a duplicate.
-      const existing = jobs.find((j) => j.discoveryId === d.id);
+      const existing = jobs.find((j) => j.fromDiscover?.roleKey === d.roleKey);
       if (existing) {
-        await setStatus(d, "saved", { jobId: existing.id });
+        await setTriage(d.roleKey, { status: "saved", jobId: existing.id });
         addToast(`Saved ${d.company} to your pipeline`);
         return;
       }
       const notes = [
-        `Fit ${d.fitScore}/100 (Discover)`,
-        ...d.fitReasons.map((r) => `- ${r}`),
-        ...(d.flagSnippets.length ? ["", "Posting says:", ...d.flagSnippets.map((s) => `"${s}"`)] : []),
+        `Fit ${Math.round(d.score)}/100 (Discover)`,
+        ...d.reasons.map((r) => `- ${r}`),
+        ...(d.snippets.length ? ["", "Posting says:", ...d.snippets.map((s) => `"${s}"`)] : []),
       ].join("\n");
       const jobId = await createJob({
         company: d.company,
         title: d.title,
         location: d.location,
-        link: d.url,
-        priority: priorityFor(d.fitScore),
-        status: "Saved",
+        url: d.url,
+        priority: priorityFor(d.score),
+        status: "saved",
         notes,
-        discoveryId: d.id,
-        fitScore: d.fitScore,
-      });
+        fromDiscover: { roleKey: d.roleKey.slice(0, 64), fitScore: Math.round(d.score) },
+      }, "discover");
       if (!jobId) return;
-      await setStatus(d, "saved", { jobId });
+      await setTriage(d.roleKey, { status: "saved", jobId });
       addToast(`Saved ${d.company} to your pipeline`);
     } catch (e) {
       console.error(e);
@@ -592,10 +489,10 @@ export default function Discover() {
     }
   };
 
-  const handleDismiss = async (d: Discovery) => {
-    setBusyId(d.id);
+  const handleDismiss = async (d: CardView) => {
+    setBusyId(d.roleKey);
     try {
-      await setStatus(d, "dismissed");
+      await setTriage(d.roleKey, { status: "dismissed" });
     } catch (e) {
       console.error(e);
       addToast("Couldn't dismiss that role.", "error");
@@ -604,26 +501,29 @@ export default function Discover() {
     }
   };
 
-  const handleRestore = async (d: Discovery) => {
-    setBusyId(d.id);
+  const handleRestore = async (d: CardView) => {
+    setBusyId(d.roleKey);
     try {
-      await setStatus(d, "new");
+      await setTriage(d.roleKey, null);
+    } catch (e) {
+      console.error(e);
+      addToast("Couldn't restore that role.", "error");
     } finally {
       setBusyId(null);
     }
   };
 
-  const handleHideCompany = async (d: Discovery) => {
+  const handleHideCompany = async (d: CardView) => {
     if (!profile) return;
-    const blocked = profile.companies.blocked;
-    if (blocked.some((c) => c.toLowerCase() === d.company.toLowerCase())) return;
-    if (blocked.length >= 100) {
+    const hidden = profile.companies.hidden;
+    if (hidden.some((c) => c.toLowerCase() === d.company.toLowerCase())) return;
+    if (hidden.length >= 100) {
       addToast("You've hidden 100 companies. Remove some in Tune matches first.", "warning");
       return;
     }
-    setBusyId(d.id);
+    setBusyId(d.roleKey);
     try {
-      await saveProfile({ ...profile, companies: { ...profile.companies, blocked: [...blocked, d.company] } });
+      await saveProfile({ ...profile, companies: { ...profile.companies, hidden: [...hidden, d.company] } });
       addToast(`Hid ${d.company}. Undo it in Tune matches.`);
     } catch (e) {
       console.error(e);
@@ -633,8 +533,8 @@ export default function Discover() {
     }
   };
 
-  const lastRun = ago(run?.lastRunAt);
-  const capped = !!run?.cap && !!run?.matches && run.matches > run.cap;
+  const lastRun = ago(feed?.refreshedAt);
+  const capped = !!feed && feed.cap > 0 && feed.totalMatches > feed.cap;
 
   return (
     <div className="p-3 sm:p-4 md:p-5 lg:p-8 h-full flex flex-col max-w-[1700px] mx-auto overflow-y-auto scrollbar-theme">
@@ -650,12 +550,12 @@ export default function Discover() {
           </p>
           <p className="text-slate-300 mt-1 text-xs">
             {lastRun
-              ? `Last refreshed ${lastRun}${run?.rawPostings ? ` from ${run.rawPostings.toLocaleString()} postings` : ""}.`
+              ? `Last refreshed ${lastRun}.`
               : "Waiting for the first collector run."}
-            {run?.sourceErrors && Object.keys(run.sourceErrors).length > 0 && (
+            {!!feed?.failedSources && (
               <span className="text-amber-300">
                 {" "}
-                {Object.keys(run.sourceErrors).length} source(s) failed last run.
+                {feed.failedSources} source(s) failed last run.
               </span>
             )}
           </p>
@@ -672,20 +572,9 @@ export default function Discover() {
       {capped && (
         <div className="premium-glass rounded-2xl border border-blue-400/20 px-4 py-3 mb-5 sm:mb-6 text-xs sm:text-sm text-slate-200 flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-blue-300 shrink-0" />
-          {isPro ? (
-            <span>
-              Showing your top {run?.cap} of {run?.matches?.toLocaleString()} matches. Raise your minimum score in
-              Tune matches to narrow them down.
-            </span>
-          ) : (
-            <span>
-              Showing your top {run?.cap} of {run?.matches?.toLocaleString()} matches on the Free plan.{" "}
-              <Link to="/account" className="font-bold text-white underline underline-offset-2">
-                Upgrade to Pro
-              </Link>{" "}
-              to see them all.
-            </span>
-          )}
+          <span>
+            Showing your top {feed?.cap} of {feed?.totalMatches.toLocaleString()} matches. Raise your minimum score in Tune matches to narrow them down.
+          </span>
         </div>
       )}
 
@@ -766,7 +655,7 @@ export default function Discover() {
           ))}
         </div>
         <div className="flex items-center gap-1 p-1 rounded-2xl bg-white/5 border border-white/10 self-start">
-          {(["new", "saved", "dismissed"] as DiscoveryStatus[]).map((v) => (
+          {(["new", "saved", "dismissed"] as CardStatus[]).map((v) => (
             <button
               key={v}
               onClick={() => setView(v)}
@@ -843,14 +732,15 @@ export default function Discover() {
             </Link>
           )}
         </div>
-      ) : items.length === 0 ? (
+      ) : items.length === 0 || profile?.enabled === false ? (
+        // Turned off: show the off state even if an old feed doc is still there.
         <div className="premium-glass rounded-2xl p-8 text-center text-slate-200">
           <Compass className="w-10 h-10 mx-auto mb-3 opacity-80" />
           <p className="font-bold text-white">{profile?.enabled === false ? "Discover is off" : "No roles yet"}</p>
           <p className="text-sm mt-1 max-w-md mx-auto">
             {profile?.enabled === false
               ? "Turn it back on in Tune matches to get new roles."
-              : inviteOnly && !run
+              : inviteOnly && !feed
                 ? "Discover is invite-only during the beta. Your settings are saved, and matches will appear here once you're added."
                 : `Your first matches arrive on the next refresh (${REFRESH_TIMES}).`}
           </p>
@@ -866,8 +756,8 @@ export default function Discover() {
           </p>
           <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-3 sm:gap-4">
             {filtered.slice(0, limit).map((d) => (
-              <DiscoveryCard
-                key={d.id}
+              <RoleCard
+                key={d.roleKey}
                 d={d}
                 isNew={isNewSinceVisit(d)}
                 sponsorMode={sponsorMode}
@@ -875,7 +765,7 @@ export default function Discover() {
                 onDismiss={handleDismiss}
                 onRestore={handleRestore}
                 onHideCompany={canEdit && profile ? handleHideCompany : undefined}
-                busy={busyId === d.id}
+                busy={!canEdit || busyId === d.roleKey}
               />
             ))}
           </div>

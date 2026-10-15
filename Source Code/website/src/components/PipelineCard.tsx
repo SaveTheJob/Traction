@@ -1,9 +1,9 @@
 import { Draggable } from "@hello-pangea/dnd";
-import { Briefcase, Calendar, Edit2, Folder, MapPin, Trash2 } from "lucide-react";
+import { Briefcase, Calendar, Edit2, MapPin, Trash2 } from "lucide-react";
+import { format } from "date-fns";
 import { memo } from "react";
 import { createPortal } from "react-dom";
-import type { Job } from "../context/JobContext";
-import { useJobs } from "../context/JobContext";
+import type { Job } from "../lib/db";
 
 interface PipelineCardProps {
   job: Job;
@@ -16,19 +16,19 @@ const priorityMeta: Record<
   string,
   { bar: string; badge: string; glow: string; text: string }
 > = {
-  High: {
+  high: {
     bar: "bg-red-500",
     badge: "bg-red-500/20 text-red-400",
     glow: "shadow-red-500/10",
     text: "HIGH",
   },
-  Medium: {
+  medium: {
     bar: "bg-amber-400",
     badge: "bg-amber-400/20 text-amber-300",
     glow: "shadow-amber-400/10",
     text: "MED",
   },
-  Low: {
+  low: {
     bar: "bg-blue-400",
     badge: "bg-blue-400/20 text-blue-300",
     glow: "shadow-blue-400/10",
@@ -42,9 +42,13 @@ export default memo(function PipelineCard({
   openModal,
   handleDelete,
 }: PipelineCardProps) {
-  const { openVault } = useJobs();
-  const pm = priorityMeta[job.priority ?? "Low"] ?? priorityMeta.Low;
+  const pm = priorityMeta[job.priority] ?? priorityMeta.low;
   const initial = job.company.charAt(0).toUpperCase();
+  const dateLabel = job.appliedAt
+    ? format(job.appliedAt, "MMM d, yyyy")
+    : job.createdAt
+      ? `Saved ${format(job.createdAt, "MMM d, yyyy")}`
+      : "";
 
   return (
     <Draggable draggableId={job.id} index={index}>
@@ -105,10 +109,10 @@ export default memo(function PipelineCard({
 
               {/* Info chips row */}
               <div className="flex items-center gap-2 flex-wrap">
-                {job.dateApplied && (
+                {dateLabel && (
                   <span className="flex items-center gap-1 text-[11px] text-slate-300 bg-white/5 rounded-full px-2.5 py-1 border border-white/8">
                     <Calendar className="w-3 h-3 flex-shrink-0" />
-                    {job.dateApplied}
+                    {dateLabel}
                   </span>
                 )}
                 {job.location && (
@@ -117,7 +121,7 @@ export default memo(function PipelineCard({
                     {job.location}
                   </span>
                 )}
-                {!job.dateApplied && !job.location && (
+                {!dateLabel && !job.location && (
                   <span className="flex items-center gap-1 text-[11px] text-slate-300 bg-white/5 rounded-full px-2.5 py-1 border border-white/8">
                     <Briefcase className="w-3 h-3 flex-shrink-0" />
                     No details yet
@@ -128,13 +132,6 @@ export default memo(function PipelineCard({
               {/* Actions row — hidden while dragging, visible on hover */}
               {!snapshot.isDragging && (
                 <div className="flex items-center justify-end gap-1 h-5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 -mt-1">
-                  <button
-                    onClick={() => openVault(job.id)}
-                    className="p-1 rounded-lg text-slate-300 hover:text-amber-400 hover:bg-amber-400/10 transition-colors"
-                    title="Documents Vault"
-                  >
-                    <Folder className="w-3.5 h-3.5" />
-                  </button>
                   <button
                     onClick={() => openModal(job.id)}
                     className="p-1 rounded-lg text-slate-300 hover:text-blue-400 hover:bg-blue-400/10 transition-colors"

@@ -3,17 +3,20 @@ import {
   ChevronUp,
   Copy,
   Edit2,
+  Linkedin,
   Mail,
   Plus,
   Search,
   Trash2,
 } from "lucide-react";
+import { formatDistanceToNowStrict } from "date-fns";
 import { useCallback, useState } from "react";
 import ConfirmDialog from "../components/ConfirmDialog";
 import NetworkStatusBadge from "../components/NetworkStatusBadge";
 import type { ToastMessage } from "../components/Toast";
 import ToastContainer from "../components/Toast";
 import { useNetwork } from "../context/NetworkContext";
+import type { Strength } from "../lib/db";
 
 export default function Network() {
   const { contacts, deleteContact, openNetworkModal } = useNetwork();
@@ -46,14 +49,10 @@ export default function Network() {
   );
 
   const [sortKey, setSortKey] = useState<
-    "name" | "company" | "status" | "lastContacted" | null
+    "name" | "company" | "strength" | "lastContacted" | null
   >(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
-  const contactStatusOrder: Record<string, number> = {
-    Hot: 0,
-    Warm: 1,
-    Cold: 2,
-  };
+  const strengthOrder: Record<Strength, number> = { hot: 0, warm: 1, cold: 2 };
 
   const toggleSort = (key: typeof sortKey) => {
     if (sortKey === key) {
@@ -72,14 +71,14 @@ export default function Network() {
         cmp = a.name.localeCompare(b.name);
       } else if (sortKey === "company") {
         cmp = a.company.localeCompare(b.company);
-      } else if (sortKey === "status") {
-        cmp =
-          (contactStatusOrder[a.status] ?? 99) -
-          (contactStatusOrder[b.status] ?? 99);
+      } else if (sortKey === "strength") {
+        cmp = strengthOrder[a.strength] - strengthOrder[b.strength];
       } else if (sortKey === "lastContacted") {
-        cmp =
-          new Date(a.lastContacted).getTime() -
-          new Date(b.lastContacted).getTime();
+        // Never-contacted sort last in either direction.
+        if (!a.lastContactedAt || !b.lastContactedAt) {
+          return a.lastContactedAt ? -1 : b.lastContactedAt ? 1 : 0;
+        }
+        cmp = a.lastContactedAt.getTime() - b.lastContactedAt.getTime();
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
@@ -159,12 +158,12 @@ export default function Network() {
                   </span>
                 </th>
                 <th
-                  onClick={() => toggleSort("status")}
+                  onClick={() => toggleSort("strength")}
                   className="px-4 sm:px-6 py-3 sm:py-5 text-[10px] font-black text-slate-300 uppercase tracking-widest bg-transparent cursor-pointer select-none hover:text-slate-200 transition-colors"
                 >
                   <span className="inline-flex items-center gap-1">
-                    Status
-                    {sortKey === "status" ? (
+                    Strength
+                    {sortKey === "strength" ? (
                       sortDir === "asc" ? (
                         <ChevronUp className="w-3.5 h-3.5" />
                       ) : (
@@ -220,7 +219,7 @@ export default function Network() {
                           {contact.email && (
                             <button
                               onClick={(e) =>
-                                handleCopyEmail(e, contact.email!)
+                                handleCopyEmail(e, contact.email)
                               }
                               className="text-xs text-blue-400 flex items-center gap-1.5 mt-1 hover:underline w-fit text-left bg-transparent border-none p-0 cursor-pointer font-medium"
                               title="Copy email to clipboard"
@@ -249,24 +248,37 @@ export default function Network() {
                     </td>
                     <td className="px-4 sm:px-6 py-3 sm:py-5 whitespace-nowrap">
                       <div className="scale-95 origin-left group-hover:scale-100 transition-transform">
-                        <NetworkStatusBadge status={contact.status} />
+                        <NetworkStatusBadge strength={contact.strength} />
                       </div>
                     </td>
                     <td className="px-4 sm:px-6 py-3 sm:py-5 whitespace-nowrap hidden lg:table-cell">
                       <p className="text-sm text-slate-300 font-mono">
-                        {contact.lastContacted}
+                        {contact.lastContactedAt
+                          ? formatDistanceToNowStrict(contact.lastContactedAt, { addSuffix: true })
+                          : "Never"}
                       </p>
                     </td>
                     <td className="px-4 pr-6 sm:pr-8 py-3 sm:py-5 whitespace-nowrap text-right w-[1%] align-middle">
                       <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity duration-150">
                         {contact.email && (
                           <button
-                            onClick={(e) => handleCopyEmail(e, contact.email!)}
+                            onClick={(e) => handleCopyEmail(e, contact.email)}
                             className="p-1.5 text-slate-300 hover:text-green-400 hover:bg-green-500/10 rounded-full transition-colors inline-flex bg-transparent cursor-pointer border-none"
                             title="Copy email to clipboard"
                           >
                             <Copy className="w-4 h-4" />
                           </button>
+                        )}
+                        {contact.linkedinUrl && (
+                          <a
+                            href={contact.linkedinUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 text-slate-300 hover:text-blue-400 hover:bg-blue-900/30 rounded-full transition-colors inline-flex"
+                            title="Open LinkedIn"
+                          >
+                            <Linkedin className="w-4 h-4" />
+                          </a>
                         )}
                         <button
                           onClick={() => openNetworkModal(contact.id)}

@@ -9,7 +9,6 @@ import {
   Palette,
   Radio,
   ShieldCheck,
-  Sparkles,
   Users,
   X,
 } from "lucide-react";
@@ -45,7 +44,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         { label: "Pipeline", path: "/pipeline", icon: KanbanSquare },
         { label: "Network", path: "/network", icon: Users },
         { label: "Analytics", path: "/analytics", icon: BarChart3 },
-        { label: "AI Resume", path: "/resume", icon: Sparkles },
         ...(isAdmin && !impersonatedUser
           ? [{ label: "Admin Portal", path: "/admin", icon: ShieldCheck }]
           : []),
